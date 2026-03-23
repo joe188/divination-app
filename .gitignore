@@ -1,0 +1,52 @@
+# OSX
+.DS_Store
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+local.properties
+*.keystore
+*.jks
+.ccache/
+.externalNativeBuild/
+
+# Build
+build/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Temporary
+*.tmp
+*.temp
+.tmp/
+temp/
+
+# Test
+coverage/
+*.test.js.snap
