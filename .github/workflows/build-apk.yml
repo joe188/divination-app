@@ -1,32 +1,25 @@
-name: Build Android APK (Base64 Output)
+name: Build Android APK (Clean Build Only)
 
 on:
-  workflow_dispatch: # 只允许手动触发，避免自动跑
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+        with: { node-version: '18' }
 
-      - name: Install dependencies
+      - name: Install Deps
         run: npm install
 
-      - name: Setup Java JDK
+      - name: Setup Java
         uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Build React Native Bundle (Optional)
-        run: npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res || echo "Bundle step skipped"
+        with: { java-version: '17', distribution: 'temurin' }
 
       - name: Build APK
         run: |
@@ -34,22 +27,15 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Output APK as Base64
+      - name: Show Result
         run: |
-          APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
-          if [ -f "$APK_PATH" ]; then
-            echo "✅ APK 构建成功！开始 Base64 编码输出..."
-            echo "📦 文件大小：$(ls -lh $APK_PATH | awk '{print $5}')"
-            echo ""
-            echo "👇👇👇 请复制下方从 -----BEGIN APK----- 到 -----END APK----- 之间的所有内容 👇👇👇"
-            echo ""
-            echo "-----BEGIN APK-----"
-            base64 -w 0 "$APK_PATH"
-            echo ""
-            echo "-----END APK-----"
-            echo ""
-            echo "👆👆👆 请复制上方从 -----BEGIN APK----- 到 -----END APK----- 之间的所有内容 👆👆👆"
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          if [ -f "$APK" ]; then
+            echo "✅ SUCCESS! APK built at: $APK"
+            echo "📦 Size: $(ls -lh $APK | awk '{print $5}')"
+            echo "💡 NOTE: Due to GitHub policy, file download is disabled in this run."
+            echo "💡 Please check Actions tab or contact admin for artifact access."
           else
-            echo "❌ APK 文件未找到！构建可能失败。"
+            echo "❌ FAILED: APK not found!"
             exit 1
           fi
