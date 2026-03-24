@@ -44,7 +44,7 @@ jobs:
         build-tools: '33.0.2'
         ndk: '25.1.8937393'
         cache: true
-        cache-key: 'android-sdk-${{ runner.os }}-${{ hashFiles('''android/build.gradle''', '''android/gradle/wrapper/gradle-wrapper.properties''') }}'
+        cache-key: "android-sdk-${{ runner.os }}-${{ hashFiles('android/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}"
 
     - name: Accept Android licenses
       run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
