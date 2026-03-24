@@ -81,14 +81,21 @@ jobs:
 
       - name: Show Result
         run: |
-          APK="android/app/build/outputs/apk/release/app-release.apk"
-          if [ -f "$APK" ]; then
-            echo "✅ SUCCESS! APK built at: $APK"
+          echo "=== Searching for APK files ==="
+          find android/app/build/outputs -name "*.apk" -type f 2>/dev/null
+          APK=$(find android/app/build/outputs -name "*.apk" -type f 2>/dev/null | head -1)
+          if [ -n "$APK" ]; then
+            echo "✅ SUCCESS! APK found at: $APK"
             echo "📦 Size: $(ls -lh $APK | awk '{print $5}')"
             echo "💡 NOTE: Due to GitHub policy, file download is disabled in this run."
             echo "💡 Please check Actions tab or contact admin for artifact access."
+            echo "📁 Full listing:"
+            find android/app/build/outputs -type f -name "*.apk" -exec ls -lh {} \;
           else
-            echo "❌ FAILED: APK not found!"
-            echo "🔍 Build log captured. Check previous steps for details."
+            echo "❌ FAILED: No APK file found in any output directory!"
+            echo "🔍 Listing all output directories:"
+            find android/app/build/outputs -type d 2>/dev/null | head -20
+            echo "🔍 Checking if build truly succeeded:"
+            test -f android/app/build/outputs/apk/release/output-metadata.json && cat android/app/build/outputs/apk/release/output-metadata.json || echo "No metadata"
             exit 1
           fi
