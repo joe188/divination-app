@@ -49,15 +49,18 @@ jobs:
     - name: Accept Android licenses
       run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
+    - name: Fix Gradle wrapper permissions
+      run: chmod +x android/gradlew
+
     - name: Build Debug APK
       run: |
         cd android
-        ./gradlew assembleDebug --no-daemon --stacktrace
+        ./gradlew --no-daemon --stacktrace clean assembleDebug
 
     - name: Build Release APK
       run: |
         cd android
-        ./gradlew assembleRelease --no-daemon --stacktrace
+        ./gradlew --no-daemon --stacktrace clean assembleRelease
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
