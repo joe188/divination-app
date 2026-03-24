@@ -52,15 +52,18 @@ jobs:
     - name: Fix Gradle wrapper permissions
       run: chmod +x android/gradlew
 
+    - name: Set Gradle JVM args
+      run: echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError" >> android/gradle.properties
+
     - name: Build Debug APK
       run: |
         cd android
-        ./gradlew --no-daemon --stacktrace clean assembleDebug
+        ./gradlew --no-daemon --stacktrace --info clean assembleDebug
 
     - name: Build Release APK
       run: |
         cd android
-        ./gradlew --no-daemon --stacktrace clean assembleRelease
+        ./gradlew --no-daemon --stacktrace --info clean assembleRelease
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
