@@ -59,45 +59,15 @@ jobs:
         run: npm install
 
       - name: Build APK
-        id: build_apk
-        continue-on-error: true
+        continue-on-error: false
         run: |
           cd android
           gradle --no-daemon --stacktrace --info clean assembleRelease 2>&1 | tee /tmp/build.log
           echo "BUILD_EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_ENV
           echo "BUILD_LOG=/tmp/build.log" >> $GITHUB_ENV
 
-      - name: Inspect Output Directory
-        if: ${{ env.BUILD_EXIT_CODE == 0 }}
-        run: |
-          echo "=== Full tree of app/build/outputs ==="
-          find android/app/build/outputs -type f 2>/dev/null | sort
-          echo "=== Full tree of app/build (filtered) ==="
-          find android/app/build -type f \( -name "*.apk" -o -name "*.aab" -o -name "*.log" -o -name "*.json" \) 2>/dev/null | sort
-          echo "=== APK files found ==="
-          find android/app/build -name "*.apk" -type f 2>/dev/null | wc -l
-          echo "=== AAB files found ==="
-          find android/app/build -name "*.aab" -type f 2>/dev/null | wc -l
-          echo "=== Listing all APK files with details ==="
-          find android/app/build -name "*.apk" -type f 2>/dev/null -exec ls -lh {} \;
-          echo "=== Listing all AAB files with details ==="
-          find android/app/build -name "*.aab" -type f 2>/dev/null -exec ls -lh {} \;
-          echo "=== Checking for output-metadata.json ==="
-          find android/app/build/outputs -name "output-metadata.json" -type f 2>/dev/null -exec echo "Found: {}" \; -exec cat {} \;
-
-      - name: Capture Build Failure Details
-        if: ${{ env.BUILD_EXIT_CODE != 0 }}
-        run: |
-          echo "=== Build failed with exit code ${{ env.BUILD_EXIT_CODE }} ==="
-          echo "=== Last 200 lines of build log ==="
-          tail -200 /tmp/build.log || true
-          echo "=== Searching for common error patterns ==="
-          grep -i "error\|exception\|failed" /tmp/build.log || true
-          echo "=== Checking output directories ==="
-          ls -la app/build/outputs/apk/ 2>/dev/null || echo "No APK output"
-          find app/build -name "*.log" -exec echo "Found log: {}" \; -exec tail -10 {} \; 2>/dev/null || true
-
       - name: Show Result
+        if: always()
         run: |
           echo "=== Searching for APK files ==="
           APK=$(find android/app/build -name "*.apk" -type f 2>/dev/null | head -1)
@@ -119,5 +89,7 @@ jobs:
             find android/app/build/outputs -type d 2>/dev/null | head -20
             echo "🔍 Checking if build truly succeeded:"
             test -f android/app/build/outputs/apk/release/output-metadata.json && cat android/app/build/outputs/apk/release/output-metadata.json || echo "No metadata"
+            echo "📝 Last 50 lines of build log:"
+            tail -50 /tmp/build.log 2>/dev/null || echo "No build log"
             exit 1
           fi
