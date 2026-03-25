@@ -51,7 +51,7 @@ react {
     // hermesFlags = ["-O", "-output-source-map"]
     
     /* Autolinking */
-    autolinkLibrariesWithApp()
+    // autolinkLibrariesWithApp()  // Removed in RN 0.73+ (handled automatically by com.facebook.react plugin)
 }
 
 /**
