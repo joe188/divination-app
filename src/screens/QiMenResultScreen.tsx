@@ -74,7 +74,7 @@ export const QiMenResultScreen: React.FC<QiMenResultScreenProps> = ({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `灵虾奇门 - ${mockResult.yinYang === 'yang' ? '阳遁' : '阴遁'}${mockResult.juShu}局：${mockResult.interpretation.overall}`,
+        message: `灵枢智能排盘 - ${mockResult.yinYang === 'yang' ? '阳遁' : '阴遁'}${mockResult.juShu}局：${mockResult.interpretation.overall}`,
       });
     } catch (error) {
       console.error('分享失败', error);

@@ -48,7 +48,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 头部标题 */}
         <View style={styles.header}>
-          <Text style={styles.title}>灵虾排盘</Text>
+          <Text style={styles.title}>灵枢智能排盘</Text>
           <Text style={styles.subtitle}>灵枢智能排盘 · 传承千年智慧</Text>
         </View>
 

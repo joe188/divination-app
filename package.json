@@ -1,7 +1,7 @@
 {
   "name": "divination-app",
   "version": "1.0.0",
-  "description": "周易排盘 APP - 让传统文化触手可及",
+  "description": "灵枢智能排盘 - 让传统文化触手可及",
   "main": "index.js",
   "scripts": {
     "android": "react-native run-android",

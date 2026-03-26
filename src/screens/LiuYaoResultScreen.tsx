@@ -61,7 +61,7 @@ export const LiuYaoResultScreen: React.FC<LiuYaoResultScreenProps> = ({
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `灵虾排盘 - ${mockResult.benGua.name}卦：${mockResult.interpretation.overall}`,
+        message: `灵枢智能排盘 - ${mockResult.benGua.name}卦：${mockResult.interpretation.overall}`,
       });
     } catch (error) {
       console.error('分享失败', error);
