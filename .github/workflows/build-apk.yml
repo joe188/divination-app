@@ -35,7 +35,7 @@ jobs:
       - name: Build APK
         env:
           GRADLE_USER_HOME: /tmp/gradle-home
-          # 强制覆盖任何可能的全局 JVM 参数，防止 "-Xmx64m" 这种脏数据干扰
+          # 强制覆盖 JVM 参数
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
           JAVA_OPTS: "-Xmx2048m"
         run: |
@@ -45,12 +45,13 @@ jobs:
           rm -rf .gradle
           rm -rf ~/.gradle/wrapper/dists
           
-          # 打印环境变量确认（调试用）
+          # 打印环境变量确认
           echo "GRADLE_OPTS: $GRADLE_OPTS"
           echo "JAVA_OPTS: $JAVA_OPTS"
           
-          # 强制全新构建
-          ./gradlew clean assembleRelease --no-daemon --no-build-cache --refresh-dependencies --stacktrace
+          # 【终极方案】直接使用 java -jar 运行 Gradle Wrapper，彻底绕过 gradlew 脚本逻辑错误
+          echo "🚀 使用 java -jar 直接运行 Gradle Wrapper..."
+          java -jar gradle/wrapper/gradle-wrapper.jar clean assembleRelease --no-daemon --no-build-cache --refresh-dependencies --stacktrace
 
       - name: Rename APK to LingShu
         run: |
