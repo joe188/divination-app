@@ -40,28 +40,31 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
+      - name: Build APK (Debug First)
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           cd android
-          echo "🚀 使用 gradle 命令直接构建..."
-          gradle clean assembleRelease 2>&1 || true
+          echo "🚀 先尝试 debug 构建..."
+          gradle clean assembleDebug 2>&1 || true
           
-          # 🔍 暴力调试：列出整个 android 目录结构
+          # 🔍 调试：检查 APK 是否生成
           echo ""
           echo "========================================"
-          echo "🔍 调试：完整目录结构"
+          echo "🔍 查找 APK 文件"
           echo "========================================"
-          find . -type f -name "*.apk" 2>/dev/null
-          find . -type d -name "build" 2>/dev/null
-          ls -laR app/build/outputs/ 2>/dev/null || echo "app/build/outputs 不存在"
+          find . -name "*.apk" 2>/dev/null || echo "未找到 APK"
 
       - name: Rename APK to LingShu
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk LingShu.apk
+          # 优先使用 release，如果没有就用 debug
+          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk LingShu.apk
+          elif [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp android/app/build/outputs/apk/debug/app-debug.apk LingShu.apk
+          fi
           echo "✅ APK 已重命名为：LingShu.apk"
 
       - name: Push to Gitee (China Mirror)
