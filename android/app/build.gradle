@@ -77,9 +77,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.divination.bazi"
+    namespace "com.lingshu.paipan"
     defaultConfig {
-        applicationId "com.divination.bazi"
+        applicationId "com.lingshu.paipan"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

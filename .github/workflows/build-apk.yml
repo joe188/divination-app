@@ -40,31 +40,24 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK (Debug First)
+      - name: Build APK
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
+          echo "🚀 开始构建..."
+          
+          # 切换到 android 目录
           cd android
-          echo "🚀 先尝试 debug 构建..."
-          gradle clean assembleDebug 2>&1 | tee /tmp/build.log
-          BUILD_EXIT_CODE=${PIPESTATUS[0]}
           
+          # 使用系统 gradle (不用 gradlew)
+          gradle assembleRelease --no-daemon --warning-mode=none 2>&1 | tail -30
+          
+          # 检查结果
           echo ""
-          echo "========================================"
-          echo "🔍 Gradle 构建结果: exit code = $BUILD_EXIT_CODE"
-          echo "========================================"
-          
-          # 🔍 调试：检查 APK 是否生成
-          echo "🔍 查找 APK 文件..."
-          find . -name "*.apk" 2>/dev/null && echo "✅ 找到 APK!" || echo "❌ 未找到 APK"
-          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "debug 目录不存在"
-          
-          # 显示 build.log 最后 30 行
-          echo ""
-          echo "=== Gradle 日志最后 30 行 ==="
-          tail -30 /tmp/build.log
+          echo "🔍 检查 APK..."
+          find . -name "*.apk" -type f 2>/dev/null
 
       - name: Rename APK to LingShu
         run: |
