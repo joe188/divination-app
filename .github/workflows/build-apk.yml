@@ -33,12 +33,17 @@ jobs:
         run: npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res || echo "Bundle step skipped"
 
       - name: Build APK
+        env:
+          # 禁用 Gradle 缓存，强制每次全新下载配置
+          GRADLE_USER_HOME: /tmp/gradle-home
         run: |
           cd android
-          # 清理旧构建和缓存，防止配置污染
-          ./gradlew clean --no-daemon
-          # 重新构建
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          # 彻底清理旧环境
+          rm -rf ~/.gradle/caches
+          rm -rf .gradle
+          
+          # 强制全新构建（无守护进程，无缓存）
+          ./gradlew clean assembleRelease --no-daemon --no-build-cache --stacktrace
 
       - name: Rename APK to LingShu
         run: |
