@@ -71,15 +71,15 @@ jobs:
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
-          echo "🚀 正在推送到 Gitee (joel/divination-apk)..."
+          echo "🚀 正在推送到 Gitee (joelinfo/divination-apk)..."
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
           # 使用 HTTPS + 环境变量方式，避免 URL 解析问题
-          GITEE_URL="https://joel:${GITEE_TOKEN}@gitee.com/joel/divination-apk.git"
+          GITEE_URL="https://joelinfo:${GITEE_TOKEN}@gitee.com/joelinfo/divination-apk.git"
           
           # 克隆 Gitee 仓库
-          git clone "$GITEE_URL" gitee-mirror || git clone https://gitee.com/joel/divination-apk.git gitee-mirror
+          git clone "$GITEE_URL" gitee-mirror || git clone https://gitee.com/joelinfo/divination-apk.git gitee-mirror
           cp LingShu.apk gitee-mirror/
           cd gitee-mirror
           
@@ -89,5 +89,5 @@ jobs:
           
           echo "============================================"
           echo "🎉 构建并推送成功！"
-          echo "📥 下载地址：https://gitee.com/joel/divination-apk/raw/master/LingShu.apk"
+          echo "📥 下载地址：https://gitee.com/joelinfo/divination-apk/raw/master/LingShu.apk"
           echo "============================================"
