@@ -48,13 +48,16 @@ jobs:
         run: |
           cd android
           echo "🚀 使用 gradle 命令直接构建..."
-          gradle clean assembleRelease 2>&1 | tee /tmp/gradle.log || true
+          gradle clean assembleRelease 2>&1 || true
           
-          # 🔍 调试：列出所有生成的文件
-          echo "=== 调试信息：列出 android/app/build 目录 ===" 
-          find . -name "*.apk" 2>/dev/null || echo "❌ 未找到任何 APK 文件"
-          ls -la app/build/outputs/apk/ 2>/dev/null || echo "❌ apk 目录不存在"
-          cat /tmp/gradle.log | tail -80
+          # 🔍 暴力调试：列出整个 android 目录结构
+          echo ""
+          echo "========================================"
+          echo "🔍 调试：完整目录结构"
+          echo "========================================"
+          find . -type f -name "*.apk" 2>/dev/null
+          find . -type d -name "build" 2>/dev/null
+          ls -laR app/build/outputs/ 2>/dev/null || echo "app/build/outputs 不存在"
 
       - name: Rename APK to LingShu
         run: |
