@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -30,7 +30,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Build React Native Bundle
-        run: npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res || echo "Bundle step skipped"
+        run: |
+          # 确保 assets 目录存在
+          mkdir -p android/app/src/main/assets
+          # 打包 JS bundle
+          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          echo "✅ JS Bundle 打包完成"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -42,21 +47,14 @@ jobs:
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           cd android
-          
-          # 清理 Gradle 缓存中残留的 macOS Java 路径
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/daemon
-          rm -rf .gradle
-          
-          # 直接使用系统级 gradle 命令（参考配置）
           echo "🚀 使用 gradle 命令直接构建..."
-          gradle --no-daemon clean assembleRelease --stacktrace 2>&1 | tee /tmp/gradle.log || true
+          gradle clean assembleRelease 2>&1 | tee /tmp/gradle.log || true
           
           # 🔍 调试：列出所有生成的文件
           echo "=== 调试信息：列出 android/app/build 目录 ===" 
           find . -name "*.apk" 2>/dev/null || echo "❌ 未找到任何 APK 文件"
           ls -la app/build/outputs/apk/ 2>/dev/null || echo "❌ apk 目录不存在"
-          cat /tmp/gradle.log | tail -50
+          cat /tmp/gradle.log | tail -80
 
       - name: Rename APK to LingShu
         run: |
