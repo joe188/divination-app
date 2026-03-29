@@ -34,16 +34,23 @@ jobs:
 
       - name: Build APK
         env:
-          # 禁用 Gradle 缓存，强制每次全新下载配置
           GRADLE_USER_HOME: /tmp/gradle-home
+          # 强制覆盖任何可能的全局 JVM 参数，防止 "-Xmx64m" 这种脏数据干扰
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
+          JAVA_OPTS: "-Xmx2048m"
         run: |
           cd android
           # 彻底清理旧环境
           rm -rf ~/.gradle/caches
           rm -rf .gradle
+          rm -rf ~/.gradle/wrapper/dists
           
-          # 强制全新构建（无守护进程，无缓存）
-          ./gradlew clean assembleRelease --no-daemon --no-build-cache --stacktrace
+          # 打印环境变量确认（调试用）
+          echo "GRADLE_OPTS: $GRADLE_OPTS"
+          echo "JAVA_OPTS: $JAVA_OPTS"
+          
+          # 强制全新构建
+          ./gradlew clean assembleRelease --no-daemon --no-build-cache --refresh-dependencies --stacktrace
 
       - name: Rename APK to LingShu
         run: |
