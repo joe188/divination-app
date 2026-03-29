@@ -75,14 +75,14 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           
-          # 使用 HTTPS + 环境变量方式，避免 URL 解析问题
-          GITEE_URL="https://joelinfo:${GITEE_TOKEN}@gitee.com/joelinfo/divination-apk.git"
-          
-          # 克隆 Gitee 仓库
-          git clone "$GITEE_URL" gitee-mirror || git clone https://gitee.com/joelinfo/divination-apk.git gitee-mirror
-          cp LingShu.apk gitee-mirror/
+          # 克隆仓库（私有仓库需要认证）
+          git clone https://gitee.com/joelinfo/divination-apk.git gitee-mirror
           cd gitee-mirror
           
+          # 配置认证
+          git remote set-url origin https://joelinfo:$GITEE_TOKEN@gitee.com/joelinfo/divination-apk.git
+          
+          cp ../LingShu.apk ./
           git add LingShu.apk
           git commit -m "feat: 上传灵枢智能排盘 APK (Auto-build from GitHub)"
           git push origin master
