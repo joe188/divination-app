@@ -1,4 +1,11 @@
 {
-  "name": "灵虾排盘",
-  "version": "1.0.0"
+  "name": "灵枢智能排盘",
+  "version": "1.0.0",
+  "slug": "lingshu-paipan",
+  "android": {
+    "package": "com.lingshu.paipan"
+  },
+  "ios": {
+    "bundleIdentifier": "com.lingshu.paipan"
+  }
 }
