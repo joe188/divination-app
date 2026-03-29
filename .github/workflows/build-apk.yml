@@ -35,8 +35,10 @@ jobs:
       - name: Build APK
         run: |
           cd android
-          chmod +x gradlew
-          ./gradlew assembleRelease
+          # 清理旧构建和缓存，防止配置污染
+          ./gradlew clean --no-daemon
+          # 重新构建
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Rename APK to LingShu
         run: |
