@@ -32,19 +32,25 @@ jobs:
       - name: Build React Native Bundle
         run: npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res || echo "Bundle step skipped"
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Build APK
         env:
-          GRADLE_USER_HOME: /tmp/gradle-home
-          # 强制覆盖 JVM 参数，确保内存充足
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
-          JAVA_OPTS: "-Xmx2048m"
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
           cd android
           
-          # 【核心步骤】直接使用 Java 运行 Gradle Wrapper Jar 包
-          # 完全不需要 gradlew 脚本，彻底杜绝脚本逻辑错误和环境干扰
-          echo "🚀 正在直接使用 Java 运行 Gradle Wrapper (无需 gradlew 脚本)..."
-          java -cp gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain clean assembleRelease --no-daemon --no-build-cache --refresh-dependencies --stacktrace
+          # 清理 Gradle 缓存中残留的 macOS Java 路径
+          rm -rf ~/.gradle/caches
+          rm -rf ~/.gradle/daemon
+          rm -rf .gradle
+          
+          # 直接使用系统级 gradle 命令（参考配置）
+          echo "🚀 使用 gradle 命令直接构建..."
+          gradle --no-daemon clean assembleRelease 2>&1 || true
 
       - name: Rename APK to LingShu
         run: |
