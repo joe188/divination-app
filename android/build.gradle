@@ -16,32 +16,15 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+        classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
+
+apply plugin: "com.facebook.react.rootproject"
 
 allprojects {
     repositories {
         google()
         mavenCentral()
-    }
-}
-
-// 查找项目根目录中的 node_modules
-def findRootProject(File dir) {
-    if (new File(dir, "node_modules").exists()) {
-        return dir
-    }
-    def parent = dir.getParentFile()
-    if (parent != null) {
-        return findRootProject(parent)
-    }
-    return null
-}
-
-def rootProjectDir = findRootProject(project.rootDir)
-if (rootProjectDir != null) {
-    def autolinkGradle = new File(rootProjectDir, "node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
-    if (autolinkGradle.exists()) {
-        apply from: autolinkGradle
     }
 }
