@@ -40,21 +40,28 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK with RN CLI
+      - name: Setup Gradle Wrapper
+        run: |
+          echo "🚀 下载 Gradle Wrapper..."
+          mkdir -p android/gradle/wrapper
+          curl -L -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
+          ls -la android/gradle/wrapper/
+
+      - name: Build APK
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          echo "🚀 使用 React Native CLI 构建..."
+          echo "🚀 直接用 Java 运行 Gradle Wrapper..."
           
           # 确保 JS bundle 已生成
           mkdir -p android/app/src/main/assets
           npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
           
-          # 使用 gradlew (通过 bash -c 确保正确执行)
+          # 直接用 java -jar 运行 Gradle Wrapper (绕过 gradlew 脚本)
           cd android
-          bash -c "./gradlew assembleRelease --no-daemon" 2>&1 | tail -40
+          java -jar gradle/wrapper/gradle-wrapper.jar assembleRelease --no-daemon 2>&1 | tail -40
           
           # 检查
           echo ""
