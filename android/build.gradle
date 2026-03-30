@@ -26,6 +26,22 @@ allprojects {
     }
 }
 
-// React Native autolinking - 从 android 目录往上两级
-def rnRoot = project.rootDir.getAbsoluteFile().getParentFile()
-apply from: new File(rnRoot, "node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
+// 查找项目根目录中的 node_modules
+def findRootProject(File dir) {
+    if (new File(dir, "node_modules").exists()) {
+        return dir
+    }
+    def parent = dir.getParentFile()
+    if (parent != null) {
+        return findRootProject(parent)
+    }
+    return null
+}
+
+def rootProjectDir = findRootProject(project.rootDir)
+if (rootProjectDir != null) {
+    def autolinkGradle = new File(rootProjectDir, "node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
+    if (autolinkGradle.exists()) {
+        apply from: autolinkGradle
+    }
+}
