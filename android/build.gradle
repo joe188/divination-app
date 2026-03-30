@@ -1,4 +1,4 @@
-// Top-level build file
+// Top-level build file - 简化版
 buildscript {
     ext {
         buildToolsVersion = "34.0.0"
@@ -7,7 +7,6 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.9.22"
-        reactNativeVersion = "0.73.0"
     }
     repositories {
         google()
@@ -16,13 +15,8 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-        // React Native Gradle 插件必须在 classpath 中
-        classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
-
-// 应用 React Native 根项目插件
-apply plugin: com.facebook.react.rootproject.RootProjectPlugin
 
 allprojects {
     repositories {
@@ -31,10 +25,14 @@ allprojects {
     }
 }
 
-// 全局 React Native 配置
-project.ext.react = [
-    enableHermes: true,
-    enableProfiler: false,
-    enableSeparateBuildPerCPUArchitecture: false,
-    enableNewArchitecture: false
-]
+subprojects { subproject ->
+    afterEvaluate {
+        if (subproject.hasProperty("android")) {
+            android {
+                if (namespace == null) {
+                    namespace = subproject.name
+                }
+            }
+        }
+    }
+}
