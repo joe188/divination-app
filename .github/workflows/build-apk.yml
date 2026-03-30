@@ -40,24 +40,26 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build APK
+      - name: Build APK with RN CLI
         env:
           JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          echo "🚀 开始构建..."
+          echo "🚀 使用 React Native CLI 构建..."
           
-          # 切换到 android 目录
+          # 确保 JS bundle 已生成
+          mkdir -p android/app/src/main/assets
+          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+          
+          # 使用 gradlew (通过 bash -c 确保正确执行)
           cd android
+          bash -c "./gradlew assembleRelease --no-daemon" 2>&1 | tail -40
           
-          # 使用系统 gradle (不用 gradlew)
-          gradle assembleRelease --no-daemon --warning-mode=none 2>&1 | tail -30
-          
-          # 检查结果
+          # 检查
           echo ""
           echo "🔍 检查 APK..."
-          find . -name "*.apk" -type f 2>/dev/null
+          ls -la app/build/outputs/apk/release/ 2>/dev/null || find . -name "*.apk" -type f 2>/dev/null
 
       - name: Rename APK to LingShu
         run: |
