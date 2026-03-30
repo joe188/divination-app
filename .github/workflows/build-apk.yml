@@ -61,22 +61,34 @@ jobs:
           
           # 直接用 java -jar 运行 Gradle Wrapper (绕过 gradlew 脚本)
           cd android
-          java -jar gradle/wrapper/gradle-wrapper.jar assembleRelease --no-daemon 2>&1 | tail -40
+          java -jar gradle/wrapper/gradle-wrapper.jar assembleRelease --no-daemon 2>&1 
           
-          # 检查
+          # 检查 - 确保在正确的目录
           echo ""
           echo "🔍 检查 APK..."
-          ls -la app/build/outputs/apk/release/ 2>/dev/null || find . -name "*.apk" -type f 2>/dev/null
+          echo "当前目录: $(pwd)"
+          ls -la app/build/outputs/apk/release/ 2>/dev/null && echo "✅ Release APK 找到!" || true
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null && echo "✅ Debug APK 找到!" || true
+          find . -name "*.apk" -type f 2>/dev/null
 
       - name: Rename APK to LingShu
         run: |
+          cd android
           # 优先使用 release，如果没有就用 debug
-          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
-            cp android/app/build/outputs/apk/release/app-release.apk LingShu.apk
-          elif [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
-            cp android/app/build/outputs/apk/debug/app-debug.apk LingShu.apk
+          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            cp app/build/outputs/apk/release/app-release.apk ../LingShu.apk
+            echo "✅ 使用 Release APK"
+          elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp app/build/outputs/apk/debug/app-debug.apk ../LingShu.apk
+            echo "✅ 使用 Debug APK"
+          else
+            echo "❌ 未找到 APK 文件!"
+            ls -la app/build/outputs/apk/ 2>/dev/null || echo "outputs/apk 目录不存在"
+            find . -name "*.apk" -type f 2>/dev/null || echo "未找到任何 APK"
+            exit 1
           fi
-          echo "✅ APK 已重命名为：LingShu.apk"
+          cd ..
+          ls -la LingShu.apk
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
