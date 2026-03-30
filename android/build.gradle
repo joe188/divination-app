@@ -8,7 +8,6 @@ buildscript {
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.9.22"
-        reactNativeVersion = "0.73.0"
     }
     repositories {
         google()
@@ -27,4 +26,6 @@ allprojects {
     }
 }
 
-apply from: file("../../node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
+// React Native autolinking - 从 android 目录往上两级
+def rnRoot = project.rootDir.getAbsoluteFile().getParentFile()
+apply from: new File(rnRoot, "node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
