@@ -3,11 +3,12 @@
 buildscript {
     ext {
         buildToolsVersion = "34.0.0"
-        minSdkVersion = 21
+        minSdkVersion = 24
         compileSdkVersion = 34
         targetSdkVersion = 34
         ndkVersion = "25.1.8937393"
         kotlinVersion = "1.9.22"
+        reactNativeVersion = "0.73.0"
     }
     repositories {
         google()
@@ -19,4 +20,11 @@ buildscript {
     }
 }
 
-apply plugin: "com.facebook.react.rootproject"
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply from: file("../../node_modules/@react-native/gradle-plugin/build/generated/autolinking/autolinkLibrariesWithApp.gradle")
