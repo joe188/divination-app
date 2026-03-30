@@ -1,4 +1,4 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file
 
 buildscript {
     ext {
@@ -16,11 +16,8 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-        classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
-
-apply plugin: "com.facebook.react.rootproject"
 
 allprojects {
     repositories {
@@ -28,3 +25,13 @@ allprojects {
         mavenCentral()
     }
 }
+
+apply plugin: "com.facebook.react.rootproject"
+
+// 禁用新架构
+project.ext.react = [
+    enableHermes: true,
+    enableProfiler: false,
+    enableSeparateBuildPerCPUArchitecture: false,
+    enableNewArchitecture: false  // 禁用新架构
+]
