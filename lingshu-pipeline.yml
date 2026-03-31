@@ -1,0 +1,65 @@
+# 灵枢智能排盘 - Gitee Go 流水线配置
+# 完整版本，包含镜像配置
+
+version: '1.1'
+name: 灵枢智能排盘 - APK 构建
+description: 使用 Node.js 18 和 Gradle 构建 React Native Android 应用
+
+# 关键：指定使用 Node.js 18 镜像
+runner:
+  image: node:18-bullseye
+  cpu: 2000m
+  memory: 4096Mi
+
+stages:
+  - name: 环境准备
+    jobs:
+      - name: check-env
+        script:
+          - echo "🔍 检查环境..."
+          - node -v
+          - npm -v
+          - java -version
+
+  - name: 安装依赖
+    jobs:
+      - name: install-deps
+        script:
+          - echo "📦 安装项目依赖..."
+          - npm install --legacy-peer-deps
+          - echo "✅ 依赖安装完成"
+
+  - name: 构建 APK
+    jobs:
+      - name: build-apk
+        script:
+          - echo "🏗️ 开始构建 APK..."
+          - cd android
+          - chmod +x gradlew
+          - ./gradlew assembleRelease
+          - echo "✅ APK 构建完成"
+          
+          - echo "📦 检查输出文件..."
+          - ls -lh app/build/outputs/apk/release/
+          
+          - echo "🎉 灵枢智能排盘构建成功!"
+
+  - name: 上传产物
+    jobs:
+      - name: upload-artifact
+        script:
+          - echo "📤 准备上传 APK..."
+          - mkdir -p artifacts
+          - cp android/app/build/outputs/apk/release/app-release.apk artifacts/lingshu-paipan.apk
+          - echo "✅ APK 已准备上传"
+
+artifacts:
+  - name: lingshu-paipan.apk
+    path: artifacts/lingshu-paipan.apk
+    expire: 7d
+
+triggers:
+  push:
+    branches:
+      - master
+      - main

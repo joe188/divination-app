@@ -1,0 +1,23 @@
+# 灵枢智能排盘 - 最简 Gitee Go 配置
+# 直接复制下面的内容到 Gitee Go YAML 编辑器
+
+version: '1.0'
+name: 灵枢智能排盘 APK
+image: node:18
+
+build:
+  stage: install
+  script:
+    - node -v
+    - npm install --legacy-peer-deps
+  
+  stage: android
+  script:
+    - cd android
+    - chmod +x gradlew
+    - ./gradlew assembleRelease
+    - ls -lh app/build/outputs/apk/release/
+  
+  artifacts:
+    - path: android/app/build/outputs/apk/release/app-release.apk
+      name: lingshu-paipan.apk
