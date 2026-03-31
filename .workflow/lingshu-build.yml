@@ -21,6 +21,7 @@ stages:
         jdkVersion: '8'
         gradleVersion: '4.4'
         commands:
+          - 'image: node:18'
           - bash gitee-go-build.sh
         artifacts:
           - name: BUILD_ARTIFACT
