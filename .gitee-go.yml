@@ -1,0 +1,25 @@
+# Gitee Go 配置文件
+# 灵枢智能排盘 - Android APK 构建
+
+version: '1.0'
+name: 灵枢智能排盘 - APK 构建
+description: 使用 Node.js 和 Gradle 构建 React Native Android 应用
+
+stages:
+  - name: 构建
+    jobs:
+      - name: build-apk
+        image: node:18
+        script:
+          - echo "🚀 开始构建灵枢智能排盘..."
+          - npm install --legacy-peer-deps
+          - cd android
+          - chmod +x gradlew
+          - ./gradlew assembleRelease
+        artifacts:
+          - path: android/app/build/outputs/apk/release/app-release.apk
+            name: lingshu-paipan.apk
+            expire: 7d
+        only:
+          - master
+          - main
