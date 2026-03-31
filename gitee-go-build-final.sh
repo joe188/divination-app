@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+# 强制进入工作目录，解决 getcwd 错误
+cd /root/workspace/joelinfo/divination-apk || { echo "❌ 无法进入工作目录"; exit 1; }
+echo "📁 工作目录：$(pwd)"
 
 echo "🚀 开始构建灵枢智能排盘..."
 
