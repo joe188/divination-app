@@ -19,7 +19,7 @@ const FIVE_ELEMENTS_TRAITS: Record<string, string[]> = {
  */
 const TEN_GODS_MEANINGS: Record<string, string> = {
   zhengguan: '正官 - 代表事业、名誉、责任感',
-  pian guan: '偏官 - 代表权力、野心、冒险精神',
+  'pian guan': '偏官 - 代表权力、野心、冒险精神',
   zhengyin: '正印 - 代表学业、母亲、贵人相助',
   pianyin: '偏印 - 代表特殊才能、独立思考',
   cai: '财星 - 代表财富、物质、现实',
