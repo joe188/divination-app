@@ -1,3 +1,6 @@
+# 灵枢智能排盘 - Gitee Actions 配置
+# 使用 Node.js 环境构建 React Native 项目
+
 name: 灵枢智能排盘 - APK 构建
 
 on:
@@ -7,29 +10,44 @@ on:
     branches: [ master, main ]
 
 jobs:
-  build-apk:
-    name: 构建 APK
+  build-android:
+    name: 构建 Android APK
     runs-on: ubuntu-latest
     container:
-      image: node:18
+      image: reactnativecommunity/react-native-android:latest
     
     steps:
-      - name:  checkout 代码
+      - name: 📦 Checkout 代码
         uses: actions/checkout@v3
       
-      - name: 安装依赖
+      - name: 🟢 设置 Node.js 环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: 📥 安装依赖
         run: |
           echo "🚀 开始构建灵枢智能排盘..."
-          npm install
+          npm install --legacy-peer-deps
       
-      - name: 构建 APK
+      - name: 🔧 配置 Android 环境
         run: |
           cd android
           chmod +x gradlew
+      
+      - name: 🏗️ 构建 APK
+        run: |
+          cd android
           ./gradlew assembleRelease
       
-      - name: 上传 APK
+      - name: 📤 上传 APK
         uses: actions/upload-artifact@v3
         with:
           name: lingshu-paipan-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+      
+      - name: ✅ 构建完成
+        run: |
+          echo "🎉 灵枢智能排盘 APK 构建完成!"
+          echo "APK 路径：android/app/build/outputs/apk/release/app-release.apk"
