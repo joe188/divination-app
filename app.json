@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "slug": "lingshu-paipan",
   "android": {
-    "package": "com.lingshu.paipan"
+    "package": "com.lingshu.paipan",
+    "versionCode": 1
   },
   "ios": {
-    "bundleIdentifier": "com.lingshu.paipan"
+    "bundleIdentifier": "com.lingshu.paipan",
+    "bundleVersion": "1.0.0"
   }
 }

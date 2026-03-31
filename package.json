@@ -1,7 +1,7 @@
 {
   "name": "lingshu-paipan",
   "version": "1.0.0",
-  "description": "灵枢智能排盘 APP - 让传统文化触手可及",
+  "description": "灵枢智能排盘 - 周易八字排盘应用（国潮风格）",
   "main": "index.js",
   "scripts": {
     "android": "react-native run-android",
@@ -17,12 +17,14 @@
     "chinese-culture",
     "react-native"
   ],
-  "author": "",
+  "author": "灵枢智能排盘团队",
   "license": "ISC",
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^3.0.2",
+    "lunar-typescript": "^1.8.6",
     "react": "18.2.0",
     "react-native": "0.73.0",
-    "lunar-typescript": "^1.8.6"
+    "react-native-share": "^12.2.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -36,5 +38,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/joelinfo/divination-app.git"
   }
 }

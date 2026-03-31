@@ -94,7 +94,7 @@ divination-app/
 
 #### Android 配置详情：
 - **应用 ID**: `com.divination.bazi`
-- **应用名称**: 灵虾排盘
+- **应用名称**: 灵枢智能排盘
 - **minSdkVersion**: 21
 - **targetSdkVersion**: 34
 - **compileSdkVersion**: 34
