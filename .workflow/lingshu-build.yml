@@ -15,19 +15,6 @@ stages:
     executor:
       - joelinfo
     steps:
-      - step: release@gitee
-        name: release_gitee
-        displayName: Gitee Release
-        releaseName: 灵枢智能排盘
-        description: bash bash gitee-go-build-final.sh
-        tagName: lingshu
-        upstreamArtifact: []
-        assertFiles: null
-        prerelease: true
-        allowUpdate: true
-        notify: []
-        strategy:
-          retry: '0'
       - step: publish@release_artifacts
         name: publish_release_artifacts
         displayName: lingshu-paipan.apk
