@@ -30,7 +30,7 @@ stages:
           retry: '0'
       - step: publish@release_artifacts
         name: publish_release_artifacts
-        displayName: 发布
+        displayName: lingshu-paipan.apk
         dependArtifact: output
         version: 1.0.0.0
         autoIncrement: true
