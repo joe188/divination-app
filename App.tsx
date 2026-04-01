@@ -6,20 +6,31 @@ import React, { useState } from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { BaZiInputScreen } from './src/screens/BaZiInputScreen';
+import { LiuYaoScreen } from './src/screens/LiuYaoScreen';
+import { QiMenScreen } from './src/screens/QiMenScreen';
 import { ResultScreen } from './src/screens/ResultScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { colors } from './src/styles/theme';
 import { addHistory, type HistoryItem } from './src/utils/storage';
+import { generateAIInterpretation } from './src/utils/ai-interpret';
 
 // 简单路由状态
-type Screen = 'home' | 'input' | 'result' | 'ai' | 'history';
+type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'history';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [baziData, setBaziData] = useState<any>(null);
 
   const handleStartDivination = () => {
-    setCurrentScreen('input');
+    setCurrentScreen('bazi'); // 默认进入八字排盘
+  };
+
+  const handleStartLiuYao = () => {
+    setCurrentScreen('liuyao');
+  };
+
+  const handleStartQiMen = () => {
+    setCurrentScreen('qimen');
   };
 
   const handleBack = () => {
@@ -28,14 +39,22 @@ export default function App() {
 
   const handleSubmitBazi = (data: any) => {
     setBaziData(data);
-    // 添加到历史记录
-    addHistory({
-      solarDate: data.solarDate || '',
-      lunarDate: data.lunarDate || '',
-      hour: data.hour || '',
-      fourPillars: data.fourPillars || {},
-      fiveElements: data.fiveElements || {},
-    });
+    // 添加历史记录
+    if (data.baziResult) {
+      const bz = data.baziResult;
+      addHistory({
+        solarDate: bz.solarDate,
+        lunarDate: bz.lunarDate,
+        hour: data.hourLabel,
+        fourPillars: {
+          year: bz.ganZhi.year.gan + bz.ganZhi.year.zhi,
+          month: bz.ganZhi.month.gan + bz.ganZhi.month.zhi,
+          day: bz.ganZhi.day.gan + bz.ganZhi.day.zhi,
+          hour: bz.ganZhi.hour.gan + bz.ganZhi.hour.zhi,
+        },
+        fiveElements: bz.fiveElements,
+      });
+    }
     setCurrentScreen('result');
   };
 
@@ -62,14 +81,17 @@ export default function App() {
   const handleAIInterpret = async () => {
     // 实现 AI 解卦功能
     if (baziData) {
-      const { generateAIInterpretation } = await import('./src/utils/ai-interpret');
-      const interpretation = generateAIInterpretation(
-        baziData.fourPillars || {},
-        baziData.fiveElements || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }
-      );
-      console.log('AI 解卦结果:', interpretation);
-      // TODO: 显示解卦结果（可以用 Alert 或新页面）
-      alert(interpretation);
+      try {
+        const interpretation = await generateAIInterpretation(
+          baziData.fourPillars || {},
+          baziData.fiveElements || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }
+        );
+        alert(interpretation);
+      } catch (error) {
+        alert('AI 解卦失败，请检查网络或稍后重试');
+      }
+    } else {
+      alert('暂无排盘数据');
     }
   };
 
@@ -79,14 +101,38 @@ export default function App() {
         return (
           <HomeScreen
             onStartDivination={handleStartDivination}
+            onStartLiuYao={handleStartLiuYao}
+            onStartQiMen={handleStartQiMen}
             onViewHistory={handleViewHistory}
           />
         );
-      case 'input':
+      case 'bazi':
         return (
           <BaZiInputScreen
             onBack={handleBack}
             onSubmit={handleSubmitBazi}
+          />
+        );
+      case 'liuyao':
+        return (
+          <LiuYaoScreen
+            onBack={handleBack}
+            onSubmit={(data) => {
+              console.log('六爻数据:', data);
+              alert('六爻排盘功能开发中，暂只做演示');
+              setCurrentScreen('home');
+            }}
+          />
+        );
+      case 'qimen':
+        return (
+          <QiMenScreen
+            onBack={handleBack}
+            onSubmit={(data) => {
+              console.log('奇门数据:', data);
+              alert('奇门遁甲排盘功能开发中，暂只做演示');
+              setCurrentScreen('home');
+            }}
           />
         );
       case 'result':
@@ -95,6 +141,7 @@ export default function App() {
             onBack={handleBack}
             onShare={handleShare}
             onAIInterpret={handleAIInterpret}
+            baziData={baziData}
           />
         );
       case 'history':
@@ -108,6 +155,8 @@ export default function App() {
         return (
           <HomeScreen
             onStartDivination={handleStartDivination}
+            onStartLiuYao={handleStartLiuYao}
+            onStartQiMen={handleStartQiMen}
             onViewHistory={handleViewHistory}
           />
         );

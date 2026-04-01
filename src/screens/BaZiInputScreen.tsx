@@ -4,12 +4,12 @@
  */
 
 import React, { useState } from 'react';
+import { calculateBaZi, type BaZiResult } from '../utils/bazi-calculator';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Modal,
   FlatList,
@@ -17,7 +17,8 @@ import {
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoInput } from '../components/GuochaoInput';
-import { colors, fonts, spacing, radii } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii } = theme;
 
 interface BaZiInputScreenProps {
   onSubmit?: (data: BaziData) => void;
@@ -28,28 +29,31 @@ interface BaziData {
   year: number;
   month: number;
   day: number;
-  hour: string;
+  hour: number;         // 24小时制
+  hourLabel: string;    // 时辰名称
   location: string;
+  calendarType: 'solar' | 'lunar';
   solarCorrection: boolean;
+  baziResult?: BaZiResult; // 计算结果
 }
 
-// Mock 数据
+// 模拟数据 - 后续可以从存储中恢复
 const years = Array.from({ length: 100 }, (_, i) => 1900 + i);
 const months = Array.from({ length: 12 }, (_, i) => i + 1);
 const days = Array.from({ length: 31 }, (_, i) => i + 1);
 const shichen = [
-  { label: '子时', value: '23:00-01:00', time: '23:00' },
-  { label: '丑时', value: '01:00-03:00', time: '01:00' },
-  { label: '寅时', value: '03:00-05:00', time: '03:00' },
-  { label: '卯时', value: '05:00-07:00', time: '05:00' },
-  { label: '辰时', value: '07:00-09:00', time: '07:00' },
-  { label: '巳时', value: '09:00-11:00', time: '09:00' },
-  { label: '午时', value: '11:00-13:00', time: '11:00' },
-  { label: '未时', value: '13:00-15:00', time: '13:00' },
-  { label: '申时', value: '15:00-17:00', time: '15:00' },
-  { label: '酉时', value: '17:00-19:00', time: '17:00' },
-  { label: '戌时', value: '19:00-21:00', time: '19:00' },
-  { label: '亥时', value: '21:00-23:00', time: '21:00' },
+  { label: '子时', value: '23:00-01:00', hour: 23 },
+  { label: '丑时', value: '01:00-03:00', hour: 1 },
+  { label: '寅时', value: '03:00-05:00', hour: 3 },
+  { label: '卯时', value: '05:00-07:00', hour: 5 },
+  { label: '辰时', value: '07:00-09:00', hour: 7 },
+  { label: '巳时', value: '09:00-11:00', hour: 9 },
+  { label: '午时', value: '11:00-13:00', hour: 11 },
+  { label: '未时', value: '13:00-15:00', hour: 13 },
+  { label: '申时', value: '15:00-17:00', hour: 15 },
+  { label: '酉时', value: '17:00-19:00', hour: 17 },
+  { label: '戌时', value: '19:00-21:00', hour: 19 },
+  { label: '亥时', value: '21:00-23:00', hour: 21 },
 ];
 
 const zodiacMap: Record<number, string> = {
@@ -76,14 +80,31 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
   const [showHourPicker, setShowHourPicker] = useState(false);
 
   const handleSubmit = () => {
-    onSubmit?.({
-      year: selectedYear,
-      month: selectedMonth,
-      day: selectedDay,
-      hour: selectedHour.value,
-      location,
-      solarCorrection,
-    });
+    try {
+      // 计算八字
+      const result = calculateBaZi(
+        selectedYear,
+        selectedMonth,
+        selectedDay,
+        selectedHour.hour,
+        calendarType === 'lunar'
+      );
+
+      onSubmit?.({
+        year: selectedYear,
+        month: selectedMonth,
+        day: selectedDay,
+        hour: selectedHour.hour,
+        hourLabel: selectedHour.label,
+        location,
+        calendarType,
+        solarCorrection,
+        baziResult: result,
+      });
+    } catch (error) {
+      console.error('八字计算失败:', error);
+      alert('计算失败，请检查输入日期是否有效');
+    }
   };
 
   const renderPicker = (
@@ -92,7 +113,8 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
     title: string,
     data: any[],
     selected: any,
-    onSelect: (item: any) => void
+    onSelect: (item: any) => void,
+    valueKey?: string  // 用于对象数组比较
   ) => (
     <Modal
       visible={visible}
@@ -111,27 +133,32 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
           <FlatList
             data={data}
             keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.pickerItem,
-                  selected === item.value && styles.pickerItemSelected,
-                ]}
-                onPress={() => {
-                  onSelect(item);
-                  onClose();
-                }}
-              >
-                <Text
+            renderItem={({ item }) => {
+              const isSelected = valueKey
+                ? selected === item[valueKey]
+                : selected === (item.value ?? item);
+              return (
+                <TouchableOpacity
                   style={[
-                    styles.pickerItemText,
-                    selected === item.value && styles.pickerItemTextSelected,
+                    styles.pickerItem,
+                    isSelected && styles.pickerItemSelected,
                   ]}
+                  onPress={() => {
+                    onSelect(item);
+                    onClose();
+                  }}
                 >
-                  {item.label || item}
-                </Text>
-              </TouchableOpacity>
-            )}
+                  <Text
+                    style={[
+                      styles.pickerItemText,
+                      isSelected && styles.pickerItemTextSelected,
+                    ]}
+                  >
+                    {item.label || item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }}
           />
         </View>
       </View>
@@ -139,10 +166,10 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 标题栏 */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: spacing.xl }]}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
@@ -286,7 +313,7 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
         showYearPicker,
         () => setShowYearPicker(false),
         '选择年份',
-        years.reverse(),
+        years,
         selectedYear,
         (item: number) => setSelectedYear(item)
       )}
@@ -297,7 +324,8 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
         '选择月份',
         months.map(m => ({ label: `${m}月`, value: m })),
         selectedMonth,
-        (item: any) => setSelectedMonth(item.value)
+        (item: any) => setSelectedMonth(item.value),
+        'value'
       )}
 
       {renderPicker(
@@ -306,7 +334,8 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
         '选择日期',
         days.map(d => ({ label: `${d}日`, value: d })),
         selectedDay,
-        (item: any) => setSelectedDay(item.value)
+        (item: any) => setSelectedDay(item.value),
+        'value'
       )}
 
       {renderPicker(
@@ -315,9 +344,10 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
         '选择时辰',
         shichen,
         selectedHour,
-        (item: any) => setSelectedHour(item)
+        (item: any) => setSelectedHour(item),
+        'hour'
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -11,7 +11,8 @@ import {
   ImageBackground,
   Text,
 } from 'react-native';
-import { colors, spacing, radii, shadows, fonts } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, spacing, radii, shadows, fonts } = theme;
 
 interface GuochaoCardProps {
   children: React.ReactNode;

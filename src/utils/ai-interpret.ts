@@ -1,229 +1,175 @@
 /**
- * AI 解卦工具模块
- * 基于八字排盘结果生成智能解读
+ * AI 解卦服务
+ * 支持两种模式：
+ * 1. 本地规则引擎（离线，简单解读）
+ * 2. 免费大模型 API（需网络，StepFun/DeepSeek）
  */
 
-/**
- * 五行属性对应的性格特征
- */
-const FIVE_ELEMENTS_TRAITS: Record<string, string[]> = {
-  wood: ['仁慈', '正直', '生长', '创造力', '灵活性'],
-  fire: ['热情', '活力', '礼貌', '冲动', '表现欲'],
-  earth: ['诚信', '稳重', '包容', '实际', '耐心'],
-  metal: ['义气', '果断', '坚毅', '原则', '效率'],
-  water: ['智慧', '灵活', '适应', '深思', '变通'],
-};
+// 本地规则引擎（简化版）
+export function generateLocalInterpretation(
+  fourPillars: { year: string; month: string; day: string; hour: string },
+  fiveElements: { wood: number; fire: number; earth: number; metal: number; water: number }
+): string {
+  const { year, month, day, hour } = fourPillars;
+  const elements = fiveElements;
 
-/**
- * 十神关系解读
- */
-const TEN_GODS_MEANINGS: Record<string, string> = {
-  zhengguan: '正官 - 代表事业、名誉、责任感',
-  'pian guan': '偏官 - 代表权力、野心、冒险精神',
-  zhengyin: '正印 - 代表学业、母亲、贵人相助',
-  pianyin: '偏印 - 代表特殊才能、独立思考',
-  cai: '财星 - 代表财富、物质、现实',
-  shi: '食神 - 代表才华、享受、表达能力',
-  shang: '伤官 - 代表创新、叛逆、艺术天赋',
-  bi: '比肩 - 代表兄弟、朋友、竞争',
-  jie: '劫财 - 代表破财、竞争、冲动',
-};
+  // 分析五行强弱
+  const maxElement = Object.entries(elements).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+  const minElement = Object.entries(elements).reduce((a, b) => a[1] < b[1] ? a : b)[0];
 
-/**
- * 根据五行分布生成解读
- */
-const generateFiveElementsAnalysis = (
-  fiveElements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
-  }
-): string => {
-  // 找出最强和最弱的五行
-  const elements = [
-    { name: '木', value: fiveElements.wood, trait: FIVE_ELEMENTS_TRAITS.wood },
-    { name: '火', value: fiveElements.fire, trait: FIVE_ELEMENTS_TRAITS.fire },
-    { name: '土', value: fiveElements.earth, trait: FIVE_ELEMENTS_TRAITS.earth },
-    { name: '金', value: fiveElements.metal, trait: FIVE_ELEMENTS_TRAITS.metal },
-    { name: '水', value: fiveElements.water, trait: FIVE_ELEMENTS_TRAITS.water },
-  ];
-
-  // 排序
-  const sorted = [...elements].sort((a, b) => b.value - a.value);
-  const strongest = sorted[0];
-  const weakest = sorted[4];
-
-  let analysis = `🔮 **五行分析**\n\n`;
-  analysis += `你的五行中，**${strongest.name}** 最旺，**${weakest.name}** 最弱。\n\n`;
-  analysis += `**${strongest.name}** 旺的特征：\n`;
-  analysis += strongest.trait.join('、') + '\n\n';
-  
-  if (weakest.value < 10) {
-    analysis += `**${weakest.name}** 较弱，建议：\n`;
-    analysis += `• 多接触与${weakest.name}相关的事物\n`;
-    analysis += `• 培养${weakest.trait[0]}的品质\n`;
-    analysis += `• 注意平衡发展\n\n`;
-  }
-
-  // 五行平衡建议
-  analysis += `**平衡建议**：\n`;
-  if (strongest.name === '木' && weakest.name === '金') {
-    analysis += `木旺金弱，性格仁慈但缺乏果断，建议培养决断力。`;
-  } else if (strongest.name === '火' && weakest.name === '水') {
-    analysis += `火旺水弱，热情但缺乏智慧沉淀，建议多思考再行动。`;
-  } else if (strongest.name === '土' && weakest.name === '木') {
-    analysis += `土旺木弱，稳重但缺乏创造力，建议多尝试新事物。`;
-  } else if (strongest.name === '金' && weakest.name === '火') {
-    analysis += `金旺火弱，果断但缺乏热情，建议多与人交流。`;
-  } else if (strongest.name === '水' && weakest.name === '土') {
-    analysis += `水旺土弱，灵活但缺乏稳重，建议脚踏实地。`;
-  } else {
-    analysis += `保持当前平衡，发挥优势，补足短板。`;
-  }
-
-  return analysis;
-};
-
-/**
- * 根据四柱生成运势解读
- */
-const generateFortuneAnalysis = (
-  fourPillars: {
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-  }
-): string => {
-  const dayStem = fourPillars.day.charAt(0); // 日干
-  const dayBranch = fourPillars.day.charAt(1); // 日支
-
-  // 十天干性格
-  const stemMeanings: Record<string, string> = {
-    '甲': '甲木之人，正直仁慈，有领导才能',
-    '乙': '乙木之人，温柔善良，善于协调',
-    '丙': '丙火之人，热情开朗，有表现欲',
-    '丁': '丁火之人，内敛热情，思维敏捷',
-    '戊': '戊土之人，厚重诚实，讲信用',
-    '己': '己土之人，细腻包容，善于分析',
-    '庚': '庚金之人，刚毅果断，重义气',
-    '辛': '辛金之人，精致优雅，追求完美',
-    '壬': '壬水之人，聪明灵活，适应力强',
-    '癸': '癸水之人，温柔内敛，善于思考',
+  // 天干地支五行
+  const ganElement: Record<string, string> = {
+    甲: '木', 乙: '木',
+    丙: '火', 丁: '火',
+    戊: '土', 己: '土',
+    庚: '金', 辛: '金',
+    壬: '水', 癸: '水',
   };
 
-  let analysis = `📅 **日主分析**\n\n`;
-  analysis += `你的日干为**${dayStem}**，${stemMeanings[dayStem] || ''}。\n\n`;
-  
-  return analysis;
-};
+  const zhiHidden: Record<string, string[]> = {
+    子: ['水'], 丑: ['土', '水', '金'], 寅: ['木', '火', '土'],
+    卯: ['木'], 辰: ['土', '水', '木'], 巳: ['火', '土', '金'],
+    午: ['火', '土'], 未: ['土', '火', '木'], 申: ['金', '水', '土'],
+    酉: ['金'], 戌: ['土', '金', '火'], 亥: ['水', '木', '土'],
+  };
 
-/**
- * 生成综合运势建议
- */
-const generateAdvice = (
-  fiveElements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
+  // 统计藏干
+  const hiddenCount: Record<string, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
+  [year, month, day, hour].forEach(gz => {
+    const zhi = gz[1];
+    const hidden = zhiHidden[zhi] || [];
+    hidden.forEach(h => hiddenCount[h]++);
+  });
+
+  // 构建解读
+  let interpretation = `【八字排盘解析】\n\n`;
+  interpretation += `四柱八字：${year} ${month} ${day} ${hour}\n`;
+  interpretation += `五行分布：木 ${elements.wood}%，火 ${elements.fire}%，土 ${elements.earth}%，金 ${elements.metal}%，水 ${elements.water}%\n\n`;
+
+  interpretation += `【五行强弱】\n`;
+  interpretation += `• 强：${getElementName(maxElement)} ${elements[maxElement as keyof typeof elements]}%\n`;
+  interpretation += `• 弱：${getElementName(minElement)} ${elements[minElement as keyof typeof elements]}%\n\n`;
+
+  interpretation += `【藏干分析】\n`;
+  Object.entries(hiddenCount).forEach(([el, count]) => {
+    if (count > 0) {
+      interpretation += `• ${el}藏干：${count}位\n`;
+    }
+  });
+
+  interpretation += `\n【简析】\n`;
+  if (elements.wood >= 30) interpretation += `木旺，性格仁慈，宜从事教育、文化、木制品行业。\n`;
+  if (elements.fire >= 30) interpretation += `火旺，热情积极，适合科技、能源、表演领域。\n`;
+  if (elements.earth >= 30) interpretation += `土旺，稳重诚信，适合房地产、农业、管理岗位。\n`;
+  if (elements.metal >= 30) interpretation += `金旺，刚毅果断，适合金融、法律、金属行业。\n`;
+  if (elements.water >= 30) interpretation += `水旺，智慧灵活，适合运输、旅游、水产领域。\n`;
+
+  if (elements[minElement as keyof typeof elements] < 15) {
+    interpretation += `\n⚠️ 注意：${getElementName(minElement)}偏弱，生活中建议多接触相应元素（颜色、方位、行业）以补益。`;
   }
-): string => {
-  const advice: string[] = [];
 
-  // 根据五行强弱给建议
-  if (fiveElements.wood > 30) {
-    advice.push('• 事业心强，但要注意劳逸结合');
-  }
-  if (fiveElements.fire > 30) {
-    advice.push('• 热情积极，但要避免冲动行事');
-  }
-  if (fiveElements.earth > 30) {
-    advice.push('• 稳重踏实，但也要适时变通');
-  }
-  if (fiveElements.metal > 30) {
-    advice.push('• 果断坚毅，但要注意人际关系');
-  }
-  if (fiveElements.water > 30) {
-    advice.push('• 聪明灵活，但要避免思虑过多');
-  }
-
-  // 默认建议
-  if (advice.length === 0) {
-    advice.push('• 五行相对平衡，保持当前状态');
-    advice.push('• 顺势而为，把握机遇');
-  }
-
-  return '💡 **运势建议**\n\n' + advice.join('\n');
-};
-
-/**
- * AI 智能解读主函数
- * @param fourPillars 四柱八字
- * @param fiveElements 五行分布
- * @returns 完整解读文本
- */
-export const generateAIInterpretation = (
-  fourPillars: {
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-  },
-  fiveElements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
-  }
-): string => {
-  let interpretation = '🦐 **灵枢智能排盘 - AI 解卦**\n';
-  interpretation += '━━━━━━━━━━━━━━\n\n';
-
-  // 1. 日主分析
-  interpretation += generateFortuneAnalysis(fourPillars);
-  interpretation += '\n';
-
-  // 2. 五行分析
-  interpretation += generateFiveElementsAnalysis(fiveElements);
-  interpretation += '\n';
-
-  // 3. 运势建议
-  interpretation += generateAdvice(fiveElements);
-  interpretation += '\n';
-
-  interpretation += '━━━━━━━━━━━━━━\n';
-  interpretation += '✨ 以上解读仅供参考，命运掌握在自己手中';
+  interpretation += `\n\n【提示】本解读为简化版，如需详细分析（含大运、流年、十神关系），请使用AI智能解卦。`;
 
   return interpretation;
-};
+}
+
+function getElementName(key: string): string {
+  const map: Record<string, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };
+  return map[key] || key;
+}
+
+// AI API 配置
+const AI_PROVIDERS = {
+  stepfun: {
+    name: 'StepFun',
+    apiKey: '', // 需用户配置
+    baseUrl: 'https://api.stepfun.com/v1/chat/completions',
+    model: 'step-1.5-flash',
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    apiKey: '',
+    baseUrl: 'https://api.deepseek.com/v1/chat/completions',
+    model: 'deepseek-chat',
+  },
+} as const;
+
+type Provider = keyof typeof AI_PROVIDERS;
 
 /**
- * 简版解读（用于快速预览）
+ * 调用大模型 API 进行解卦
+ * @param fourPillars 四柱
+ * @param fiveElements 五行
+ * @param provider AI 提供商（默认 stepfun）
+ * @param apiKey API 密钥（可选，未配置则走本地）
  */
-export const getQuickInterpretation = (
-  fiveElements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
-  }
-): string => {
-  const strongest = Object.entries(fiveElements)
-    .sort(([, a], [, b]) => b - a)[0][0];
-  
-  const meanings: Record<string, string> = {
-    wood: '木旺 - 仁慈正直，有创造力',
-    fire: '火旺 - 热情开朗，活力四射',
-    earth: '土旺 - 稳重诚信，包容万物',
-    metal: '金旺 - 果断坚毅，重情重义',
-    water: '水旺 - 聪明灵活，善于思考',
-  };
+export async function generateAIInterpretation(
+  fourPillars: { year: string; month: string; day: string; hour: string },
+  fiveElements: { wood: number; fire: number; earth: number; metal: number; water: number },
+  provider: Provider = 'stepfun',
+  apiKey?: string
+): Promise<string> {
+  const config = AI_PROVIDERS[provider];
 
-  return meanings[strongest] || '五行平衡，运势平稳';
-};
+  // 如果没有 API Key，回退到本地规则
+  if (!apiKey) {
+    return generateLocalInterpretation(fourPillars, fiveElements);
+  }
+
+  try {
+    const prompt = `请以专业命理师身份，分析以下八字排盘，给出详细解读（性格、事业、感情、健康、大运、流年、建议等）：
+
+四柱：${fourPillars.year} ${fourPillars.month} ${fourPillars.day} ${fourPillars.hour}
+五行分布：木${fiveElements.wood}%，火${fiveElements.fire}%，土${fiveElements.earth}%，金${fiveElements.metal}%，水${fiveElements.water}%
+
+要求：
+1. 用中文回答，语气亲切专业
+2. 分析十神关系、五行生克
+3. 指出用神和忌神
+4. 给出补救建议（颜色、方位、行业）
+5. 简述未来一年运势提示`;
+
+    const response = await fetch(config.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [
+          { role: 'system', content: '你是一位精通周易八字、奇门遁甲的传统文化专家，擅长用通俗易懂的语言解读命理。' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('AI API 错误:', error);
+      throw new Error(`AI 请求失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+
+    if (content) {
+      return `【${config.name} 智能解卦】\n\n${content}`;
+    } else {
+      throw new Error('API 返回格式异常');
+    }
+  } catch (error) {
+    console.error('AI 解卦失败:', error);
+    return `⚠️ AI 解卦失败，已切换至本地规则引擎：\n\n` + generateLocalInterpretation(fourPillars, fiveElements);
+  }
+}
+
+/**
+ * 设置 API Key（持久化）
+ */
+export function setAIProviderConfig(provider: Provider, apiKey: string): void {
+  // TODO: 保存到 AsyncStorage 或 SharedPreferences
+  console.log(`设置 ${provider} API Key: ${apiKey ? '已设置' : '已清除'}`);
+}

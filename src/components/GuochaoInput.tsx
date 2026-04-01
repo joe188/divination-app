@@ -14,7 +14,8 @@ import {
   Animated,
   KeyboardTypeOptions,
 } from 'react-native';
-import { colors, fonts, spacing, radii } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii } = theme;
 
 interface GuochaoInputProps {
   label?: string;

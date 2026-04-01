@@ -13,7 +13,8 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { colors, fonts, spacing, radii, shadows } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii, shadows } = theme;
 
 interface GuochaoButtonProps {
   title: string;

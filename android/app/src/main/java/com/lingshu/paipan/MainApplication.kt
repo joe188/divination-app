@@ -1,4 +1,4 @@
-package com.divination.bazi
+package com.lingshu.paipan
 
 import android.app.Application
 import com.facebook.react.ReactApplication
@@ -12,7 +12,7 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost =
       object : ReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
-            listOf(MainReactPackage())
+            listOf<ReactPackage>(MainReactPackage())
 
         override fun getJSMainModuleName(): String = "index"
 

@@ -9,15 +9,17 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
-import { colors, fonts, spacing } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii } = theme;
 
 interface HomeScreenProps {
   onStartDivination?: () => void;
+  onStartLiuYao?: () => void;
+  onStartQiMen?: () => void;
   onViewHistory?: () => void;
 }
 
@@ -44,10 +46,12 @@ const mockHistory = [
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onStartDivination,
+  onStartLiuYao,
+  onStartQiMen,
   onViewHistory,
 }) => {
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 顶部问候 */}
         <View style={styles.header}>
@@ -85,15 +89,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* 主要操作区 */}
         <View style={styles.actions}>
           <GuochaoButton
-            title="开始排盘"
+            title="🔮 八字排盘"
             variant="primary"
             size="large"
             onPress={onStartDivination}
             style={styles.mainButton}
           />
           
+          <View style={styles.secondaryButtons}>
+            <GuochaoButton
+              title="🪙 六爻占卜"
+              variant="outline"
+              size="small"
+              onPress={onStartLiuYao}
+              style={[styles.secondaryButton, styles.halfButton]}
+            />
+            <GuochaoButton
+              title="🗺️ 奇门遁甲"
+              variant="outline"
+              size="small"
+              onPress={onStartQiMen}
+              style={[styles.secondaryButton, styles.halfButton]}
+            />
+          </View>
+          
           <GuochaoButton
-            title="查看历史"
+            title="📚 查看历史"
             variant="outline"
             size="medium"
             onPress={onViewHistory}
@@ -118,7 +139,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* 底部 spacer */}
         <View style={styles.spacer} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -225,8 +246,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   
+  secondaryButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  
   secondaryButton: {
-    width: '100%',
+    flex: 1,
+  },
+  
+  halfButton: {
+    flex: 1,
   },
   
   historyItem: {

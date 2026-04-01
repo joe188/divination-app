@@ -9,60 +9,116 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
-import { colors, fonts, spacing, radii } from '../styles/theme';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii } = theme;
+
+// 导入 BaziData 类型定义（与 BaZiInputScreen 一致）
+// 为避免循环依赖，这里重新声明
+interface BaziData {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  hourLabel: string;
+  location: string;
+  calendarType: 'solar' | 'lunar';
+  solarCorrection: boolean;
+  baziResult?: {
+    solarDate: string;
+    lunarDate: string;
+    ganZhi: {
+      year: { gan: string; zhi: string };
+      month: { gan: string; zhi: string };
+      day: { gan: string; zhi: string };
+      hour: { gan: string; zhi: string };
+    };
+    fiveElements: {
+      wood: number;
+      fire: number;
+      earth: number;
+      metal: number;
+      water: number;
+    };
+    shishen: string[];
+    wuxingDistribution: {
+      wood: number;
+      fire: number;
+      earth: number;
+      metal: number;
+      water: number;
+    };
+  };
+}
 
 interface ResultScreenProps {
   onBack?: () => void;
   onShare?: () => void;
   onAIInterpret?: () => void;
+  baziData?: BaziData;
 }
-
-// Mock 排盘结果数据
-const mockBaziResult = {
-  date: '1990 年 08 月 15 日 子时',
-  year: { gan: '庚', zhi: '午', element: '金火' },
-  month: { gan: '甲', zhi: '申', element: '木金' },
-  day: { gan: '丙', zhi: '戌', element: '火土' },
-  hour: { gan: '戊', zhi: '子', element: '土水' },
-  wuxing: {
-    wood: 20,
-    fire: 25,
-    earth: 30,
-    metal: 15,
-    water: 10,
-  },
-  shishen: ['偏财', '七杀', '日主', '食神'],
-};
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({
   onBack,
   onShare,
   onAIInterpret,
+  baziData,
 }) => {
   const [activeTab, setActiveTab] = useState<'wuxing' | 'shishen'>('wuxing');
 
-  const getElementColor = (element: string) => {
-    const colors_map: Record<string, string> = {
-      木: colors.wood,
-      火: colors.fire,
-      土: colors.earth,
-      金: colors.gold,
-      水: colors.water,
+  // 获取天干对应五行颜色
+  const getGanElementColor = (gan: string) => {
+    const ganElement: Record<string, string> = {
+      甲: colors.wood, 乙: colors.wood,
+      丙: colors.fire, 丁: colors.fire,
+      戊: colors.earth, 己: colors.earth,
+      庚: colors.gold, 辛: colors.gold,
+      壬: colors.water, 癸: colors.water,
     };
-    return colors_map[element] || colors.inkBlack;
+    return ganElement[gan] || colors.inkBlack;
   };
 
+  // 使用传入的 baziData 或默认空数据
+  const data = baziData?.baziResult;
+  const hasData = !!data;
+
+  if (!hasData) {
+    return (
+      <View style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={[styles.header, { paddingTop: spacing.xl }]}>
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>排盘结果</Text>
+            <TouchableOpacity onPress={onShare} style={styles.shareButton}>
+              <Text style={styles.shareButtonText}>分享</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>暂无排盘数据</Text>
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // 构建日期显示
+  const dateDisplay = baziData.calendarType === 'lunar'
+    ? `${data.lunarDate} ${baziData.hourLabel}`
+    : `${data.solarDate} ${baziData.hourLabel}`;
+
+  const ganZhi = data.ganZhi;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 标题栏 */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: spacing.xl }]}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
@@ -74,12 +130,12 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
         {/* 日期信息 */}
         <View style={styles.dateInfo}>
-          <Text style={styles.dateText}>{mockBaziResult.date}</Text>
+          <Text style={styles.dateText}>{dateDisplay}</Text>
           <Text style={styles.ganzhiText}>
-            {mockBaziResult.year.gan}{mockBaziResult.year.zhi}年 
-            {mockBaziResult.month.gan}{mockBaziResult.month.zhi}月 
-            {mockBaziResult.day.gan}{mockBaziResult.day.zhi}日 
-            {mockBaziResult.hour.gan}{mockBaziResult.hour.zhi}时
+            {ganZhi.year.gan}{ganZhi.year.zhi}年 
+            {ganZhi.month.gan}{ganZhi.month.zhi}月 
+            {ganZhi.day.gan}{ganZhi.day.zhi}日 
+            {ganZhi.hour.gan}{ganZhi.hour.zhi}时
           </Text>
         </View>
 
@@ -89,49 +145,69 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             {/* 年柱 */}
             <View style={styles.zhuItem}>
               <Text style={styles.zhuLabel}>年柱</Text>
-              <Text style={[styles.zhuGan, { color: getElementColor(mockBaziResult.year.gan) }]}>
-                {mockBaziResult.year.gan}
+              <Text style={[styles.zhuGan, { color: getGanElementColor(ganZhi.year.gan) }]}>
+                {ganZhi.year.gan}
               </Text>
-              <Text style={[styles.zhuZhi, { color: getElementColor(mockBaziResult.year.zhi) }]}>
-                {mockBaziResult.year.zhi}
+              <Text style={[styles.zhuZhi, { color: getGanElementColor(ganZhi.year.zhi) }]}>
+                {ganZhi.year.zhi}
               </Text>
-              <Text style={styles.zhuElement}>{mockBaziResult.year.element}</Text>
+              <Text style={styles.zhuElement}>
+                {getGanElementColor(ganZhi.year.gan).replace('#', '') === colors.wood ? '木' :
+                 getGanElementColor(ganZhi.year.gan).replace('#', '') === colors.fire ? '火' :
+                 getGanElementColor(ganZhi.year.gan).replace('#', '') === colors.earth ? '土' :
+                 getGanElementColor(ganZhi.year.gan).replace('#', '') === colors.gold ? '金' : '水'}
+              </Text>
             </View>
             
             {/* 月柱 */}
             <View style={styles.zhuItem}>
               <Text style={styles.zhuLabel}>月柱</Text>
-              <Text style={[styles.zhuGan, { color: getElementColor(mockBaziResult.month.gan) }]}>
-                {mockBaziResult.month.gan}
+              <Text style={[styles.zhuGan, { color: getGanElementColor(ganZhi.month.gan) }]}>
+                {ganZhi.month.gan}
               </Text>
-              <Text style={[styles.zhuZhi, { color: getElementColor(mockBaziResult.month.zhi) }]}>
-                {mockBaziResult.month.zhi}
+              <Text style={[styles.zhuZhi, { color: getGanElementColor(ganZhi.month.zhi) }]}>
+                {ganZhi.month.zhi}
               </Text>
-              <Text style={styles.zhuElement}>{mockBaziResult.month.element}</Text>
+              <Text style={styles.zhuElement}>
+                {getGanElementColor(ganZhi.month.gan).replace('#', '') === colors.wood ? '木' :
+                 getGanElementColor(ganZhi.month.gan).replace('#', '') === colors.fire ? '火' :
+                 getGanElementColor(ganZhi.month.gan).replace('#', '') === colors.earth ? '土' :
+                 getGanElementColor(ganZhi.month.gan).replace('#', '') === colors.gold ? '金' : '水'}
+              </Text>
             </View>
             
             {/* 日柱 */}
             <View style={styles.zhuItem}>
               <Text style={styles.zhuLabel}>日柱</Text>
-              <Text style={[styles.zhuGan, { color: getElementColor(mockBaziResult.day.gan) }]}>
-                {mockBaziResult.day.gan}
+              <Text style={[styles.zhuGan, { color: getGanElementColor(ganZhi.day.gan) }]}>
+                {ganZhi.day.gan}
               </Text>
-              <Text style={[styles.zhuZhi, { color: getElementColor(mockBaziResult.day.zhi) }]}>
-                {mockBaziResult.day.zhi}
+              <Text style={[styles.zhuZhi, { color: getGanElementColor(ganZhi.day.zhi) }]}>
+                {ganZhi.day.zhi}
               </Text>
-              <Text style={styles.zhuElement}>{mockBaziResult.day.element}</Text>
+              <Text style={styles.zhuElement}>
+                {getGanElementColor(ganZhi.day.gan).replace('#', '') === colors.wood ? '木' :
+                 getGanElementColor(ganZhi.day.gan).replace('#', '') === colors.fire ? '火' :
+                 getGanElementColor(ganZhi.day.gan).replace('#', '') === colors.earth ? '土' :
+                 getGanElementColor(ganZhi.day.gan).replace('#', '') === colors.gold ? '金' : '水'}
+              </Text>
             </View>
             
             {/* 时柱 */}
             <View style={styles.zhuItem}>
               <Text style={styles.zhuLabel}>时柱</Text>
-              <Text style={[styles.zhuGan, { color: getElementColor(mockBaziResult.hour.gan) }]}>
-                {mockBaziResult.hour.gan}
+              <Text style={[styles.zhuGan, { color: getGanElementColor(ganZhi.hour.gan) }]}>
+                {ganZhi.hour.gan}
               </Text>
-              <Text style={[styles.zhuZhi, { color: getElementColor(mockBaziResult.hour.zhi) }]}>
-                {mockBaziResult.hour.zhi}
+              <Text style={[styles.zhuZhi, { color: getGanElementColor(ganZhi.hour.zhi) }]}>
+                {ganZhi.hour.zhi}
               </Text>
-              <Text style={styles.zhuElement}>{mockBaziResult.hour.element}</Text>
+              <Text style={styles.zhuElement}>
+                {getGanElementColor(ganZhi.hour.gan).replace('#', '') === colors.wood ? '木' :
+                 getGanElementColor(ganZhi.hour.gan).replace('#', '') === colors.fire ? '火' :
+                 getGanElementColor(ganZhi.hour.gan).replace('#', '') === colors.earth ? '土' :
+                 getGanElementColor(ganZhi.hour.gan).replace('#', '') === colors.gold ? '金' : '水'}
+              </Text>
             </View>
           </View>
         </GuochaoCard>
@@ -167,10 +243,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <View style={styles.wuxingLabel}>
                   <Text style={[styles.wuxingDot, { color: colors.wood }]}>●</Text>
                   <Text style={styles.wuxingName}>木</Text>
-                  <Text style={styles.wuxingValue}>{mockBaziResult.wuxing.wood}%</Text>
+                  <Text style={styles.wuxingValue}>{data.wuxingDistribution.wood}%</Text>
                 </View>
                 <View style={styles.wuxingTrack}>
-                  <View style={[styles.wuxingFill, { width: `${mockBaziResult.wuxing.wood}%`, backgroundColor: colors.wood }]} />
+                  <View style={[styles.wuxingFill, { width: `${data.wuxingDistribution.wood}%`, backgroundColor: colors.wood }]} />
                 </View>
               </View>
               
@@ -178,10 +254,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <View style={styles.wuxingLabel}>
                   <Text style={[styles.wuxingDot, { color: colors.fire }]}>●</Text>
                   <Text style={styles.wuxingName}>火</Text>
-                  <Text style={styles.wuxingValue}>{mockBaziResult.wuxing.fire}%</Text>
+                  <Text style={styles.wuxingValue}>{data.wuxingDistribution.fire}%</Text>
                 </View>
                 <View style={styles.wuxingTrack}>
-                  <View style={[styles.wuxingFill, { width: `${mockBaziResult.wuxing.fire}%`, backgroundColor: colors.fire }]} />
+                  <View style={[styles.wuxingFill, { width: `${data.wuxingDistribution.fire}%`, backgroundColor: colors.fire }]} />
                 </View>
               </View>
               
@@ -189,10 +265,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <View style={styles.wuxingLabel}>
                   <Text style={[styles.wuxingDot, { color: colors.earth }]}>●</Text>
                   <Text style={styles.wuxingName}>土</Text>
-                  <Text style={styles.wuxingValue}>{mockBaziResult.wuxing.earth}%</Text>
+                  <Text style={styles.wuxingValue}>{data.wuxingDistribution.earth}%</Text>
                 </View>
                 <View style={styles.wuxingTrack}>
-                  <View style={[styles.wuxingFill, { width: `${mockBaziResult.wuxing.earth}%`, backgroundColor: colors.earth }]} />
+                  <View style={[styles.wuxingFill, { width: `${data.wuxingDistribution.earth}%`, backgroundColor: colors.earth }]} />
                 </View>
               </View>
               
@@ -200,10 +276,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <View style={styles.wuxingLabel}>
                   <Text style={[styles.wuxingDot, { color: colors.gold }]}>●</Text>
                   <Text style={styles.wuxingName}>金</Text>
-                  <Text style={styles.wuxingValue}>{mockBaziResult.wuxing.metal}%</Text>
+                  <Text style={styles.wuxingValue}>{data.wuxingDistribution.metal}%</Text>
                 </View>
                 <View style={styles.wuxingTrack}>
-                  <View style={[styles.wuxingFill, { width: `${mockBaziResult.wuxing.metal}%`, backgroundColor: colors.gold }]} />
+                  <View style={[styles.wuxingFill, { width: `${data.wuxingDistribution.metal}%`, backgroundColor: colors.gold }]} />
                 </View>
               </View>
               
@@ -211,16 +287,16 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <View style={styles.wuxingLabel}>
                   <Text style={[styles.wuxingDot, { color: colors.water }]}>●</Text>
                   <Text style={styles.wuxingName}>水</Text>
-                  <Text style={styles.wuxingValue}>{mockBaziResult.wuxing.water}%</Text>
+                  <Text style={styles.wuxingValue}>{data.wuxingDistribution.water}%</Text>
                 </View>
                 <View style={styles.wuxingTrack}>
-                  <View style={[styles.wuxingFill, { width: `${mockBaziResult.wuxing.water}%`, backgroundColor: colors.water }]} />
+                  <View style={[styles.wuxingFill, { width: `${data.wuxingDistribution.water}%`, backgroundColor: colors.water }]} />
                 </View>
               </View>
             </View>
           ) : (
             <View style={styles.shishenContent}>
-              {mockBaziResult.shishen.map((item, index) => (
+              {data.shishen.map((item, index) => (
                 <View key={index} style={styles.shishenItem}>
                   <Text style={styles.shishenLabel}>{['年', '月', '日', '时'][index]}</Text>
                   <Text style={styles.shishenValue}>{item}</Text>
@@ -230,25 +306,19 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           )}
         </GuochaoCard>
 
-        {/* 五行分析 */}
+        {/* 五行分析（简化，后续可增强） */}
         <GuochaoCard title="五行分析" variant="elevated">
           <View style={styles.analysisContent}>
             <View style={styles.analysisItem}>
               <Text style={styles.analysisLabel}>五行强弱：</Text>
               <Text style={styles.analysisValue}>
-                土最旺 (30%)，水最弱 (10%)
-              </Text>
-            </View>
-            <View style={styles.analysisItem}>
-              <Text style={styles.analysisLabel}>五行缺失：</Text>
-              <Text style={styles.analysisValue}>
-                水较弱，需补水
+                木、火、土、金、水分布如上
               </Text>
             </View>
             <View style={styles.analysisItem}>
               <Text style={styles.analysisLabel}>建议：</Text>
               <Text style={styles.analysisValue}>
-                宜穿戴黑色、蓝色饰品，多接触水元素
+                根据五行缺失，可适当补益相应元素
               </Text>
             </View>
           </View>
@@ -278,7 +348,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
         <View style={styles.spacer} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -553,6 +623,19 @@ const styles = StyleSheet.create({
   
   spacer: {
     height: spacing['6xl'],
+  },
+
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: spacing['3xl'],
+  },
+
+  emptyText: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.xl,
+    color: colors.gray[500],
   },
 });
 

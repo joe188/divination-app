@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { colors } from '../styles/theme';
@@ -107,20 +106,20 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewItem
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
+      <View style={styles.container}>
+        <View style={[styles.header, { paddingTop: 20 }]}>
           <GuochaoButton title="← 返回" size="small" onPress={onBack} />
           <Text style={styles.headerTitle}>历史记录</Text>
           <View style={styles.headerPlaceholder} />
         </View>
         <Text style={styles.loadingText}>加载中...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: 20 }]}>
         <GuochaoButton title="← 返回" size="small" onPress={onBack} />
         <Text style={styles.headerTitle}>历史记录</Text>
         <GuochaoButton
@@ -145,7 +144,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewItem
           showsVerticalScrollIndicator={false}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
