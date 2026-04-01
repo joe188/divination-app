@@ -1,4 +1,21 @@
-# OSX
+# Gradle
+.gradle/
+build/
+*/build/
+
+# Android
+*.apk
+*.ap_
+*.aab
+*.aab
+
+# Native libraries
+*.so
+
+# Android Studio
+.idea
+*.iml
+local.properties
 .DS_Store
 
 # Node
@@ -6,47 +23,13 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
-# Android
-*.apk
-*.ap_
-*.aab
-*.dex
-*.class
-bin/
-gen/
-local.properties
-*.keystore
-*.jks
-.ccache/
-.externalNativeBuild/
+# macOS
+.AppleDouble
+.LSOverride
 
-# Build
-build/
-dist/
+# Release keystore (keep local only, but not in git)
+release.keystore
 
-# IDE
-.idea/
-*.iml
-.vscode/
-*.swp
-*.swo
-*~
-
-# Environment
-.env
-.env.local
-.env.production
-
-# Logs
-*.log
-logs/
-
-# Temporary
-*.tmp
-*.temp
-.tmp/
+# Temporary files
+tmp/
 temp/
-
-# Test
-coverage/
-*.test.js.snap

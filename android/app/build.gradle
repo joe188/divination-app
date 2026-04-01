@@ -51,7 +51,10 @@ react {
     // hermesFlags = ["-O", "-output-source-map"]
     
     /* Autolinking */
-    ()
+    // No additional configuration needed - autolinking handles dependencies
+
+    // Explicitly disable new architecture for compatibility
+    // (If you want to enable new architecture, update MainApplication.kt accordingly)
 }
 
 /**
@@ -92,6 +95,12 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('release.keystore')
+            storePassword 'Lingshu@123'
+            keyAlias 'lingshu-release-key'
+            keyPassword 'Lingshu@123'
+        }
     }
     buildTypes {
         debug {
@@ -100,9 +109,9 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardConfig("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
