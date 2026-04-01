@@ -10,16 +10,18 @@ import { LiuYaoScreen } from './src/screens/LiuYaoScreen';
 import { QiMenScreen } from './src/screens/QiMenScreen';
 import { ResultScreen } from './src/screens/ResultScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
+import { HistoryDetailScreen } from './src/screens/HistoryDetailScreen';
 import { colors } from './src/styles/theme';
-import { addHistory, type HistoryItem } from './src/utils/storage';
+import { addHistory, deleteHistory, type HistoryItem } from './src/utils/storage';
 import { generateAIInterpretation } from './src/utils/ai-interpret';
 
 // 简单路由状态
-type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'history';
+type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'history' | 'history-detail';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [baziData, setBaziData] = useState<any>(null);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
 
   const handleStartDivination = () => {
     setCurrentScreen('bazi'); // 默认进入八字排盘
@@ -43,6 +45,10 @@ export default function App() {
     if (data.baziResult) {
       const bz = data.baziResult;
       addHistory({
+        title: data.question || '八字排盘',
+        type: 'bazi',
+        date: bz.solarDate,
+        time: data.hourLabel,
         solarDate: bz.solarDate,
         lunarDate: bz.lunarDate,
         hour: data.hourLabel,
@@ -63,8 +69,8 @@ export default function App() {
   };
 
   const handleViewHistoryItem = (item: HistoryItem) => {
-    console.log('查看历史记录详情:', item);
-    // TODO: 显示详情或跳转到详情页
+    setSelectedHistoryItem(item);
+    setCurrentScreen('history-detail');
   };
 
   const handleShare = async () => {
@@ -119,7 +125,18 @@ export default function App() {
             onBack={handleBack}
             onSubmit={(data) => {
               console.log('六爻数据:', data);
-              Alert.alert('六爻排盘功能开发中，暂只做演示');
+              // 添加历史记录
+              addHistory({
+                title: data.question,
+                type: 'liuyao',
+                date: new Date().toLocaleDateString('zh-CN'),
+                time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+                guaName: data.result?.guaName,
+                bianguaName: data.result?.bianguaName,
+                yaoTexts: data.result?.yaoTexts,
+                summary: data.result?.summary,
+              });
+              Alert.alert('六爻排盘完成，已保存到历史');
               setCurrentScreen('home');
             }}
           />
@@ -130,7 +147,19 @@ export default function App() {
             onBack={handleBack}
             onSubmit={(data) => {
               console.log('奇门数据:', data);
-              Alert.alert('奇门遁甲排盘功能开发中，暂只做演示');
+              // 添加历史记录
+              addHistory({
+                title: '奇门遁甲',
+                type: 'qimen',
+                date: new Date().toLocaleDateString('zh-CN'),
+                time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+                jieQi: data.jieQi,
+                diZhi: data.diZhi,
+                fuShen: data.fuShen,
+                tianPan: data.tianPan,
+                diPan: data.diPan,
+              });
+              Alert.alert('奇门排盘完成，已保存到历史');
               setCurrentScreen('home');
             }}
           />
@@ -149,6 +178,18 @@ export default function App() {
           <HistoryScreen
             onBack={handleBack}
             onViewItem={handleViewHistoryItem}
+          />
+        );
+      case 'history-detail':
+        return (
+          <HistoryDetailScreen
+            onBack={() => setCurrentScreen('history')}
+            onDelete={async (id) => {
+              await deleteHistory(id);
+              Alert.alert('已删除');
+              setCurrentScreen('history');
+            }}
+            route={{ params: { item: selectedHistoryItem! } }}
           />
         );
       default:

@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
+import { QiMenPanView } from '../components/QiMenPanView';
 import { calculateQiMen, type QiMenResult } from '../utils/qimen-calculator';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
@@ -277,6 +278,13 @@ export const QiMenScreen: React.FC<QiMenScreenProps> = ({
             <Text style={styles.infoValue}>{qimenResult?.zhiShi || '待计算'}</Text>
           </View>
         </GuochaoCard>
+
+        {/* 盘面可视化 */}
+        {qimenResult && (
+          <GuochaoCard title="奇门盘面" variant="elevated" style={{ marginTop: spacing.md }}>
+            <QiMenPanView result={qimenResult} />
+          </GuochaoCard>
+        )}
 
         {/* 提交按钮 */}
         <GuochaoButton

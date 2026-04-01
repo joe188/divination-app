@@ -1,0 +1,299 @@
+/**
+ * HistoryDetailScreen - 历史记录详情页
+ * 展示单条排盘记录的完整信息
+ */
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { GuochaoCard } from '../components/GuochaoCard';
+import theme from '../styles/theme';
+const { colors, fonts, spacing, radii } = theme;
+
+interface HistoryDetailScreenProps {
+  route: {
+    params: {
+      item: {
+        id: string;
+        date: string;
+        time: string;
+        title: string;
+        type: 'bazi' | 'liuyao' | 'qimen';
+        data?: any;
+      };
+    };
+  };
+  onBack?: () => void;
+  onDelete?: (id: string) => void;
+}
+
+export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({
+  route,
+  onBack,
+  onDelete,
+}) => {
+  const { item } = route.params;
+
+  const handleDelete = () => {
+    Alert.alert('删除记录', '确定要删除这条记录吗？', [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: () => onDelete?.(item.id),
+      },
+    ]);
+  };
+
+  const renderBaziDetail = (data: any) => (
+    <GuochaoCard title="四柱八字" variant="pattern">
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>年柱</Text>
+        <Text style={styles.value}>{data?.year || '--'}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>月柱</Text>
+        <Text style={styles.value}>{data?.month || '--'}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>日柱</Text>
+        <Text style={styles.value}>{data?.day || '--'}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>时柱</Text>
+        <Text style={styles.value}>{data?.hour || '--'}</Text>
+      </View>
+      {data?.wuxing && (
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>五行</Text>
+          <Text style={styles.value}>{data.wuxing}</Text>
+        </View>
+      )}
+    </GuochaoCard>
+  );
+
+  const renderLiuYaoDetail = (data: any) => (
+    <GuochaoCard title="六爻卦象" variant="pattern">
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>本卦</Text>
+        <Text style={styles.value}>{data?.guaName || '--'}</Text>
+      </View>
+      {data?.bianguaName && (
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>变卦</Text>
+          <Text style={styles.value}>{data.bianguaName}</Text>
+        </View>
+      )}
+      {data?.yaoTexts && data.yaoTexts.length > 0 && (
+        <View style={styles.yaoList}>
+          {data.yaoTexts.map((text: string, idx: number) => (
+            <Text key={idx} style={styles.yaoText}>{text}</Text>
+          ))}
+        </View>
+      )}
+      {data?.summary && (
+        <View style={styles.summary}>
+          <Text style={styles.summaryTitle}>综合解读</Text>
+          <Text style={styles.summaryText}>{data.summary}</Text>
+        </View>
+      )}
+    </GuochaoCard>
+  );
+
+  const renderQiMenDetail = (data: any) => (
+    <GuochaoCard title="奇门遁甲" variant="pattern">
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>节气</Text>
+        <Text style={styles.value}>{data?.jieQi || '--'}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>时辰</Text>
+        <Text style={styles.value}>{data?.diZhi || '--'}</Text>
+      </View>
+      <View style={styles.detailRow}>
+        <Text style={styles.label}>值符</Text>
+        <Text style={styles.value}>{data?.fuShen || '--'}</Text>
+      </View>
+      {data?.tianPan && (
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>天盘</Text>
+          <Text style={styles.value}>{data.tianPan.join(' ')}</Text>
+        </View>
+      )}
+      {data?.diPan && (
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>地盘</Text>
+          <Text style={styles.value}>{data.diPan.join(' ')}</Text>
+        </View>
+      )}
+    </GuochaoCard>
+  );
+
+  const renderDetail = () => {
+    switch (item.type) {
+      case 'bazi':
+        return renderBaziDetail(item.data);
+      case 'liuyao':
+        return renderLiuYaoDetail(item.data);
+      case 'qimen':
+        return renderQiMenDetail(item.data);
+      default:
+        return <Text style={styles.unknown}>未知类型</Text>;
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* 头部 */}
+        <View style={[styles.header, { paddingTop: spacing.xl }]}>
+          <TouchableOpacity onPress={onBack} style={styles.backButton}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>记录详情</Text>
+          <View style={styles.headerPlaceholder} />
+        </View>
+
+        {/* 基本信息 */}
+        <GuochaoCard title="基本信息" variant="elevated">
+          <View style={styles.detailRow}>
+            <Text style={styles.label}>求测事项</Text>
+            <Text style={styles.value}>{item.title}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.label}>日期</Text>
+            <Text style={styles.value}>{item.date}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.label}>时间</Text>
+            <Text style={styles.value}>{item.time}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.label}>类型</Text>
+            <Text style={styles.value}>
+              {item.type === 'bazi' ? '八字排盘' : item.type === 'liuyao' ? '六爻占卜' : '奇门遁甲'}
+            </Text>
+          </View>
+        </GuochaoCard>
+
+        {/* 详细数据 */}
+        {renderDetail()}
+
+        <View style={styles.spacer} />
+      </ScrollView>
+
+      {/* 删除按钮 */}
+      <View style={styles.footer}>
+        <GuochaoButton
+          title="🗑️ 删除记录"
+          variant="outline"
+          size="large"
+          onPress={handleDelete}
+          style={styles.deleteButton}
+        />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.riceWhite,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  backButton: {
+    padding: spacing.sm,
+  },
+  backButtonText: {
+    fontSize: fonts.sizes.xl,
+    color: colors.inkBlack,
+  },
+  headerTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes['2xl'],
+    fontWeight: '600',
+    color: colors.inkBlack,
+  },
+  headerPlaceholder: {
+    width: 40,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[100],
+  },
+  label: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.gray[600],
+  },
+  value: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.md,
+    color: colors.inkBlack,
+    fontWeight: '600',
+  },
+  yaoList: {
+    marginTop: spacing.md,
+  },
+  yaoText: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.sm,
+    color: colors.gray[700],
+    lineHeight: 22,
+    marginBottom: spacing.xs,
+  },
+  summary: {
+    marginTop: spacing.lg,
+  },
+  summaryTitle: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.inkBlack,
+    fontWeight: '600',
+    marginBottom: spacing.sm,
+  },
+  summaryText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.sm,
+    color: colors.gray[600],
+    lineHeight: 22,
+  },
+  unknown: {
+    textAlign: 'center',
+    color: colors.gray[500],
+    marginTop: spacing.xl,
+  },
+  spacer: {
+    height: spacing['6xl'],
+  },
+  footer: {
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[200],
+    backgroundColor: colors.white,
+  },
+  deleteButton: {
+    borderColor: colors.error,
+  },
+});
+
+export default HistoryDetailScreen;

@@ -9,31 +9,32 @@ let historyCache: any[] = [];
 export interface HistoryItem {
   id: string;
   timestamp: number;
-  solarDate: string;
-  lunarDate: string;
-  hour: string;
-  gender?: string;
-  birthPlace?: string;
-  fourPillars: {
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-  };
-  fiveElements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
-  };
+  title: string;      // 求测事项
+  type: 'bazi' | 'liuyao' | 'qimen';
+  date: string;      // 显示用日期
+  time: string;      // 显示用时间
+  // 以下是可能的数据字段（依类型可选）
+  solarDate?: string;
+  lunarDate?: string;
+  hour?: string;
+  fourPillars?: any;
+  fiveElements?: any;
+  guaName?: string;
+  bianguaName?: string;
+  yaoTexts?: string[];
+  summary?: string;
+  jieQi?: string;
+  diZhi?: string;
+  fuShen?: string;
+  tianPan?: any;
+  diPan?: any;
 }
 
 export const getHistory = async (): Promise<HistoryItem[]> => {
   return historyCache.slice();
 };
 
-export const addHistory = async (item: Omit<HistoryItem, 'id' | 'timestamp'>): Promise<void> => {
+export const addHistory = async (item: any): Promise<void> => {
   const newItem: HistoryItem = {
     ...item,
     id: Date.now().toString(),
