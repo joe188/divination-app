@@ -3,7 +3,7 @@
  * 国潮风格设计，让传统文化触手可及
  */
 import React, { useState } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { StatusBar, StyleSheet, View, Alert } from 'react-native';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { BaZiInputScreen } from './src/screens/BaZiInputScreen';
 import { LiuYaoScreen } from './src/screens/LiuYaoScreen';
@@ -86,12 +86,12 @@ export default function App() {
           baziData.fourPillars || {},
           baziData.fiveElements || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }
         );
-        alert(interpretation);
+        Alert.alert(interpretation);
       } catch (error) {
-        alert('AI 解卦失败，请检查网络或稍后重试');
+        Alert.alert('AI 解卦失败，请检查网络或稍后重试');
       }
     } else {
-      alert('暂无排盘数据');
+      Alert.alert('暂无排盘数据');
     }
   };
 
@@ -119,7 +119,7 @@ export default function App() {
             onBack={handleBack}
             onSubmit={(data) => {
               console.log('六爻数据:', data);
-              alert('六爻排盘功能开发中，暂只做演示');
+              Alert.alert('六爻排盘功能开发中，暂只做演示');
               setCurrentScreen('home');
             }}
           />
@@ -130,7 +130,7 @@ export default function App() {
             onBack={handleBack}
             onSubmit={(data) => {
               console.log('奇门数据:', data);
-              alert('奇门遁甲排盘功能开发中，暂只做演示');
+              Alert.alert('奇门遁甲排盘功能开发中，暂只做演示');
               setCurrentScreen('home');
             }}
           />

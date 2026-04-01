@@ -16,6 +16,19 @@ import {
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoInput } from '../components/GuochaoInput';
+import { liuyaoInterpret } from '../utils/liuyao-interpret';
+
+// 六爻解卦结果接口（简化版，与 utils/liuyao-interpret.ts 中一致）
+interface LiuYaoResult {
+  guaId: number;
+  guaName: string;
+  bianguaId?: number;
+  bianguaName?: string;
+  dianhuaIndex?: number;
+  yaoTexts: string[];
+  duanyan: string;
+  summary: string;
+}
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
 
@@ -49,13 +62,29 @@ const methods = [
   { label: '手动输入', value: 'manual' },
 ];
 
-// 爻的类型
+// 爻的类型（0=少阳，1=少阴，2=老阳，3=老阴）
 const yaoTypes = [
   { label: '少阳', value: 0, description: '⚊' },
   { label: '少阴', value: 1, description: '⚋' },
   { label: '老阳', value: 2, description: '⚊ (动)' },
   { label: '老阴', value: 3, description: '⚋ (动)' },
 ];
+
+// 将内部 yao 值转为展示符号（6爻值转为三枚铜钱和）
+function yaoToDisplay(yao: number): { symbol: string; label: string } {
+  switch (yao) {
+    case 0: // 少阳
+      return { symbol: '⚊', label: '少阳' };
+    case 1: // 少阴
+      return { symbol: '⚋', label: '少阴' };
+    case 2: // 老阳（阴变阳）
+      return { symbol: '⚊', label: '老阳' };
+    case 3: // 老阴（阳变阴）
+      return { symbol: '⚋', label: '老阴' };
+    default:
+      return { symbol: '?', label: '未知' };
+  }
+}
 
 export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
   onSubmit,
@@ -107,30 +136,27 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
 
   const handleSubmit = () => {
     if (!question.trim()) {
-      alert('请输入所问之事');
+      Alert.alert('请输入所问之事');
       return;
     }
     if (method === 'manual' && yao.some(y => y < 0 || y > 3)) {
-      alert('请完善所有爻的设置');
+      Alert.alert('请完善所有爻的设置');
       return;
     }
 
-    // 计算卦象（简化）
-    const result = generateLiuYaoResult(yao, questionType);
+    // 调用完整解卦逻辑
+    const fullResult = liuyaoInterpret(yao);
 
     onSubmit?.({
       question,
       method,
       dateTime: new Date(),
       yao,
-      result,
+      result: fullResult,
     });
   };
 
-  const renderYaoSymbol = (type: number) => {
-    const symbols = ['⚊', '⚋', '⚊↱', '⚋↱'];
-    return symbols[type] || '?';
-  };
+  // 使用 yaoToDisplay 函数在前端直接渲染，不引入中间状态
 
   const renderPicker = (
     visible: boolean,
@@ -284,15 +310,18 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
         {yao.some(y => y !== 0) && (
           <GuochaoCard title="当前卦象" variant="pattern">
             <View style={styles.yaoPreview}>
-              {yao.map((y, idx) => (
-                <View key={idx} style={styles.yaoItem}>
-                  <Text style={styles.yaoLabel}>{['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'][idx]}</Text>
-                  <Text style={[styles.yaoSymbol, { fontSize: fonts.sizes['2xl'] }]}>
-                    {renderYaoSymbol(y)}
-                  </Text>
-                  <Text style={styles.yaoType}>{yaoTypes[y]?.label}</Text>
-                </View>
-              ))}
+              {yao.map((y, idx) => {
+                const disp = yaoToDisplay(y);
+                return (
+                  <View key={idx} style={styles.yaoItem}>
+                    <Text style={styles.yaoLabel}>{['初爻', '二爻', '三爻', '四爻', '五爻', '上爻'][idx]}</Text>
+                    <Text style={[styles.yaoSymbol, { fontSize: fonts.sizes['2xl'] }]}>
+                      {disp.symbol}
+                    </Text>
+                    <Text style={styles.yaoType}>{disp.label}</Text>
+                  </View>
+                );
+              })}
             </View>
           </GuochaoCard>
         )}
@@ -356,39 +385,7 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
   );
 };
 
-// 简化算卦结果生成
-function generateLiuYaoResult(yao: number[], questionType: string): any {
-  // 统计爻的动静
-  const staticCount = yao.filter(y => y <= 1).length;
-  const movingCount = yao.filter(y => y >= 2).length;
-
-  // 本卦（6爻全部）
-  const gua = yao.map(y => y % 2 === 0 ? '⚊' : '⚋').join('');
-  
-  // 变卦（动爻变化）
-  const changedYao = yao.map(y => (y === 2 ? 1 : y === 3 ? 0 : y));
-  const changedGua = changedYao.map(y => y % 2 === 0 ? '⚊' : '⚋').join('');
-
-  // 用神（根据问题类型定）
-  const useGodMap: Record<string, string> = {
-    career: '官鬼',
-    love: '妻财',
-    money: '妻财',
-    health: '子孙',
-    home: '父母',
-    other: '世爻',
-  };
-  const useGod = useGodMap[questionType] || '世爻';
-
-  return {
-    originalGua: gua,
-    changedGua: changedGua,
-    movingYaoCount: movingCount,
-    useGod,
-    summary: `本卦${gua}，变卦${changedGua}，动爻${movingCount}个，用神为${useGod}。`,
-    interpretation: '待完善具体解卦逻辑...',
-  };
-}
+// (已迁移至 utils/liuyao-interpret.ts)
 
 const styles = StyleSheet.create({
   container: {

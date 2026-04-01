@@ -103,7 +103,7 @@ export const BaZiInputScreen: React.FC<BaZiInputScreenProps> = ({
       });
     } catch (error) {
       console.error('八字计算失败:', error);
-      alert('计算失败，请检查输入日期是否有效');
+      Alert.alert('计算失败，请检查输入日期是否有效');
     }
   };
 

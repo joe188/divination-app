@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
+import { calculateQiMen, type QiMenResult } from '../utils/qimen-calculator';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
 
@@ -98,33 +99,32 @@ export const QiMenScreen: React.FC<QiMenScreenProps> = ({
   const [selectedShiChen, setSelectedShiChen] = useState(shiChenList[0]);
   const [useCurrentTime, setUseCurrentTime] = useState(true);
   const [dateTime, setDateTime] = useState(new Date());
+  const [qimenResult, setQimenResult] = useState<QiMenResult | null>(null);
 
   const handleSubmit = () => {
-    const now = new Date();
+    const now = useCurrentTime ? new Date() : dateTime;
+    const result = calculateQiMen(selectedJieQi.label, now);
+    setQimenResult(result);
+
+    // 计算六甲值符（简化）
     const liuJiaIndex = (now.getFullYear() * 12 + now.getMonth() + 1) % 10;
     const liuJiaValue = liuJia[liuJiaIndex] || '甲子';
 
-    const result: QiMenResult = {
-      luoPan: '阳遁某局',
-      description: `值符: ${liuJiaValue}，节气: ${selectedJieQi.label}，时辰: ${selectedShiChen.label}`,
-      analysis: '奇门排盘需复杂算法，此处为简化演示...',
-      suggestions: [
-        '利于: 未定',
-        '不利: 未定',
-        '吉方: 待计算',
-      ],
-    };
-
     onSubmit?.({
       dateTime: now,
-      panType: useCurrentTime ? 'current' : 'solar',
+      panType: useCurrentTime ? 'current' : panType,
       liuJia: liuJiaValue,
       diZhi: selectedShiChen.value,
       jieQi: selectedJieQi.label,
-      fuShen: liuJiaValue,
+      fuShen: result.zhiFu,
+      tianPan: result.baMen,
+      diPan: result.jiuXing,
       result,
     });
   };
+
+  // 状态：节气 Picker 可见性
+  const [showJieQiPicker, setShowJieQiPicker] = useState(false);
 
   const renderPicker = (
     visible: boolean,
@@ -226,9 +226,7 @@ export const QiMenScreen: React.FC<QiMenScreenProps> = ({
         <GuochaoCard title="当前节气" variant="pattern">
           <TouchableOpacity
             style={styles.selector}
-            onPress={() => {
-              /* show jieqi picker */
-            }}
+            onPress={() => setShowJieQiPicker(true)}
           >
             <Text style={styles.selectorText}>{selectedJieQi.label}</Text>
             <Text style={styles.selectorArrow}>▼</Text>
@@ -263,20 +261,20 @@ export const QiMenScreen: React.FC<QiMenScreenProps> = ({
         {/* 信息概览 */}
         <GuochaoCard title="排盘信息" variant="pattern">
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>当前干支:</Text>
-            <Text style={styles.infoValue}>{'待计算'}</Text>
+            <Text style={styles.infoLabel}>日干支:</Text>
+            <Text style={styles.infoValue}>{qimenResult?.dayGanZhi || '待计算'}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>时干支:</Text>
+            <Text style={styles.infoValue}>{qimenResult?.hourGanZhi || (selectedShiChen.label + ' 未计算')}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>值符:</Text>
-            <Text style={styles.infoValue}>{'甲子'}</Text>
+            <Text style={styles.infoValue}>{qimenResult?.zhiFu || '待计算'}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>节气:</Text>
-            <Text style={styles.infoValue}>{selectedJieQi.label}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>时辰:</Text>
-            <Text style={styles.infoValue}>{selectedShiChen.label}</Text>
+            <Text style={styles.infoLabel}>值使:</Text>
+            <Text style={styles.infoValue}>{qimenResult?.zhiShi || '待计算'}</Text>
           </View>
         </GuochaoCard>
 
@@ -291,6 +289,17 @@ export const QiMenScreen: React.FC<QiMenScreenProps> = ({
 
         <View style={styles.spacer} />
       </ScrollView>
+
+      {/* 节气选择器 */}
+      {renderPicker(
+        showJieQiPicker,
+        () => setShowJieQiPicker(false),
+        '选择节气',
+        jieQiList,
+        selectedJieQi,
+        setSelectedJieQi,
+        'value'
+      )}
     </View>
   );
 };

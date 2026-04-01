@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import {
   TouchableOpacity,
   Text,
+  View,
   StyleSheet,
   ViewStyle,
   TextStyle,
@@ -68,8 +69,11 @@ export const GuochaoButton: React.FC<GuochaoButtonProps> = ({
 
   const textStyles = [
     styles.text,
-    styles[`text${variant.charAt(0).toUpperCase() + variant.slice(1)}` as const],
-    styles[`text${size.charAt(0).toUpperCase() + size.slice(1)}` as const],
+    variant === 'primary' ? styles.textPrimary :
+    variant === 'secondary' ? styles.textSecondary :
+    variant === 'outline' ? styles.textOutline : styles.textGhost,
+    size === 'small' ? styles.textSmall :
+    size === 'large' ? styles.textLarge : styles.textMedium,
     textStyle,
   ];
 
@@ -88,10 +92,10 @@ export const GuochaoButton: React.FC<GuochaoButtonProps> = ({
             color={variant === 'primary' ? colors.white : colors.cinnabarRed} 
           />
         ) : (
-          <>
-            {icon && <span style={styles.icon}>{icon}</span>}
+          <View style={styles.content}>
+            {icon && <View style={styles.icon}>{icon}</View>}
             <Text style={textStyles}>{title}</Text>
-          </>
+          </View>
         )}
       </TouchableOpacity>
     </Animated.View>
@@ -107,6 +111,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
     ...shadows.md,
+    flexDirection: 'row',
   },
   
   // 主要样式 - 朱砂红填充
@@ -189,6 +194,12 @@ const styles = StyleSheet.create({
     fontSize: fonts.sizes.lg,
   },
   
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   icon: {
     marginRight: spacing.sm,
   },
