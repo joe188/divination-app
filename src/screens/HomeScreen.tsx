@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
-import { BaziIcon, LiuYaoIcon, QiMenIcon, HistoryIcon } from '../components/GuochaoIcons';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
 
@@ -90,40 +89,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* 主要操作区 */}
         <View style={styles.actions}>
           <GuochaoButton
-            title="八字排盘"
+            title="🔮 八字排盘"
             variant="primary"
             size="large"
             onPress={onStartDivination}
             style={styles.mainButton}
-            icon={<BaziIcon size={24} color={colors.riceWhite} />}
           />
           
           <View style={styles.secondaryButtons}>
             <GuochaoButton
-              title="六爻占卜"
+              title="🪙 六爻占卜"
               variant="outline"
               size="small"
               onPress={onStartLiuYao}
               style={[styles.secondaryButton, styles.halfButton]}
-              icon={<LiuYaoIcon size={20} color={colors.cinnabarRed} />}
             />
             <GuochaoButton
-              title="奇门遁甲"
+              title="🗺️ 奇门遁甲"
               variant="outline"
               size="small"
               onPress={onStartQiMen}
               style={[styles.secondaryButton, styles.halfButton]}
-              icon={<QiMenIcon size={20} color={colors.cinnabarRed} />}
             />
           </View>
           
           <GuochaoButton
-            title="查看历史"
+            title="📚 查看历史"
             variant="outline"
             size="medium"
             onPress={onViewHistory}
             style={styles.secondaryButton}
-            icon={<HistoryIcon size={20} color={colors.cinnabarRed} />}
           />
         </View>
 
