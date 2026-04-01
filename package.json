@@ -1,6 +1,6 @@
 {
   "name": "lingshu-paipan",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "灵枢智能排盘 - 周易八字排盘应用（国潮风格）",
   "main": "index.js",
   "scripts": {
