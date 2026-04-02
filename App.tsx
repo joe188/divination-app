@@ -15,6 +15,7 @@ import { colors } from './src/styles/theme';
 import { addHistory, deleteHistory } from './src/utils/storage';
 import type { HistoryItem } from './src/utils/storage';
 import { generateAIInterpretation } from './src/utils/ai-interpret';
+import { shareDivinationResult } from './src/utils/share';
 
 // 简单路由状态
 type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'history' | 'history-detail';
@@ -93,13 +94,7 @@ export default function App() {
 
   const handleShare = async () => {
     // 实现分享功能
-    if (baziData) {
-      const { shareDivinationResult } = await import('./src/utils/share');
-      await shareDivinationResult(
-        baziData.fourPillars || {},
-        baziData.fiveElements || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 }
-      );
-    }
+    await shareDivinationResult();
   };
 
   const handleAIInterpret = async () => {
@@ -184,6 +179,10 @@ export default function App() {
           />
         );
       case 'history-detail':
+        if (!selectedHistoryItem) {
+          setCurrentScreen('history');
+          return null;
+        }
         return (
           <HistoryDetailScreen
             onBack={() => setCurrentScreen('history')}
@@ -192,7 +191,7 @@ export default function App() {
               Alert.alert('已删除');
               setCurrentScreen('history');
             }}
-            route={{ params: { item: selectedHistoryItem! } }}
+            route={{ params: { item: selectedHistoryItem } }}
           />
         );
       default:

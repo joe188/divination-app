@@ -17,6 +17,7 @@ import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoInput } from '../components/GuochaoInput';
 import { liuyaoInterpret } from '../utils/liuyao-interpret';
+import { addHistory } from '../utils/storage';
 import { BOSHI_ZHENGZONG } from '../references/boshi_zhengzong_text';
 
 // 六爻解卦结果接口（简化版，与 utils/liuyao-interpret.ts 中一致）
@@ -101,9 +102,6 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
   const [editingYaoIndex, setEditingYaoIndex] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [resultData, setResultData] = useState<LiuYaoResult | null>(null);
-  const [showRef, setShowRef] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [resultData, setResultData] = useState<LiuYaoResult | null>(null);
 
   // 模拟摇卦
   const handleCoinDivination = () => {
@@ -153,15 +151,22 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
     // 调用完整解卦逻辑
     const fullResult = liuyaoInterpret(yao);
 
-    onSubmit?.({
-      question,
-      method,
-      dateTime: new Date(),
-      yao,
-      result: fullResult,
-    });
+    // 保存历史记录
+    if (onSubmit) {
+      onSubmit({
+        question,
+        method,
+        dateTime: new Date(),
+        yao,
+        result: fullResult,
+      });
+    }
 
-    // 显示结果弹窗（本地）
+    // 显示结果弹窗
+    setResultData(fullResult);
+    setShowResult(true);
+
+    // 显示结果弹窗
     setResultData(fullResult);
     setShowResult(true);
   };
@@ -404,6 +409,7 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
               <View style={{ width: 30 }} />
             </View>
             <ScrollView style={styles.resultContent}>
+              {/* 卦象展示 */}
               <GuochaoCard title="卦象" variant="pattern">
                 <View style={styles.guaHeader}>
                   <Text style={styles.guaName}>{resultData.guaName}</Text>
@@ -639,7 +645,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // 六爻结果页样式
+  // 六爻结果弹窗样式
   resultContainer: {
     flex: 1,
     backgroundColor: colors.riceWhite,
