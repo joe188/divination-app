@@ -2,15 +2,16 @@
  * HistoryDetailScreen - 历史记录详情页
  * 展示单条排盘记录的完整信息
  */
-import React from 'react';
-import {
+import React, { useState } from 'react';
+import { BOSHI_ZHENGZONG } from '../references/boshi_zhengzong_text';
+import { 
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
-} from 'react-native';
+, Modal } from 'react-native';
 import { GuochaoCard } from '../components/GuochaoCard';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
@@ -32,7 +33,9 @@ interface HistoryDetailScreenProps {
   onDelete?: (id: string) => void;
 }
 
-export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({
+export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ( {
+  const [showRef, setShowRef] = useState(false);
+{
   route,
   onBack,
   onDelete,
@@ -183,6 +186,44 @@ export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({
 
         {/* 详细数据 */}
         {renderDetail()}
+
+        {/* 典籍学习入口（六爻专用） */}
+        {(item.type === 'liuyao') && (
+          <View style={styles.refSection}>
+            <GuochaoCard variant="pattern">
+              <View style={styles.refContent}>
+                <Text style={styles.refIcon}>📚</Text>
+                <View style={styles.refText}>
+                  <Text style={styles.refTitle}>《卜筮正宗》学习材料</Text>
+                  <Text style={styles.refDesc}>阅读清代王洪绪经典六爻典籍</Text>
+                </View>
+              </View>
+              <GuochaoButton title="查看原文" onPress={() => setShowRef(true)} />
+            </GuochaoCard>
+          </View>
+        )}
+
+        {showRef && (
+          <Modal
+            visible={showRef}
+            animationType="slide"
+            presentationStyle="pageSheet"
+            onRequestClose={() => setShowRef(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={() => setShowRef(false)}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.modalTitle}>《卜筮正宗》原文</Text>
+                <View style={{ width: 30 }} />
+              </View>
+              <ScrollView style={styles.modalContent}>
+                <Text style={styles.modalText}>{BOSHI_ZHENGZONG}</Text>
+              </ScrollView>
+            </View>
+          </Modal>
+        )}
 
         <View style={styles.spacer} />
       </ScrollView>

@@ -55,7 +55,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 顶部问候 */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>你好，有缘人 👋</Text>
+          <Text style={styles.greeting}>你好，测试 👋</Text>
           <Text style={styles.date}>{mockTodayFortune.date}</Text>
           <Text style={styles.lunarDate}>{mockTodayFortune.lunar}</Text>
         </View>

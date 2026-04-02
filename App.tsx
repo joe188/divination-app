@@ -9,6 +9,7 @@ import { BaZiInputScreen } from './src/screens/BaZiInputScreen';
 import { LiuYaoScreen } from './src/screens/LiuYaoScreen';
 import { QiMenScreen } from './src/screens/QiMenScreen';
 import { ResultScreen } from './src/screens/ResultScreen';
+import { LiuYaoResultScreen } from './src/screens/LiuYaoResultScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { HistoryDetailScreen } from './src/screens/HistoryDetailScreen';
 import { colors } from './src/styles/theme';
@@ -16,11 +17,12 @@ import { addHistory, deleteHistory, type HistoryItem } from './src/utils/storage
 import { generateAIInterpretation } from './src/utils/ai-interpret';
 
 // 简单路由状态
-type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'history' | 'history-detail';
+type Screen = 'home' | 'bazi' | 'liuyao' | 'qimen' | 'result' | 'liuyaoResult' | 'history' | 'history-detail';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [baziData, setBaziData] = useState<any>(null);
+  const [liuyaoResult, setLiuYaoResult] = useState<any>(null);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<HistoryItem | null>(null);
 
   const handleStartDivination = () => {
@@ -64,6 +66,24 @@ export default function App() {
     setCurrentScreen('result');
   };
 
+  const handleSubmitLiuYao = (data: any) => {
+    // 保存历史
+    if (data.result) {
+      addHistory({
+        title: data.question,
+        type: 'liuyao',
+        date: new Date().toLocaleDateString('zh-CN'),
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        guaName: data.result.guaName,
+        bianguaName: data.result.bianguaName,
+        yaoTexts: data.result.yaoTexts,
+        summary: data.result.summary,
+      });
+    }
+    setLiuYaoResult(data.result || data);
+    setCurrentScreen('liuyaoResult');
+  };
+
   const handleViewHistory = () => {
     setCurrentScreen('history');
   };
@@ -101,7 +121,25 @@ export default function App() {
     }
   };
 
-  const renderScreen = () => {
+  const handleSubmitLiuYao = (data: any) => {
+    // 保存历史
+    if (data.result) {
+      addHistory({
+        title: data.question,
+        type: 'liuyao',
+        date: new Date().toLocaleDateString('zh-CN'),
+        time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        guaName: data.result.guaName,
+        bianguaName: data.result.bianguaName,
+        yaoTexts: data.result.yaoTexts,
+        summary: data.result.summary,
+      });
+    }
+    setLiuYaoResult(data.result || data);
+    setCurrentScreen('liuyaoResult');
+  };
+
+    const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
         return (
@@ -123,22 +161,7 @@ export default function App() {
         return (
           <LiuYaoScreen
             onBack={handleBack}
-            onSubmit={(data) => {
-              console.log('六爻数据:', data);
-              // 添加历史记录
-              addHistory({
-                title: data.question,
-                type: 'liuyao',
-                date: new Date().toLocaleDateString('zh-CN'),
-                time: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-                guaName: data.result?.guaName,
-                bianguaName: data.result?.bianguaName,
-                yaoTexts: data.result?.yaoTexts,
-                summary: data.result?.summary,
-              });
-              Alert.alert('六爻排盘完成，已保存到历史');
-              setCurrentScreen('home');
-            }}
+            onSubmit={handleSubmitLiuYao}
           />
         );
       case 'qimen':
@@ -171,6 +194,13 @@ export default function App() {
             onShare={handleShare}
             onAIInterpret={handleAIInterpret}
             baziData={baziData}
+          />
+        );
+      case 'liuyaoResult':
+        return (
+          <LiuYaoResultScreen
+            data={liuyaoResult}
+            onBack={handleBack}
           />
         );
       case 'history':
