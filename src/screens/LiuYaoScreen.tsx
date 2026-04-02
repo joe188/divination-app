@@ -17,6 +17,7 @@ import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoInput } from '../components/GuochaoInput';
 import { liuyaoInterpret } from '../utils/liuyao-interpret';
+import { BOSHI_ZHENGZONG } from '../references/boshi_zhengzong_text';
 
 // 六爻解卦结果接口（简化版，与 utils/liuyao-interpret.ts 中一致）
 interface LiuYaoResult {
@@ -98,6 +99,11 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
   const [showMethod, setShowMethod] = useState(false);
   const [showYaoEditor, setShowYaoEditor] = useState(false);
   const [editingYaoIndex, setEditingYaoIndex] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [resultData, setResultData] = useState<LiuYaoResult | null>(null);
+  const [showRef, setShowRef] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [resultData, setResultData] = useState<LiuYaoResult | null>(null);
 
   // 模拟摇卦
   const handleCoinDivination = () => {
@@ -154,6 +160,10 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
       yao,
       result: fullResult,
     });
+
+    // 显示结果弹窗（本地）
+    setResultData(fullResult);
+    setShowResult(true);
   };
 
   // 使用 yaoToDisplay 函数在前端直接渲染，不引入中间状态
@@ -381,6 +391,83 @@ export const LiuYaoScreen: React.FC<LiuYaoScreenProps> = ({
           </Modal>
         )}
       </ScrollView>
+
+      {/* 六爻结果弹窗 */}
+      {showResult && resultData && (
+        <Modal visible={showResult} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowResult(false)}>
+          <View style={styles.resultContainer}>
+            <View style={styles.resultHeader}>
+              <TouchableOpacity onPress={() => setShowResult(false)}>
+                <Text style={styles.resultClose}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.resultTitle}>六爻结果</Text>
+              <View style={{ width: 30 }} />
+            </View>
+            <ScrollView style={styles.resultContent}>
+              <GuochaoCard title="卦象" variant="pattern">
+                <View style={styles.guaHeader}>
+                  <Text style={styles.guaName}>{resultData.guaName}</Text>
+                  {resultData.bianguaName && (
+                    <Text style={styles.bgName}>变卦：{resultData.bianguaName}</Text>
+                  )}
+                </View>
+                {resultData.dianhuaIndex !== undefined && (
+                  <Text style={styles.dianhuaText}>
+                    动爻：第{resultData.dianhuaIndex + 1}爻
+                  </Text>
+                )}
+                <View style={styles.yaoList}>
+                  {resultData.yaoTexts.map((txt: string, idx: number) => (
+                    <Text key={idx} style={styles.yaoText}>{txt}</Text>
+                  ))}
+                </View>
+                <View style={styles.duanyanBox}>
+                  <Text style={styles.duanyanTitle}>卦辞：</Text>
+                  <Text style={styles.duanyanText}>{resultData.duanyan}</Text>
+                </View>
+                {resultData.summary && (
+                  <View style={styles.summaryBox}>
+                    <Text style={styles.summaryTitle}>综合解读</Text>
+                    <Text style={styles.summaryText}>{resultData.summary}</Text>
+                  </View>
+                )}
+              </GuochaoCard>
+
+              {/* 典籍学习入口 */}
+              <View style={styles.refSection}>
+                <GuochaoCard variant="pattern">
+                  <View style={styles.refContent}>
+                    <Text style={styles.refIcon}>📚</Text>
+                    <View style={styles.refText}>
+                      <Text style={styles.refTitle}>《卜筮正宗》学习材料</Text>
+                      <Text style={styles.refDesc}>阅读清代王洪绪经典六爻典籍</Text>
+                    </View>
+                  </View>
+                  <GuochaoButton title="查看原文" onPress={() => setShowRef(true)} />
+                </GuochaoCard>
+              </View>
+
+              {/* 典籍内容弹窗 */}
+              {showRef && (
+                <Modal visible={showRef} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowRef(false)}>
+                  <View style={styles.modalContainer}>
+                    <View style={styles.modalHeader}>
+                      <TouchableOpacity onPress={() => setShowRef(false)}>
+                        <Text style={styles.modalClose}>✕</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.modalTitle}>《卜筮正宗》原文</Text>
+                      <View style={{ width: 30 }} />
+                    </View>
+                    <ScrollView style={styles.modalContent}>
+                      <Text style={styles.modalText}>{BOSHI_ZHENGZONG}</Text>
+                    </ScrollView>
+                  </View>
+                </Modal>
+              )}
+            </ScrollView>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -550,6 +637,162 @@ const styles = StyleSheet.create({
   pickerItemTextSelected: {
     color: colors.cinnabarRed,
     fontWeight: '600',
+  },
+
+  // 六爻结果页样式
+  resultContainer: {
+    flex: 1,
+    backgroundColor: colors.riceWhite,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    paddingTop: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[200],
+  },
+  resultClose: {
+    fontSize: fonts.sizes.xl,
+    color: colors.gray[600],
+    width: 30,
+    textAlign: 'center',
+  },
+  resultTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.xl,
+    color: colors.inkBlack,
+  },
+  resultContent: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  guaHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  guaName: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes['2xl'],
+    color: colors.cinnabarRed,
+    marginRight: spacing.md,
+  },
+  bgName: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.gray[600],
+  },
+  dianhuaText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.sm,
+    color: colors.gold,
+    marginBottom: spacing.sm,
+  },
+  yaoList: {
+    marginBottom: spacing.md,
+  },
+  yaoText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    lineHeight: 24,
+    color: colors.inkBlack,
+    marginBottom: spacing.xs,
+  },
+  duanyanBox: {
+    backgroundColor: colors.riceWhite,
+    padding: spacing.md,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
+  },
+  duanyanTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.lg,
+    color: colors.cinnabarRed,
+    marginBottom: spacing.xs,
+  },
+  duanyanText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    lineHeight: 22,
+    color: colors.inkBlack,
+  },
+  summaryBox: {
+    backgroundColor: colors.riceWhite,
+    padding: spacing.md,
+    borderRadius: radii.md,
+  },
+  summaryTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.lg,
+    color: colors.cinnabarRed,
+    marginBottom: spacing.xs,
+  },
+  summaryText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    lineHeight: 22,
+    color: colors.inkBlack,
+  },
+  refSection: {
+    marginBottom: spacing.lg,
+  },
+  refContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  refIcon: {
+    fontSize: 32,
+    marginRight: spacing.md,
+  },
+  refText: {
+    flex: 1,
+  },
+  refTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.lg,
+    color: colors.inkBlack,
+    marginBottom: spacing.xs,
+  },
+  refDesc: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.sm,
+    color: colors.gray[600],
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.riceWhite,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[200],
+  },
+  modalClose: {
+    fontSize: fonts.sizes.xl,
+    color: colors.gray[600],
+    width: 30,
+    textAlign: 'center',
+  },
+  modalTitle: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.xl,
+    color: colors.inkBlack,
+  },
+  modalContent: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  modalText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    lineHeight: 24,
+    color: colors.inkBlack,
   },
 });
 
