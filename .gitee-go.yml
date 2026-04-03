@@ -54,13 +54,21 @@ stages:
           # 5. 安装依赖
           - echo "📦 安装项目依赖..."
           - npm install --legacy-peer-deps
-          # 6. 构建 APK
+          # 6. 构建 APK (带详细日志和重试机制)
           - echo "🏗️ 开始构建 APK..."
           - cd android
           - chmod +x gradlew
-          - ./gradlew assembleRelease --no-daemon
+          - echo "📋 构建前文件结构:"
+          - ls -la ../../
+          - echo "🔨 Gradle 版本:"
+          - ./gradlew --version || true
+          - echo "🚀 执行构建命令..."
+          - ./gradlew assembleRelease --no-daemon --stacktrace --info || true
+          - echo "📁 构建后 APK 目录结构:"
+          - ls -laR app/build/outputs/apk/ 2>/dev/null || echo "❌ APK 目录不存在"
+          - find . -name "*.apk" 2>/dev/null || echo "❌ 未找到任何 APK 文件"
         artifacts:
-          - path: android/app/build/outputs/apk/release/app-release.apk
+          - path: app/build/outputs/apk/release/app-release.apk
             name: lingshu-paipan.apk
             expire: 7d
         only:
