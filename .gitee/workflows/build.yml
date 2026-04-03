@@ -1,0 +1,69 @@
+name: 灵枢智能排盘 - Android APK 构建
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-android:
+    name: 构建 Android APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📦 检出代码
+        uses: actions/checkout@v3
+      
+      - name: 🟢 设置 Node.js 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: 📥 安装依赖
+        run: |
+          npm install --legacy-peer-deps
+      
+      - name: 🔧 配置 Gradle 镜像
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/init.gradle << 'EOF'
+allprojects {
+  repositories {
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    mavenCentral()
+  }
+}
+EOF
+      
+      - name: ☕ 配置 Java 环境
+        run: |
+          if [ -d "/usr/lib/jvm/java-11-openjdk" ]; then
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+          elif [ -d "/usr/lib/jvm/java-17-openjdk" ]; then
+            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+          fi
+          export PATH=$JAVA_HOME/bin:$PATH
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          java -version
+      
+      - name: 🏗️ 构建 Release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace --info
+      
+      - name: 📤 上传 APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lingshu-paipan-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
+      
+      - name: ✅ 构建完成
+        run: |
+          echo "🎉 APK 构建成功！"
+          ls -lh android/app/build/outputs/apk/release/
