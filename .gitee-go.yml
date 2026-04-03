@@ -9,11 +9,9 @@ stages:
         image: node:18
         script:
           - echo "🚀 开始构建灵枢智能排盘..."
-          # 1. 进入工作目录
           - cd /root/workspace/joelinfo/divination-apk
-          # 2. 配置 Java 环境
+          - echo "☕ 配置 Java 环境..."
           - |
-            echo "☕ 配置 Java 环境..."
             if [ -d "/usr/lib/jvm/java-11-openjdk" ]; then
               export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
               export PATH=$JAVA_HOME/bin:$PATH
@@ -23,11 +21,10 @@ stages:
               export PATH=$JAVA_HOME/bin:$PATH
               echo "✅ Java 17 已配置"
             else
-              echo "⚠️ 未找到 Java 11/17，尝试使用系统默认 Java"
+              echo "⚠️ 使用系统默认 Java"
             fi
-          # 3. 配置 Gradle 镜像
+          - echo "⚙️ 配置 Gradle 镜像..."
           - |
-            echo "⚙️ 配置 Gradle 镜像..."
             mkdir -p ~/.gradle
             cat > ~/.gradle/init.gradle << 'GRADLE_EOF'
 allprojects {
@@ -39,11 +36,8 @@ allprojects {
   }
 }
 GRADLE_EOF
-            echo "✅ Gradle 镜像配置完成"
-          # 4. 安装依赖
           - echo "📦 安装项目依赖..."
           - npm install --legacy-peer-deps
-          # 5. 构建 APK
           - echo "🏗️ 开始构建 APK..."
           - cd android
           - chmod +x gradlew
