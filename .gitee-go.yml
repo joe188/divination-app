@@ -1,6 +1,3 @@
-# Gitee Go 配置文件
-# 灵枢智能排盘 - Android APK 构建
-
 version: '1.0'
 name: 灵枢智能排盘 - APK 构建
 description: 使用 Node.js 和 Gradle 构建 React Native Android 应用
@@ -12,17 +9,9 @@ stages:
         image: node:18
         script:
           - echo "🚀 开始构建灵枢智能排盘..."
-          # 1. 安装 Node.js 18
-          - |
-            if ! command -v node &> /dev/null || [ "$(node -v | cut -d'v' -f2 | cut -d'.' -f1)" != "18" ]; then
-              echo "📦 安装 Node.js 18..."
-              NODE_URL="https://nodejs.org/dist/v18.20.2/node-v18.20.2-linux-x64.tar.gz"
-              curl -fsSL "$NODE_URL" | tar -xz -C /usr/local --strip-components=1
-              echo "✅ Node.js 18 安装完成"
-            fi
-          # 2. 进入工作目录
+          # 1. 进入工作目录
           - cd /root/workspace/joelinfo/divination-apk
-          # 3. 配置 Java 环境
+          # 2. 配置 Java 环境
           - |
             echo "☕ 配置 Java 环境..."
             if [ -d "/usr/lib/jvm/java-11-openjdk" ]; then
@@ -36,41 +25,30 @@ stages:
             else
               echo "⚠️ 未找到 Java 11/17，尝试使用系统默认 Java"
             fi
-          # 4. 配置 Gradle 镜像
+          # 3. 配置 Gradle 镜像
           - |
             echo "⚙️ 配置 Gradle 镜像..."
             mkdir -p ~/.gradle
             cat > ~/.gradle/init.gradle << 'GRADLE_EOF'
-            allprojects {
-              repositories {
-                maven { url 'https://maven.aliyun.com/repository/google' }
-                maven { url 'https://maven.aliyun.com/repository/public' }
-                maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
-                mavenCentral()
-              }
-            }
-            GRADLE_EOF
+allprojects {
+  repositories {
+    maven { url 'https://maven.aliyun.com/repository/google' }
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+    mavenCentral()
+  }
+}
+GRADLE_EOF
             echo "✅ Gradle 镜像配置完成"
-          # 5. 安装依赖
+          # 4. 安装依赖
           - echo "📦 安装项目依赖..."
           - npm install --legacy-peer-deps
-          # 6. 构建 APK (带详细日志和重试机制)
+          # 5. 构建 APK
           - echo "🏗️ 开始构建 APK..."
           - cd android
           - chmod +x gradlew
-          - echo "📋 构建前文件结构:"
-          - ls -la ../../
-          - echo "🔨 Gradle 版本:"
-          - ./gradlew --version || true
-          - echo "🚀 执行构建命令..."
-          - ./gradlew assembleRelease --no-daemon --stacktrace --info || true
-          - echo "📁 构建后 APK 目录结构:"
-          - ls -laR app/build/outputs/apk/ 2>/dev/null || echo "❌ APK 目录不存在"
-          - find . -name "*.apk" 2>/dev/null || echo "❌ 未找到任何 APK 文件"
+          - ./gradlew assembleRelease --no-daemon --stacktrace --info
         artifacts:
           - path: app/build/outputs/apk/release/app-release.apk
             name: lingshu-paipan.apk
             expire: 7d
-        only:
-          - master
-          - main
