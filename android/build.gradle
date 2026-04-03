@@ -15,7 +15,7 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:8.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-        classpath("com.facebook.react:react-native-gradle-plugin")
+        // React Native Gradle Plugin is loaded automatically by settings.gradle
     }
 }
 
@@ -23,17 +23,5 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-    }
-}
-
-subprojects { subproject ->
-    afterEvaluate {
-        if (subproject.hasProperty("android")) {
-            android {
-                if (namespace == null) {
-                    namespace = subproject.name
-                }
-            }
-        }
     }
 }
