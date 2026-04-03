@@ -6,6 +6,7 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 ext {
     buildToolsVersion = "34.0.0"
     minSdkVersion = 24
@@ -14,7 +15,10 @@ ext {
     ndkVersion = "25.1.8937393"
     kotlinVersion = "1.9.22"
 }
+
 rootProject.name = 'DivinationApp'
+
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 applyNativeModulesSettingsGradle(settings)
+
 include ':app'
