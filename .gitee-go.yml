@@ -1,6 +1,6 @@
 version: '1.0'
-name: 灵枢智能排盘 - APK 构建
-description: 使用 Node.js 和 Gradle 构建 React Native Android 应用
+name: 灵枢智能排盘 - APK 构建 (传统模式)
+description: 使用 Node.js + Gradle 传统方式构建 (不使用 includeBuild)
 
 stages:
   - name: 构建
@@ -38,10 +38,10 @@ allprojects {
 GRADLE_EOF
           - echo "📦 安装项目依赖..."
           - npm install --legacy-peer-deps
-          - echo "🏗️ 开始构建 APK..."
+          - echo "🏗️ 开始构建 APK (传统模式)..."
           - cd android
           - chmod +x gradlew
-          - ./gradlew assembleRelease --no-daemon --stacktrace --info
+          - ./gradlew clean assembleRelease --no-daemon --stacktrace
         artifacts:
           - path: app/build/outputs/apk/release/app-release.apk
             name: lingshu-paipan.apk
