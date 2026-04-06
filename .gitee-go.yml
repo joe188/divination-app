@@ -1,6 +1,6 @@
 version: '1.0'
-name: 灵枢智能排盘 - APK 构建 (传统模式)
-description: 使用 Node.js + Gradle 传统方式构建 (不使用 includeBuild)
+name: 灵枢智能排盘 - APK 构建 (修复版)
+description: 构建 APK 并生成 output 制品 (修复 Release Artifact Failure)
 
 stages:
   - name: 构建
@@ -26,23 +26,25 @@ stages:
           - echo "⚙️ 配置 Gradle 镜像..."
           - |
             mkdir -p ~/.gradle
-            cat > ~/.gradle/init.gradle << 'GRADLE_EOF'
+            cat > ~/.gradle/init.gradle << 'EOF'
 allprojects {
   repositories {
     maven { url 'https://maven.aliyun.com/repository/google' }
     maven { url 'https://maven.aliyun.com/repository/public' }
-    maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
     mavenCentral()
   }
 }
-GRADLE_EOF
+EOF
           - echo "📦 安装项目依赖..."
           - npm install --legacy-peer-deps
-          - echo "🏗️ 开始构建 APK (传统模式)..."
+          - echo "🏗️ 开始构建 APK..."
           - cd android
           - chmod +x gradlew
           - ./gradlew clean assembleRelease --no-daemon --stacktrace
+          - echo "📤 复制 APK 到标准制品路径..."
+          - mkdir -p /tmp/artifacts
+          - cp app/build/outputs/apk/release/app-release.apk /tmp/artifacts/output
         artifacts:
-          - path: app/build/outputs/apk/release/app-release.apk
-            name: lingshu-paipan.apk
+          - path: /tmp/artifacts/output
+            name: output
             expire: 7d
