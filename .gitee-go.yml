@@ -1,6 +1,6 @@
 version: '1.0'
 name: 灵枢智能排盘 - APK 构建 (修复版)
-description: 构建 APK 并生成 output 制品 (修复 Release Artifact Failure)
+description: 修复 Release Artifact Failure - 确保制品名为 output
 
 stages:
   - name: 构建
