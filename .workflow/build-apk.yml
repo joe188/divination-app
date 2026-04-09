@@ -20,7 +20,12 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - apt update && apt install -y nodejs npm && npm install && cd android && chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+          - chmod +x gradlew && ./gradlew assembleRelease \
+          - '  --no-daemon \'
+          - '  --build-cache \'
+          - '  --parallel \'
+          - '  --no-watch-fs \'
+          - '  -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"'
         artifacts:
           - name: BUILD_ARTIFACT
             path:
