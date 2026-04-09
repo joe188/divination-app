@@ -71,26 +71,27 @@ stages:
        displayName: 构建 APK
        run: |
          cd /root/workspace/joelinfo/divination-apk/android
-         echo "📋 检查 android 目录文件："
-         ls -la
 
-         # ==================== 核心修复：自动生成 gradlew ====================
-         echo "🔧 自动生成 gradlew 启动脚本（CI 环境专用）"
-         cat > gradlew <<'EOF'
-#!/bin/sh
-DIR="$(cd "$(dirname "$0")" && pwd)"
-exec java -Dfile.encoding=UTF-8 -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
-EOF
+         # ==============================================
+         # 🔥 终极修复：直接新建 gradlew，永不丢失
+         # ==============================================
+         echo "🔧 自动重建 gradlew 脚本（CI 专用）"
+         cat > gradlew << 'EOF'
+ #!/bin/sh
+ DIR=$(dirname "$0")
+ exec java \
+ -Dfile.encoding=UTF-8 \
+ -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
+ EOF
          chmod +x gradlew
-         # ====================================================================
 
-         echo "🔨 执行 Gradle 构建（release 签名）..."
+         echo "🔨 开始构建 APK..."
          ./gradlew clean assembleRelease \
            -PstoreFile=${RELEASE_KEY} \
            -PstorePassword=${STORE_PASSWORD} \
            -PkeyAlias=${KEY_ALIAS} \
            -PkeyPassword=${KEY_PASSWORD} \
-           --no-daemon --stacktrace --warning-mode all
+           --no-daemon --stacktrace
 
      - step: shell@bash
        name: verify_apk
