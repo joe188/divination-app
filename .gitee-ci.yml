@@ -1,62 +1,38 @@
 version: '1.0'
-name: 灵枢排盘 - APK 构建
-description: 自动构建 Release APK（优化版）
-
-# 全局变量
-variables:
- NODE_VERSION: '20'
- JDK_VERSION: '17'
- GRADLE_VERSION: '8.2'
- APP_VERSION: '1.2.2'
+name: 灵枢排盘 - APK 构建 (流水线)
+description: 自动构建 Release APK（手动安装 JDK + SDK）
 
 stages:
- - name: 编译
+ - name: 构建
    jobs:
    - name: build-apk
-     image: node:${NODE_VERSION}
-     steps:
-     # 步骤1：准备环境
-     - step: shell@bash
-       name: prepare_env
-       displayName: 准备构建环境
-       run: |
-         echo "🚀 开始构建灵枢排盘 v${APP_VERSION}"
-         echo "📦 Node.js 版本：$(node -v)"
-         echo "📦 npm 版本：$(npm -v)"
-         # 设置国内镜像（加速 + 容错）
-         npm config set registry https://registry.npmmirror.com
-         echo "🔧 npm 镜像已设置为：$(npm config get registry)"
+     image: node:20
+     script:
+     - echo "🚀 开始自动化构建 APK..."
+     - cd /root/workspace/joelinfo/divination-apk
 
-     # 步骤2：安装依赖（带缓存优先）
-     - step: shell@bash
-       name: install_deps
-       displayName: 安装项目依赖
-       run: |
-         echo "📦 开始安装依赖..."
-         # 优先尝试 npm ci（使用 lock 文件），失败则回退 npm install
-         if [ -f package-lock.json ]; then
-           echo "使用 npm ci 安装（基于 lock 文件）"
-           npm ci --legacy-peer-deps
-         else
-           echo "使用 npm install 安装"
-           npm install --legacy-peer-deps
-         fi
-         # 安全扫描（只报告高危漏洞，不阻塞构建）
-         echo "🔒 执行 npm audit 安全扫描..."
-         npm audit --audit-level=high || true
-         echo "✅ 依赖安装完成"
+     # ===== 安装 JDK 17 =====
+     - echo "📦 安装 JDK 17..."
+     - apt-get update && apt-get install -y openjdk-17-jdk-headless unzip
+     - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+     - export PATH=$JAVA_HOME/bin:$PATH
+     - java -version
 
-     # 步骤3：Android 构建（使用 JDK 17 + Gradle 8.2）
-     - step: build@android
-       name: build_android
-       displayName: 构建 APK
-       jdkVersion: ${JDK_VERSION}
-       gradleVersion: ${GRADLE_VERSION}
-       buildFile: ./android/build.gradle
-       runBefore: |
-         # 设置 Gradle 镜像（加速依赖下载）
-         mkdir -p ~/.gradle
-         cat > ~/.gradle/init.gradle << 'EOF'
+     # ===== 安装 Android SDK =====
+     - echo "📦 安装 Android SDK..."
+     - export ANDROID_HOME=/opt/android-sdk
+     - export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+     - mkdir -p $ANDROID_HOME/cmdline-tools
+     - curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
+     - unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+     - mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+     - yes | sdkmanager --licenses > /dev/null 2>&1
+     - sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" "ndk;25.1.8937393"
+
+     # ===== 配置 Gradle 镜像 =====
+     - mkdir -p ~/.gradle
+     - |
+ cat > ~/.gradle/init.gradle << 'EOF'
  allprojects {
  repositories {
  maven { url 'https://maven.aliyun.com/repository/google' }
@@ -65,45 +41,32 @@ stages:
  }
  }
  EOF
-         echo "✅ Gradle 镜像已配置（阿里云）"
-       run: |
-         echo "🔨 开始构建 APK..."
-         cd android
-         chmod +x gradlew
-         # 增加 --warning-mode all 捕获所有警告
-         ./gradlew clean assembleRelease --no-daemon --stacktrace --warning-mode all
-         echo "✅ Gradle 构建完成"
-       artifacts:
-         - name: BUILD_ARTIFACT
-           path:
-             - ./android/app/build/outputs/apk/release/
+     - echo "✅ Gradle 镜像已配置（阿里云）"
 
-     # 步骤4：发布前检查（确保 APK 存在）
-     - step: shell@bash
-       name: verify_apk
-       displayName: 验证 APK 产物
-       run: |
-         APK_PATH="android/app/build/outputs/apk/release/app-release.apk"
-         if [ -f "$APK_PATH" ]; then
-           echo "✅ APK 文件存在：$APK_PATH"
-           ls -lh "$APK_PATH"
-         else
-           echo "❌ APK 文件未找到！路径：$APK_PATH"
-           echo "📋 检查构建日志中是否有错误..."
-           exit 1
-         fi
+     # ===== 安装依赖（国内 npm 源加速）=====
+     - echo "📦 安装项目依赖..."
+     - npm config set registry https://registry.npmmirror.com
+     - if [ -f package-lock.json ]; then
+     -   npm ci --legacy-peer-deps
+     - else
+     -   npm install --legacy-peer-deps
+     - fi
+     - echo "🔒 执行 npm audit 安全扫描..."
+     - npm audit --audit-level=high || true
+     - echo "✅ 依赖安装完成"
 
-     # 步骤5：发布到 Release
-     - step: publish@release_artifacts
-       name: publish_release
-       displayName: 发布 Release
-       dependArtifact: BUILD_ARTIFACT
-       version: ${APP_VERSION}
-       autoIncrement: true
+     # ===== 构建 APK =====
+     - echo "🔨 构建 APK..."
+     - cd android
+     - chmod +x gradlew
+     - ./gradlew clean assembleRelease --no-daemon --stacktrace
 
-# 触发器：仅 master 分支推送自动触发
-triggers:
- push:
-   branches:
-     include:
-       - master
+     # ===== 输出产物 =====
+     - echo "✅ 构建 APK 成功！输出产物..."
+     - mkdir -p /tmp/artifacts
+     - cp app/build/outputs/apk/release/app-release.apk /tmp/artifacts/output
+
+     artifacts:
+     - path: /tmp/artifacts/output
+       name: output
+       expire: 7d
