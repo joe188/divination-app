@@ -19,7 +19,7 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - cd android && chmod +x gradlew && ./gradlew assembleRelease \
+          - npm install && cd android && chmod +x gradlew && ./gradlew assembleRelease \
           - '-PstoreFile=${RELEASE_KEY} \'
           - '-PstorePassword=${STORE_PASSWORD} \'
           - '-PkeyAlias=${KEY_ALIAS} \'
