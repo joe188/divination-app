@@ -20,9 +20,9 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - '# Gradle默认构建命令'
-          - chmod +x ./gradlew
-          - ' .gitee-go.yml'
+          - cd android
+          - chmod +x gradlew
+          - ./gradlew assembleRelease --no-daemon
         artifacts:
           - name: BUILD_ARTIFACT
             path:
