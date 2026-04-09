@@ -19,8 +19,10 @@ stages:
         certificate: ''
         image: ubuntu:22.04
         command:
-          - '# Gitee 内置环境变量自动拉取代码'
-          - git clone --depth 1 https://gitee.com/${GITEE_REPO_FULL_NAME}.git .
+          - '# 强制指定目录克隆，解决目录丢失'
+          - mkdir -p /root/workspace/joelinfo/divination-apk
+          - cd /root/workspace/joelinfo/divination-apk
+          - git clone --depth 1 https://gitee.com/joelinfo/divination-apk.git .
           - git checkout ${GITEE_BRANCH}
         artifacts:
           - name: BUILD_ARTIFACT
@@ -35,6 +37,8 @@ stages:
         certificate: ''
         image: ubuntu:22.04
         command:
+          - '# 强制指定目录，确保环境变量生效'
+          - cd /root/workspace/joelinfo/divination-apk
           - apt-get update
           - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
           - apt-get install -y nodejs
@@ -53,6 +57,8 @@ stages:
         certificate: ''
         image: ubuntu:22.04
         command:
+          - '# 强制指定目录，确保 npm 执行在项目根目录'
+          - cd /root/workspace/joelinfo/divination-apk
           - npm install --legacy-peer-deps
         artifacts:
           - name: BUILD_ARTIFACT
