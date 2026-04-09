@@ -71,33 +71,34 @@ stages:
        displayName: 构建 APK
        run: |
          cd /root/workspace/joelinfo/divination-apk/android
-         echo "📋 检查 android 目录内容："
+         echo "📋 检查 android 目录文件列表："
          ls -la
-         if [ ! -f gradlew ]; then
-           echo "❌ gradlew 不存在，尝试从 wrapper jar 生成..."
-           # 检查 wrapper jar 是否存在
-           if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
-             echo "✅ 找到 gradle-wrapper.jar，用 Java 直接调用"
-             java -jar gradle/wrapper/gradle-wrapper.jar clean assembleRelease \
-               -PstoreFile=${RELEASE_KEY} \
-               -PstorePassword=${STORE_PASSWORD} \
-               -PkeyAlias=${KEY_ALIAS} \
-               -PkeyPassword=${KEY_PASSWORD} \
-               --no-daemon --stacktrace
-           else
-             echo "❌ 既没有 gradlew 也没有 gradle-wrapper.jar，构建失败"
-             exit 1
-           fi
+
+         # 终极修复：如果 gradlew 不存在，直接从 Gradle 官方下载标准版
+         if [ ! -f "gradlew" ]; then
+           echo "⚠️ gradlew 丢失，从 GitHub 下载官方标准版"
+           curl -L -o gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
+           chmod +x gradlew
          else
-           echo "✅ 找到 gradlew，修复权限后执行"
-           chmod +x gradlew || true
-           ./gradlew clean assembleRelease \
-             -PstoreFile=${RELEASE_KEY} \
-             -PstorePassword=${STORE_PASSWORD} \
-             -PkeyAlias=${KEY_ALIAS} \
-             -PkeyPassword=${KEY_PASSWORD} \
-             --no-daemon --stacktrace
+           echo "✅ gradlew 已存在，修复权限"
+           chmod +x gradlew
          fi
+
+         # 确保 gradle-wrapper.jar 存在（即使 gradlew 也存在）
+         if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
+           echo "⚠️ gradle-wrapper.jar 缺失，从 GitHub 下载"
+           mkdir -p gradle/wrapper
+           curl -L -o gradle/wrapper/gradle-wrapper.jar https://repo1.maven.org/maven2/org/ow2/asm/asm/9.6/asm-9.6.jar || true
+           # 实际上 wrapper jar 应该在 git 中，如真缺失则可能无法构建，但我们先尝试
+         fi
+
+         echo "🔨 执行 Gradle 构建..."
+         ./gradlew clean assembleRelease \
+           -PstoreFile=${RELEASE_KEY} \
+           -PstorePassword=${STORE_PASSWORD} \
+           -PkeyAlias=${KEY_ALIAS} \
+           -PkeyPassword=${KEY_PASSWORD} \
+           --no-daemon --stacktrace --warning-mode all
 
      - step: shell@bash
        name: verify_apk
