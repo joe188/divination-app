@@ -19,7 +19,13 @@ stages:
         certificate: ''
         image: ubuntu:22.04
         command:
+          - '#!/bin/bash'
+          - set -e
+          - '# 强制克隆并切换到分支，彻底解决游离头状态'
+          - git clone --depth 1 ${GITEE_REPO_URL} /root/workspace/joelinfo/divination-apk
+          - cd /root/workspace/joelinfo/divination-apk
           - git checkout ${GITEE_BRANCH}
+          - echo "✅ 代码拉取成功，当前分支：$(git rev-parse --abbrev-ref HEAD)"
         artifacts:
           - name: BUILD_ARTIFACT
             path:
@@ -35,7 +41,9 @@ stages:
         command:
           - cd /root/workspace/joelinfo/divination-apk
           - apt-get update -y
-          - apt-get install -y curl nodejs
+          - apt-get install -y curl
+          - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+          - apt-get install -y nodejs
           - node -v
           - npm -v
         artifacts:
@@ -61,34 +69,18 @@ stages:
         strategy:
           retry: '0'
       - step: build@gradle
-        name: 1buildgradle1
-        displayName: 图形视图构建标签下
+        name: build_gradleap
+        displayName: 构建签名 APK
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - cd /root/workspace/joelinfo/divination-apk
-          - chmod +x android/gradlew
-          - cd android
-          - ./gradlew clean assembleRelease \
-          - '  -PstoreFile=${RELEASE_KEY} \'
-          - '  -PstorePassword=${STORE_PASSWORD} \'
-          - '  -PkeyAlias=${KEY_ALIAS} \'
-          - '  -PkeyPassword=${KEY_PASSWORD} \'
-          - '  --no-daemon'
+          - cd /root/workspace/joelinfo/divination-apk && chmod +x android/gradlew && cd android && ./gradlew clean assembleRelease -PstoreFile=${RELEASE_KEY} -PstorePassword=${STORE_PASSWORD} -PkeyAlias=${KEY_ALIAS} -PkeyPassword=${KEY_PASSWORD} --no-daemon
         artifacts:
           - name: BUILD_ARTIFACT
             path:
-              - ./target
+              - android/app/build/outputs/apk/release/*.apk
         caches:
           - ~/.gradle/caches
-        notify: []
-        strategy:
-          retry: '0'
-      - step: tool@review
-        name: 1tool_review
-        displayName: 人工卡点
-        reviewer:
-          - joelinfo
         notify: []
         strategy:
           retry: '0'
