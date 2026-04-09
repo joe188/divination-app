@@ -1,38 +1,49 @@
 version: '1.0'
-name: 灵枢排盘 - APK 构建 (流水线)
-description: 自动构建 Release APK（手动安装 JDK + SDK）
+name: 灵枢排盘 - APK 构建
+description: 自动构建 Release APK（完整环境 + 签名）
 
 stages:
  - name: 构建
    jobs:
    - name: build-apk
      image: node:20
-     script:
-     - echo "🚀 开始自动化构建 APK..."
-     - cd /root/workspace/joelinfo/divination-apk
+     steps:
+     - step: shell@bash
+       name: prepare
+       displayName: 准备环境
+       run: |
+         echo "🚀 开始构建灵枢排盘"
+         cd /root/workspace/joelinfo/divination-apk
 
-     # ===== 安装 JDK 17 =====
-     - echo "📦 安装 JDK 17..."
-     - apt-get update && apt-get install -y openjdk-17-jdk-headless unzip
-     - export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
-     - export PATH=$JAVA_HOME/bin:$PATH
-     - java -version
+     - step: shell@bash
+       name: install_java
+       displayName: 安装 JDK 17
+       run: |
+         apt-get update
+         apt-get install -y openjdk-17-jdk-headless unzip
+         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+         export PATH=$JAVA_HOME/bin:$PATH
+         java -version
 
-     # ===== 安装 Android SDK =====
-     - echo "📦 安装 Android SDK..."
-     - export ANDROID_HOME=/opt/android-sdk
-     - export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-     - mkdir -p $ANDROID_HOME/cmdline-tools
-     - curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
-     - unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
-     - mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-     - yes | sdkmanager --licenses > /dev/null 2>&1
-     - sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" "ndk;25.1.8937393"
+     - step: shell@bash
+       name: install_android_sdk
+       displayName: 安装 Android SDK
+       run: |
+         export ANDROID_HOME=/opt/android-sdk
+         export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+         mkdir -p $ANDROID_HOME/cmdline-tools
+         curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdline-tools.zip
+         unzip -q /tmp/cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+         mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+         yes | sdkmanager --licenses > /dev/null 2>&1
+         sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" "ndk;25.1.8937393"
 
-     # ===== 配置 Gradle 镜像 =====
-     - mkdir -p ~/.gradle
-     - |
- cat > ~/.gradle/init.gradle << 'EOF'
+     - step: shell@bash
+       name: config_gradle
+       displayName: 配置 Gradle 镜像
+       run: |
+         mkdir -p ~/.gradle
+         cat > ~/.gradle/init.gradle << 'EOF'
  allprojects {
  repositories {
  maven { url 'https://maven.aliyun.com/repository/google' }
@@ -41,32 +52,46 @@ stages:
  }
  }
  EOF
-     - echo "✅ Gradle 镜像已配置（阿里云）"
 
-     # ===== 安装依赖（国内 npm 源加速）=====
-     - echo "📦 安装项目依赖..."
-     - npm config set registry https://registry.npmmirror.com
-     - if [ -f package-lock.json ]; then
-     -   npm ci --legacy-peer-deps
-     - else
-     -   npm install --legacy-peer-deps
-     - fi
-     - echo "🔒 执行 npm audit 安全扫描..."
-     - npm audit --audit-level=high || true
-     - echo "✅ 依赖安装完成"
+     - step: shell@bash
+       name: install_deps
+       displayName: 安装依赖
+       run: |
+         cd /root/workspace/joelinfo/divination-apk
+         npm config set registry https://registry.npmmirror.com
+         if [ -f package-lock.json ]; then
+           npm ci --legacy-peer-deps
+         else
+           npm install --legacy-peer-deps
+         fi
+         npm audit --audit-level=high || true
 
-     # ===== 构建 APK =====
-     - echo "🔨 构建 APK..."
-     - cd android
-     - chmod +x gradlew
-     - ./gradlew clean assembleRelease --no-daemon --stacktrace
+     - step: shell@bash
+       name: build_apk
+       displayName: 构建 APK
+       run: |
+         cd /root/workspace/joelinfo/divination-apk/android
+         chmod +x gradlew
+         ./gradlew clean assembleRelease \
+           -PstoreFile=${RELEASE_KEY} \
+           -PstorePassword=${STORE_PASSWORD} \
+           -PkeyAlias=${KEY_ALIAS} \
+           -PkeyPassword=${KEY_PASSWORD} \
+           --no-daemon --stacktrace
 
-     # ===== 输出产物 =====
-     - echo "✅ 构建 APK 成功！输出产物..."
-     - mkdir -p /tmp/artifacts
-     - cp app/build/outputs/apk/release/app-release.apk /tmp/artifacts/output
+     - step: shell@bash
+       name: verify_apk
+       displayName: 验证产物
+       run: |
+         APK="/root/workspace/joelinfo/divination-apk/android/app/build/outputs/apk/release/app-release.apk"
+         if [ -f "$APK" ]; then
+           echo "✅ APK 存在: $(ls -lh $APK)"
+         else
+           echo "❌ APK 未生成"
+           exit 1
+         fi
 
-     artifacts:
-     - path: /tmp/artifacts/output
-       name: output
-       expire: 7d
+ artifacts:
+   - path: /root/workspace/joelinfo/divination-apk/android/app/build/outputs/apk/release/
+     name: output
+     expire: 7d
