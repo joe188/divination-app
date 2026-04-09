@@ -20,7 +20,7 @@ stages:
        displayName: 安装 JDK 17
        run: |
          apt-get update
-         apt-get install -y openjdk-17-jdk-headless unzip
+         apt-get install -y openjdk-17-jdk-headless unzip curl
          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
          export PATH=$JAVA_HOME/bin:$PATH
          java -version
@@ -71,28 +71,20 @@ stages:
        displayName: 构建 APK
        run: |
          cd /root/workspace/joelinfo/divination-apk/android
-         echo "📋 检查 android 目录文件列表："
+         echo "📋 检查 android 目录文件："
          ls -la
 
-         # 终极修复：如果 gradlew 不存在，直接从 Gradle 官方下载标准版
-         if [ ! -f "gradlew" ]; then
-           echo "⚠️ gradlew 丢失，从 GitHub 下载官方标准版"
-           curl -L -o gradlew https://raw.githubusercontent.com/gradle/gradle/master/gradlew
-           chmod +x gradlew
-         else
-           echo "✅ gradlew 已存在，修复权限"
-           chmod +x gradlew
-         fi
+         # ==================== 核心修复：自动生成 gradlew ====================
+         echo "🔧 自动生成 gradlew 启动脚本（CI 环境专用）"
+         cat > gradlew <<'EOF'
+#!/bin/sh
+DIR="$(cd "$(dirname "$0")" && pwd)"
+exec java -Dfile.encoding=UTF-8 -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
+EOF
+         chmod +x gradlew
+         # ====================================================================
 
-         # 确保 gradle-wrapper.jar 存在（即使 gradlew 也存在）
-         if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-           echo "⚠️ gradle-wrapper.jar 缺失，从 GitHub 下载"
-           mkdir -p gradle/wrapper
-           curl -L -o gradle/wrapper/gradle-wrapper.jar https://repo1.maven.org/maven2/org/ow2/asm/asm/9.6/asm-9.6.jar || true
-           # 实际上 wrapper jar 应该在 git 中，如真缺失则可能无法构建，但我们先尝试
-         fi
-
-         echo "🔨 执行 Gradle 构建..."
+         echo "🔨 执行 Gradle 构建（release 签名）..."
          ./gradlew clean assembleRelease \
            -PstoreFile=${RELEASE_KEY} \
            -PstorePassword=${STORE_PASSWORD} \
