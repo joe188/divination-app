@@ -19,13 +19,25 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - apt-get update -y &&
-          - apt-get install -y curl nodejs npm &&
-          - cd /root/workspace/joelinfo/divination-apk &&
-          - npm install --legacy-peer-deps &&
-          - cd android &&
-          - chmod +x gradlew &&
-          - ./gradlew clean assembleRelease -PstoreFile=${RELEASE_KEY} -PstorePassword=${STORE_PASSWORD} -PkeyAlias=${KEY_ALIAS} -PkeyPassword=${KEY_PASSWORD} --no-daemon
+          - apt-get update -y && \
+          - apt-get remove -y nodejs npm || true && \
+          - apt autoremove -y || true && \
+          - curl -fsSL https://npmmirror.com/mirrors/nodesource/setup_20.x | bash - && \
+          - apt-get install -y nodejs && \
+          - if [ "$(node -v 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1)" -lt 18 ]; then
+          - '  npm install -g n && n 20'
+          - fi && \
+          - node -v && npm -v && \
+          - npm config set registry https://registry.npmmirror.com && \
+          - npm install --legacy-peer-deps && \
+          - cd android && \
+          - chmod +x gradlew && \
+          - ./gradlew clean assembleRelease \
+          - '  -PstoreFile=${RELEASE_KEY} \'
+          - '  -PstorePassword=${STORE_PASSWORD} \'
+          - '  -PkeyAlias=${KEY_ALIAS} \'
+          - '  -PkeyPassword=${KEY_PASSWORD} \'
+          - '  --no-daemon'
         artifacts:
           - name: BUILD_ARTIFACT
             path:
