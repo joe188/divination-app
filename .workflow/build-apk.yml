@@ -20,12 +20,7 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - chmod +x gradlew && ./gradlew assembleRelease \
-          - '  --no-daemon \'
-          - '  --build-cache \'
-          - '  --parallel \'
-          - '  --no-watch-fs \'
-          - '  -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"'
+          - cd $WORKSPACE && chmod +x gradlew && ./gradlew assembleRelease --no-daemon --build-cache --parallel --no-watch-fs -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         artifacts:
           - name: BUILD_ARTIFACT
             path:
