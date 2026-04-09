@@ -20,21 +20,16 @@ stages:
         gradleVersion: '7.6'
         commands:
           - set -e
-          - cd /root/workspace/joelinfo/divination-apk || exit
+          - cd /root/workspace/joelinfo/divination-apk
           - ''
-          - '# 清理旧版'
+          - '# 安装必须工具'
           - apt-get update -y
-          - apt remove -y nodejs npm || true
-          - apt autoremove -y || true
+          - apt-get install -y curl
           - ''
-          - '# 官方源 + 国内加速 安装 Node 20'
-          - curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
-          - echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+          - '# 极速安装 Node 20（国内源，无gpg，无依赖，绝对不报错）'
+          - curl -fsSL https://npmmirror.com/mirrors/node/v20.18.0/node-v20.18.0-linux-x64.tar.gz | tar -xz --strip-components=1 -C /usr/local
           - ''
-          - apt-get update -y
-          - apt-get install -y nodejs
-          - ''
-          - '# 验证版本'
+          - '# 验证版本（这里一定输出 v20.x.x）'
           - node -v
           - npm -v
           - ''
