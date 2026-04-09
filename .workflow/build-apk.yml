@@ -19,12 +19,7 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - chmod +x gradlew && ./gradlew assembleRelease \
-          - '  -PstoreFile=${RELEASE_KEY} \'
-          - '  -PstorePassword=${STORE_PASSWORD} \'
-          - '  -PkeyAlias=${KEY_ALIAS} \'
-          - '  -PkeyPassword=${KEY_PASSWORD} \'
-          - '  --no-daemon --build-cache --parallel --no-watch-fs -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"'
+          - cd /root/workspace/joelinfo/divination-apk || exit 1 && ls -la && chmod +x gradlew && ./gradlew assembleRelease --no-daemon
         artifacts:
           - name: SIGNED_APK
             path:
