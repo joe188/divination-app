@@ -19,19 +19,32 @@ stages:
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - apt-get update -y && \
-          - apt-get remove -y nodejs npm || true && \
-          - apt autoremove -y || true && \
-          - curl -fsSL https://npmmirror.com/mirrors/nodesource/setup_20.x | bash - && \
-          - apt-get install -y nodejs && \
-          - if [ "$(node -v 2>/dev/null | cut -d'v' -f2 | cut -d'.' -f1)" -lt 18 ]; then
-          - '  npm install -g n && n 20'
-          - fi && \
-          - node -v && npm -v && \
-          - npm config set registry https://registry.npmmirror.com && \
-          - npm install --legacy-peer-deps && \
-          - cd android && \
-          - chmod +x gradlew && \
+          - set -e
+          - cd /root/workspace/joelinfo/divination-apk || exit
+          - ''
+          - '# 清理旧版'
+          - apt-get update -y
+          - apt remove -y nodejs npm || true
+          - apt autoremove -y || true
+          - ''
+          - '# 官方源 + 国内加速 安装 Node 20'
+          - curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+          - echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+          - ''
+          - apt-get update -y
+          - apt-get install -y nodejs
+          - ''
+          - '# 验证版本'
+          - node -v
+          - npm -v
+          - ''
+          - '# 安装依赖'
+          - npm config set registry https://registry.npmmirror.com
+          - npm install --legacy-peer-deps
+          - ''
+          - '# 构建 APK'
+          - cd android
+          - chmod +x gradlew
           - ./gradlew clean assembleRelease \
           - '  -PstoreFile=${RELEASE_KEY} \'
           - '  -PstorePassword=${STORE_PASSWORD} \'
