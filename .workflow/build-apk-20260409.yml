@@ -22,30 +22,32 @@ stages:
           - set -e
           - cd /root/workspace/joelinfo/divination-apk
           - ''
-          - '# 安装必须工具'
           - apt-get update -y
           - apt-get install -y curl
           - ''
-          - '# 极速安装 Node 20（国内源，无gpg，无依赖，绝对不报错）'
+          - '# 安装 Node 20'
           - curl -fsSL https://npmmirror.com/mirrors/node/v20.18.0/node-v20.18.0-linux-x64.tar.gz | tar -xz --strip-components=1 -C /usr/local
           - ''
-          - '# 验证版本（这里一定输出 v20.x.x）'
           - node -v
           - npm -v
           - ''
-          - '# 安装依赖'
           - npm config set registry https://registry.npmmirror.com
           - npm install --legacy-peer-deps
           - ''
-          - '# 构建 APK'
+          - '# 🔥 修复 Android 插件下载（关键）'
           - cd android
           - chmod +x gradlew
+          - ''
+          - '# 先让 gradle 完整下载依赖'
+          - ./gradlew --version --no-daemon
+          - ''
+          - '# 再正式打包'
           - ./gradlew clean assembleRelease \
           - '  -PstoreFile=${RELEASE_KEY} \'
           - '  -PstorePassword=${STORE_PASSWORD} \'
           - '  -PkeyAlias=${KEY_ALIAS} \'
           - '  -PkeyPassword=${KEY_PASSWORD} \'
-          - '  --no-daemon'
+          - '  --no-daemon --refresh-dependencies'
         artifacts:
           - name: BUILD_ARTIFACT
             path:
