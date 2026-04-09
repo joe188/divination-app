@@ -1,32 +1,35 @@
 version: '1.0'
 name: build-apk
-displayName: build-apk
+displayName: 构建签名APK
 triggers:
   trigger: auto
   push:
     branches:
       prefix:
-        - ''
+        - master
 stages:
-  - name: stage-4e2b7e7e
-    displayName: 未命名
+  - name: build
+    displayName: 构建签名
     strategy: naturally
     trigger: auto
-    executor: []
     steps:
       - step: build@gradle
         name: build_gradle
-        displayName: Gradle 构建
+        displayName: 签名构建APK
         jdkVersion: '17'
         gradleVersion: '7.6'
         commands:
-          - cd $WORKSPACE && chmod +x gradlew && ./gradlew assembleRelease --no-daemon --build-cache --parallel --no-watch-fs -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+          - chmod +x gradlew && ./gradlew assembleRelease \
+          - '  -PstoreFile=${RELEASE_KEY} \'
+          - '  -PstorePassword=${STORE_PASSWORD} \'
+          - '  -PkeyAlias=${KEY_ALIAS} \'
+          - '  -PkeyPassword=${KEY_PASSWORD} \'
+          - '  --no-daemon --build-cache --parallel --no-watch-fs -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"'
         artifacts:
-          - name: BUILD_ARTIFACT
+          - name: SIGNED_APK
             path:
-              - ./target
+              - app/build/outputs/apk/release/*.apk
         caches:
           - ~/.gradle/caches
-        notify: []
         strategy:
           retry: '0'
