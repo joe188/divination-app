@@ -1,0 +1,87 @@
+version: '1.0'
+name: build-apk-20260409
+displayName: 构建APK
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: build
+    displayName: ''
+    strategy: naturally
+    trigger: auto
+    steps:
+      - step: execute@docker
+        name: 1ubuntu2
+        displayName: 拉取代码
+        certificate: ''
+        image: ubuntu:22.04
+        command:
+          - '# Gitee 内置环境变量自动拉取代码'
+          - git clone --depth 1 https://gitee.com/${GITEE_REPO_FULL_NAME}.git .
+          - git checkout ${GITEE_BRANCH}
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./target
+        notify: []
+        strategy:
+          retry: '0'
+      - step: execute@docker
+        name: 1ubuntu3
+        displayName: 安装 Node 18
+        certificate: ''
+        image: ubuntu:22.04
+        command:
+          - apt-get update
+          - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+          - apt-get install -y nodejs
+          - node -v
+          - npm -v
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./target
+        notify: []
+        strategy:
+          retry: '0'
+      - step: execute@docker
+        name: execute_by_docker
+        displayName: 安装依赖
+        certificate: ''
+        image: ubuntu:22.04
+        command:
+          - npm install --legacy-peer-deps
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./target
+        notify: []
+        strategy:
+          retry: '0'
+      - step: build@gradle
+        name: 1buildgradle1
+        displayName: 图形视图构建标签下
+        jdkVersion: '17'
+        gradleVersion: '7.6'
+        commands:
+          - chmod +x android/gradlew && cd android && ./gradlew clean assembleRelease -PstoreFile=${RELEASE_KEY} -PstorePassword=${STORE_PASSWORD} -PkeyAlias=${KEY_ALIAS} -PkeyPassword=${KEY_PASSWORD} --no-daemon
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./target
+        caches:
+          - ~/.gradle/caches
+        notify: []
+        strategy:
+          retry: '0'
+      - step: tool@review
+        name: 1tool_review
+        displayName: 人工卡点
+        reviewer:
+          - joelinfo
+        notify: []
+        strategy:
+          retry: '0'
