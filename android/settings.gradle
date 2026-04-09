@@ -1,11 +1,14 @@
-// 传统方式：不包含 @react-native/gradle-plugin
+// 传统方式：包含 @react-native/gradle-plugin（本地 includeBuild）
+pluginManagement {
+  includeBuild("../node_modules/@react-native/gradle-plugin")
+}
 ext {
     buildToolsVersion = "34.0.0"
     minSdkVersion = 24
     compileSdkVersion = 34
     targetSdkVersion = 34
     ndkVersion = "25.1.8937393"
-    kotlinVersion = "1.9.22"
+    kotlinVersion = "1.7.22"  // RN 0.72.7 必须用 1.7.22
 }
 rootProject.name = 'DivinationApp'
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")

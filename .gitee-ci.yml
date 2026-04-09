@@ -1,0 +1,60 @@
+version: '1.0'
+name: build-apk
+displayName: 构建签名APK
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - master
+
+stages:
+  - name: build
+    displayName: 构建
+    steps:
+      - step: checkout@git
+        name: checkout
+        displayName: 拉取代码
+
+      # 安装 Node.js 20（tar.gz 直接解压，避免 apt 冲突）
+      - step: shell@bash
+        name: install_node
+        displayName: 安装Node20
+        run: |
+          apt-get update -y
+          apt-get install -y curl
+          # 下载并解压 Node.js 20（国内镜像）
+          curl -fsSL https://npmmirror.com/mirrors/node/v20.18.0/node-v20.18.0-linux-x64.tar.gz | tar -xz --strip-components=1 -C /usr/local
+          node -v && npm -v
+
+      # 安装依赖（国内 npm 源加速）
+      - step: shell@bash
+        name: install_deps
+        displayName: 安装依赖
+        run: |
+          npm config set registry https://registry.npmmirror.com
+          npm install --legacy-peer-deps
+
+      # 构建签名 APK（Gitee 会自动处理 SDK 和 Gradle wrapper）
+      - step: shell@bash
+        name: build_apk
+        displayName: 构建签名APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          # 直接使用 wrapper（Gitee 会自动优化 distributionUrl 并下载合适版本）
+          ./gradlew clean assembleRelease \
+            -PstoreFile=${RELEASE_KEY} \
+            -PstorePassword=${STORE_PASSWORD} \
+            -PkeyAlias=${KEY_ALIAS} \
+            -PkeyPassword=${KEY_PASSWORD} \
+            --no-daemon
+
+      # 上传 APK
+      - step: artifacts@upload
+        name: upload_apk
+        displayName: 上传APK
+        with:
+          files:
+            - source: android/app/build/outputs/apk/release/*.apk
+              target: /

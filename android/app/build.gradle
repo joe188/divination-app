@@ -5,23 +5,24 @@ apply from: file("../../node_modules/react-native/react.gradle")
 
 android {
     namespace "com.lingshu.paipan"
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    ndkVersion rootProject.ext.ndkVersion
+    compileSdkVersion 34
+    buildToolsVersion "34.0.0"
+    ndkVersion "25.1.8937393"
 
     defaultConfig {
         applicationId "com.lingshu.paipan"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
         versionName "1.2.2"
     }
     signingConfigs {
         release {
-            storeFile file('release.keystore')
-            storePassword 'Lingshu@123'
-            keyAlias 'lingshu-release-key'
-            keyPassword 'Lingshu@123'
+            // 从 Gradle 属性读取（Gitee 流水线传入 -PstoreFile=...）
+            storeFile file(project.findProperty('storeFile') ?: 'release.keystore')
+            storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
+            keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
+            keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
         }
     }
     buildTypes {

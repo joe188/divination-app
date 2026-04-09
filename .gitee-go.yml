@@ -1,32 +1,32 @@
 version: '1.0'
-name: 灵枢智能排盘 - APK 构建 (修复版)
-description: 修复 Release Artifact Failure - 确保制品名为 output
+name: 灵枢智能排盘 - 构建 APK
+description: 严格按照用户命令升级 Node.js 18
 
-stages:
-  - name: 构建
-    jobs:
-      - name: build-apk
-        image: node:18
-        script:
-          - echo "🚀 开始构建灵枢智能排盘..."
-          - cd /root/workspace/joelinfo/divination-apk
-          - echo "☕ 配置 Java 环境..."
-          - |
-            if [ -d "/usr/lib/jvm/java-11-openjdk" ]; then
-              export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-              export PATH=$JAVA_HOME/bin:$PATH
-              echo "✅ Java 11 已配置"
-            elif [ -d "/usr/lib/jvm/java-17-openjdk" ]; then
-              export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
-              export PATH=$JAVA_HOME/bin:$PATH
-              echo "✅ Java 17 已配置"
-            else
-              echo "⚠️ 使用系统默认 Java"
-            fi
-          - echo "⚙️ 配置 Gradle 镜像..."
-          - |
-            mkdir -p ~/.gradle
-            cat > ~/.gradle/init.gradle << 'EOF'
+jobs:
+  - name: build-apk
+    steps:
+      - name: 卸载旧版 Node.js/npm
+        run: |
+          apt-get remove -y nodejs npm
+          apt-get autoremove -y
+      - name: 添加 Node.js 18 官方源
+        run: |
+          curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+          echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/nodesource.list
+      - name: 安装 Node 18
+        run: |
+          apt-get update
+          apt-get install -y nodejs
+      - name: 验证版本
+        run: |
+          node -v
+          npm -v
+      - name: Grant gradlew permission
+        run: chmod +x android/gradlew
+      - name: 配置 Gradle 镜像
+        run: |
+          mkdir -p ~/.gradle
+          cat > ~/.gradle/init.gradle << 'EOF'
 allprojects {
   repositories {
     maven { url 'https://maven.aliyun.com/repository/google' }
@@ -35,16 +35,14 @@ allprojects {
   }
 }
 EOF
-          - echo "📦 安装项目依赖..."
-          - npm install --legacy-peer-deps
-          - echo "🏗️ 开始构建 APK..."
-          - cd android
-          - chmod +x gradlew
-          - ./gradlew clean assembleRelease --no-daemon --stacktrace
-          - echo "📤 复制 APK 到标准制品路径..."
-          - mkdir -p /tmp/artifacts
-          - cp app/build/outputs/apk/release/app-release.apk /tmp/artifacts/output
-        artifacts:
-          - path: /tmp/artifacts/output
-            name: output
-            expire: 7d
+      - name: Install dependencies & Build
+        run: |
+          npm install --legacy-peer-deps
+          cd android
+          ./gradlew clean assembleRelease --no-daemon --stacktrace
+      - name: Upload APK
+        uses: artifacts/upload
+        with:
+          files:
+            - source: android/app/build/outputs/apk/release/*.apk
+              target: /
