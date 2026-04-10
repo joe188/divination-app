@@ -18,16 +18,16 @@ android {
         release {
             // 🔑 智能查找 keystore：优先 APKS 注入路径，fallback 到本地路径
             def _apksPath = '/workspace/android/app/release.keystore'
-            def _localPath = 'android/app/release.keystore'
+            def _localPath = 'release.keystore'  // 相对于 android/app/ 目录
             def _ks = file(_apksPath)
             if (!_ks.exists()) {
                 _ks = file(_localPath)
             }
             if (!_ks.exists()) {
                 throw new GradleException("❌ Release keystore not found at:\n" +
-                    "  1. ${_apksPath}\n" +
-                    "  2. ${_localPath}\n" +
-                    "Please ensure 'release.keystore' is committed to the repo.")
+                    "  1. ${_apksPath} (APKS injected)\n" +
+                    "  2. ${_localPath} (relative to android/app/)\n" +
+                    "Please ensure 'release.keystore' is committed to the repo in android/app/.")
             }
 
             storeFile _ks
