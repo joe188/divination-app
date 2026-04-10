@@ -17,33 +17,17 @@ android {
     signingConfigs {
         release {
             // 🔑 优先使用 APKS 注入的 storeFile 参数，然后 fallback 到已知路径
-            def _propStoreFile = project.findProperty('storeFile')
-            def _ks
-            if (_propStoreFile) {
-                _ks = file(_propStoreFile)
-            } else {
-                // APKS 可能直接复制到标准路径
-                def _apksPath = '/workspace/android/app/release.keystore'
-                def _localPath = 'release.keystore'  // 相对于 android/app/
-                _ks = file(_apksPath)
-                if (!_ks.exists()) {
-                    _ks = file(_localPath)
-                }
-            }
+            // ✅ 直接使用仓库中的 keystore 文件，不依赖 APKS 注入
+            def _ks = file('release.keystore')  // 相对于 android/app/ 目录
             if (!_ks.exists()) {
-                throw new GradleException("❌ Release keystore not found.\n" +
-                    "Checked:\n" +
-                    "  - storeFile property: ${_propStoreFile}\n" +
-                    "  - /workspace/android/app/release.keystore\n" +
-                    "  - release.keystore (relative to android/app/)\n" +
-                    "Please ensure keystore is committed and APKS signing is configured.")
+                throw new GradleException("❌ Release keystore not found at: android/app/release.keystore\n" +
+                    "Please ensure the file is committed to the repository.")
             }
 
             storeFile _ks
-            // 优先使用注入的密码/别名，否则用默认值
-            storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
-            keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
-            keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
+            storePassword 'Lingshu@123'
+            keyAlias 'lingshu-release-key'
+            keyPassword 'Lingshu@123'
         }
     }
     buildTypes {
