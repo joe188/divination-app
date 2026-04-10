@@ -51,6 +51,10 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
+            // 🔑 确保 V1 + V2 签名（APKS 校验需要 V1）
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
 }
