@@ -40,10 +40,7 @@ android {
             storePassword storePassProp
             keyAlias keyAliasProp
             keyPassword keyPassProp
-
-            // 🔑 显式启用 V1 + V2 签名，确保生成 META-INF/MANIFEST.MF
-            v1SigningEnabled true
-            v2SigningEnabled true
+            // APKS 会自动处理签名，无需显式配置 v1/v2
         }
     }
     buildTypes {
@@ -51,10 +48,7 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-
-            // 🔑 确保 V1 + V2 签名（APKS 校验需要 V1）
-            v1SigningEnabled true
-            v2SigningEnabled true
+            // APKS 会自动处理 V1/V2 签名，无需显式配置
         }
     }
 }
