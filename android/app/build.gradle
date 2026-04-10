@@ -16,31 +16,25 @@ android {
     }
     signingConfigs {
         release {
-            // 🔑 APKS 环境：必须通过 -P 参数传入 keystore 信息（由 Gitee 界面配置提供）
-            // 不允许自动生成，因为 APKS 环境无法持久化
-            def storeFileProp = project.findProperty('storeFile')
-            def storePassProp = project.findProperty('storePassword')
-            def keyAliasProp = project.findProperty('keyAlias')
-            def keyPassProp = project.findProperty('keyPassword')
+            // 🔑 智能查找 keystore：优先 APKS 注入路径，fallback 到本地路径
+            def keystorePath = '/workspace/android/app/release.keystore'
+            def localKeystorePath = 'android/app/release.keystore'
 
-            if (!storeFileProp) {
-                throw new GradleException("❌ 缺少 storeFile 属性。请在 Gitee /apks 配置中上传 keystore 文件并勾选'保留签名配置'。")
-            }
-            if (!storePassProp) {
-                throw new GradleException("❌ 缺少 storePassword 属性。请在 Gitee /apks 配置中设置存储密码。")
-            }
-            if (!keyAliasProp) {
-                throw new GradleException("❌ 缺少 keyAlias 属性。请在 Gitee /apks 配置中设置密钥别名。")
-            }
-            if (!keyPassProp) {
-                throw new GradleException("❌ 缺少 keyPassword 属性。请在 Gitee /apks 配置中设置密钥密码。")
+            File keystoreFile = file(keystorePath)
+            if (!keystoreFile.exists()) {
+                keystoreFile = file(localKeystorePath)
+                if (!keystoreFile.exists()) {
+                    throw new GradleException("❌ Release keystore not found at:\n" +
+                        "  1. ${keystorePath} (APKS injected)\n" +
+                        "  2. ${localKeystorePath} (local)\n" +
+                        "Please ensure 'release.keystore' is committed to the repo.")
+                }
             }
 
-            storeFile file(storeFileProp)
-            storePassword storePassProp
-            keyAlias keyAliasProp
-            keyPassword keyPassProp
-            // APKS 会自动处理签名，无需显式配置 v1/v2
+            storeFile keystoreFile
+            storePassword 'Lingshu@123'
+            keyAlias 'lingshu-release-key'
+            keyPassword 'Lingshu@123'
         }
     }
     buildTypes {
