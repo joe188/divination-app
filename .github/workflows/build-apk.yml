@@ -1,109 +1,118 @@
-name: Build LingShu APK
+name: 🚀 Android Release Build (Signed)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ master, main ]
   workflow_dispatch:
+
+permissions:
+  contents: write  # 用于创建 Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: 🧰 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: npm install
 
-      - name: Setup Java JDK
+      - name: ☕ Setup Java JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build React Native Bundle
+      - name: 🔐 Decode and place keystore
         run: |
-          # 确保 assets 目录存在
+          echo "🔑 正在解码 keystore..."
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          chmod 600 android/app/release.keystore
+          ls -la android/app/release.keystore
+          echo "✅ Keystore 已就绪"
+
+      - name: 🧱 Build React Native Bundle
+        run: |
+          echo "📦 打包 JS bundle..."
           mkdir -p android/app/src/main/assets
-          # 打包 JS bundle
           npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
           echo "✅ JS Bundle 打包完成"
 
-      - name: Setup Gradle
+      - name: ⚙️ Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Setup Gradle Wrapper
+      - name: 🔨 Build Release APK with Gradle
         run: |
-          echo "🚀 下载 Gradle Wrapper..."
-          mkdir -p android/gradle/wrapper
-          curl -L -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/master/gradle/wrapper/gradle-wrapper.jar
-          ls -la android/gradle/wrapper/
-
-      - name: Build APK
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: |
-          echo "🚀 直接用 Java 运行 Gradle Wrapper..."
-          
-          # 确保 JS bundle 已生成
-          mkdir -p android/app/src/main/assets
-          npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
-          
-          # 直接用 java -jar 运行 Gradle Wrapper (绕过 gradlew 脚本)
+          echo "🚀 开始 Gradle 构建..."
           cd android
-          java -jar gradle/wrapper/gradle-wrapper.jar assembleRelease --no-daemon 2>&1 
-          
-          # 检查 - 确保在正确的目录
-          echo ""
-          echo "🔍 检查 APK..."
-          echo "当前目录: $(pwd)"
-          ls -la app/build/outputs/apk/release/ 2>/dev/null && echo "✅ Release APK 找到!" || true
-          ls -la app/build/outputs/apk/debug/ 2>/dev/null && echo "✅ Debug APK 找到!" || true
-          find . -name "*.apk" -type f 2>/dev/null
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --console=plain
+          echo "✅ Gradle 构建完成"
 
-      - name: Rename APK to LingShu
+      - name: 🔍 Verify APK Signature
         run: |
-          cd android
-          # 优先使用 release，如果没有就用 debug
-          if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            cp app/build/outputs/apk/release/app-release.apk ../LingShu.apk
-            echo "✅ 使用 Release APK"
-          elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-            cp app/build/outputs/apk/debug/app-debug.apk ../LingShu.apk
-            echo "✅ 使用 Debug APK"
-          else
-            echo "❌ 未找到 APK 文件!"
-            ls -la app/build/outputs/apk/ 2>/dev/null || echo "outputs/apk 目录不存在"
-            find . -name "*.apk" -type f 2>/dev/null || echo "未找到任何 APK"
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "app-release*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ 未找到 Release APK!"
+            find android/app/build/outputs/apk -name "*.apk" -type f 2>/dev/null || true
             exit 1
           fi
-          cd ..
-          ls -la LingShu.apk
+          
+          echo "🔍 检查 APK: $APK_PATH"
+          
+          # 检查 META-INF 目录（V1 签名）
+          if unzip -l "$APK_PATH" | grep -q "META-INF/MANIFEST.MF"; then
+            echo "✅ META-INF/MANIFEST.MF 存在（V1 签名）"
+          else
+            echo "❌ 缺少 META-INF/MANIFEST.MF！签名失败。"
+            unzip -l "$APK_PATH" | head -30
+            exit 1
+          fi
+          
+          if unzip -l "$APK_PATH" | grep -q "META-INF/CERT.RSA"; then
+            echo "✅ META-INF/CERT.RSA 存在"
+          fi
+          
+          if unzip -l "$APK_PATH" | grep -q "META-INF/CERT.SF"; then
+            echo "✅ META-INF/CERT.SF 存在"
+          fi
 
-      - name: Upload APK as Artifact
+      - name: 🔑 Show SHA-256 Fingerprint
+        run: |
+          if [ -f android/app/release.keystore ]; then
+            echo "🔑 密钥库 SHA-256 指纹："
+            keytool -list -v -keystore android/app/release.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" 2>/dev/null | grep "SHA256:" | head -1
+          else
+            echo "⚠️ 未找到 release.keystore"
+          fi
+
+      - name: 📦 Rename and Upload APK
+        run: |
+          APK_PATH=$(find android/app/build/outputs/apk/release -name "app-release*.apk" | head -1)
+          cp "$APK_PATH" LingShu-signed.apk
+          echo "📦 APK 文件名: LingShu-signed.apk"
+
+      - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LingShu-apk
-          path: LingShu.apk
-          retention-days: 7
+          name: LingShu-signed-apk
+          path: LingShu-signed.apk
+          retention-days: 30
 
-      - name: Display Download Info
+      - name: 🎉 Build Summary
         run: |
           echo "============================================"
-          echo "🎉 构建成功！"
-          echo ""
-          echo "📦 APK 文件名: LingShu.apk"
-          echo "📥 请在页面顶部 Artifacts 处下载"
-          echo ""
+          echo "✅ Build successful!"
+          echo "📦 APK: LingShu-signed.apk (download from Artifacts)"
+          echo "🔑 签名: V1 (JAR) + V2 (Full APK)"
           echo "📱 安装前请先卸载旧版本"
           echo "============================================"
