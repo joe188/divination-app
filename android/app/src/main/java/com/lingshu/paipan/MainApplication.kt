@@ -3,22 +3,15 @@ package com.lingshu.paipan
 import android.app.Application
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
-import com.facebook.react.ReactPackage
 import com.facebook.react.shell.MainReactPackage
-import com.swmansion.rnscreens.ScreensPackage
-import com.th3rdwave.safeareacontext.SafeAreaContextPackage
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
 
-  override val reactNativeHost: ReactNativeHost =
+  override fun getReactNativeHost(): ReactNativeHost =
       object : ReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            listOf<ReactPackage>(
-                MainReactPackage(),
-                ScreensPackage(),
-                SafeAreaContextPackage()
-            )
+        override fun getPackages(): List<com.facebook.react.ReactPackage> =
+            listOf<com.facebook.react.ReactPackage>(MainReactPackage())
 
         override fun getJSMainModuleName(): String = "index"
 
