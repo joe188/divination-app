@@ -21,14 +21,18 @@ android {
             if (ksFile != null) {
                 storeFile file(ksFile)
             } else {
-                // 相对于 app 模块目录的路径，确保在任何工作目录下都能找到
-                def defaultKs = new File(projectDir, 'release.keystore')
-                if (!defaultKs.exists()) {
-                    // 自动生成 keystore（理论上仓库已提交，此处为兜底）
-                    println "⚠️ release.keystore 不存在，自动生成..."
+                // 优先查找根目录 release.keystore（Gitee /apks 可能从根目录运行）
+                def rootKs = rootProject.file('release.keystore')
+                def appKs = new File(projectDir, 'release.keystore')
+                def finalKs = rootKs.exists() ? rootKs : (appKs.exists() ? appKs : null)
+                
+                if (finalKs == null) {
+                    // 都不存在，自动生成到 app 目录（兜底）
+                    println "⚠️ release.keystore 不存在，自动生成到 ${projectDir}..."
+                    finalKs = new File(projectDir, 'release.keystore')
                     exec {
                         commandLine 'keytool', '-genkeypair', '-v',
-                            '-keystore', defaultKs.absolutePath,
+                            '-keystore', finalKs.absolutePath,
                             '-alias', 'lingshu-release-key',
                             '-keyalg', 'RSA', '-keysize', '2048',
                             '-validity', '10000',
@@ -37,7 +41,7 @@ android {
                             '-dname', 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'
                     }
                 }
-                storeFile defaultKs
+                storeFile finalKs
             }
             storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
             keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
@@ -89,15 +93,18 @@ afterEvaluate {
                 if (!manifestExists) {
                     println "⚠️ 未检测到 META-INF/MANIFEST.MF，V1 签名可能缺失，尝试补签..."
 
-                    // 确保 keystore 存在
+                    // 确保 keystore 存在（与 signingConfigs 逻辑一致）
                     def ksFile
                     if (project.hasProperty('storeFile')) {
                         ksFile = file(project.property('storeFile'))
                     } else {
-                        ksFile = new File(projectDir, 'release.keystore')
-                        if (!ksFile.exists()) {
-                            // 自动生成 keystore（仅当不存在时）
+                        def rootKs = rootProject.file('release.keystore')
+                        def appKs = new File(projectDir, 'release.keystore')
+                        ksFile = rootKs.exists() ? rootKs : (appKs.exists() ? appKs : null)
+                        if (ksFile == null) {
+                            // 自动生成到 app 目录
                             println "⚠️ release.keystore 不存在，自动生成..."
+                            ksFile = new File(projectDir, 'release.keystore')
                             exec {
                                 commandLine 'keytool', '-genkeypair', '-v',
                                     '-keystore', ksFile.absolutePath,
