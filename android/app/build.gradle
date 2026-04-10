@@ -17,7 +17,7 @@ android {
     signingConfigs {
         release {
             // 从 Gradle 属性读取（Gitee 流水线传入 -PstoreFile=...）
-            storeFile file(project.findProperty('storeFile') ?: 'release.keystore')
+            storeFile rootProject.file(project.findProperty('storeFile') ?: 'release.keystore')
             storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
             keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
             keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
