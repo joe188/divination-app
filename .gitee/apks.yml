@@ -1,0 +1,13 @@
+version: 1
+platform: android
+android:
+  gradle_task: assembleRelease
+  signing:
+    enabled: true
+    keystore:
+      path: android/app/release.keystore
+      alias: lingshu-release-key
+      password: Lingshu@123
+      key_password: Lingshu@123
+  cache:
+    enabled: true
