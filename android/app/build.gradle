@@ -46,3 +46,16 @@ dependencies {
     implementation project(':react-native-screens')
     implementation project(':react-native-safe-area-context')
 }
+
+// 本地环境：强制替换远程 react-native 依赖为本地 ReactAndroid（Gradle 8.2 兼容写法）
+afterEvaluate {
+    configurations.all { config ->
+        config.resolutionStrategy.dependencySubstitution { sub ->
+            all { substitution ->
+                if (substitution.requested.module == 'com.facebook.react:react-native') {
+                    substitution.useTarget project(':ReactAndroid')
+                }
+            }
+        }
+    }
+}

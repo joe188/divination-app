@@ -37,12 +37,15 @@ println "⚠️ 手动链接 RN 核心库和依赖"
 
 include ':app'
 
-// 本地环境专用：强制替换远程 react-native 为本地 ReactAndroid
-gradle.beforeProject { project ->
-    project.configurations.all { config ->
-        config.resolutionStrategy.dependencySubstitution {
-            substitute module('com.facebook.react:react-native').using project(':ReactAndroid')
-                .because '本地环境使用 ReactAndroid 源码'
+// 本地环境：在所有项目配置前设置依赖替换规则
+gradle.beforeProject { p ->
+    p.configurations?.all { cfg ->
+        cfg.resolutionStrategy?.dependencySubstitution { rule ->
+            rule.all { sub ->
+                if (sub.requested.module == 'com.facebook.react:react-native') {
+                    sub.useTarget project(':ReactAndroid')
+                }
+            }
         }
     }
 }
