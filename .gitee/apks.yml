@@ -2,7 +2,7 @@ version: 1
 platform: android
 android:
   gradle_task: assembleRelease
-  # 关键：指定输出 APK 路径，防止 Gitee 重打包破坏签名
-  output_apk: app/build/outputs/apk/release/app-release.apk
+  # 关键：指定输出 APK 路径（相对于仓库根目录，android/ 下）
+  output_apk: android/app/build/outputs/apk/release/app-release.apk
   cache:
     enabled: true
