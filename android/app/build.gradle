@@ -16,38 +16,32 @@ android {
     }
     signingConfigs {
         release {
-            // 🔑 关键：使用绝对路径 + 显式启用 V1/V2 签名
-            def ksFile = project.findProperty('storeFile')
-            if (ksFile != null) {
-                storeFile file(ksFile)
-            } else {
-                // 优先查找根目录 release.keystore（Gitee /apks 可能从根目录运行）
-                def rootKs = rootProject.file('release.keystore')
-                def appKs = new File(projectDir, 'release.keystore')
-                def finalKs = rootKs.exists() ? rootKs : (appKs.exists() ? appKs : null)
-                
-                if (finalKs == null) {
-                    // 都不存在，自动生成到 app 目录（兜底）
-                    println "⚠️ release.keystore 不存在，自动生成到 ${projectDir}..."
-                    finalKs = new File(projectDir, 'release.keystore')
-                    exec {
-                        commandLine 'keytool', '-genkeypair', '-v',
-                            '-keystore', finalKs.absolutePath,
-                            '-alias', 'lingshu-release-key',
-                            '-keyalg', 'RSA', '-keysize', '2048',
-                            '-validity', '10000',
-                            '-storepass', 'Lingshu@123',
-                            '-keypass', 'Lingshu@123',
-                            '-dname', 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'
-                    }
-                }
-                storeFile finalKs
-            }
-            storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
-            keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
-            keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
+            // 🔑 APKS 环境：必须通过 -P 参数传入 keystore 信息（由 Gitee 界面配置提供）
+            // 不允许自动生成，因为 APKS 环境无法持久化
+            def storeFileProp = project.findProperty('storeFile')
+            def storePassProp = project.findProperty('storePassword')
+            def keyAliasProp = project.findProperty('keyAlias')
+            def keyPassProp = project.findProperty('keyPassword')
 
-            // 🔑 核心修复：显式启用 V1 + V2 签名，确保生成 META-INF/MANIFEST.MF
+            if (!storeFileProp) {
+                throw new GradleException("❌ 缺少 storeFile 属性。请在 Gitee /apks 配置中上传 keystore 文件并勾选'保留签名配置'。")
+            }
+            if (!storePassProp) {
+                throw new GradleException("❌ 缺少 storePassword 属性。请在 Gitee /apks 配置中设置存储密码。")
+            }
+            if (!keyAliasProp) {
+                throw new GradleException("❌ 缺少 keyAlias 属性。请在 Gitee /apks 配置中设置密钥别名。")
+            }
+            if (!keyPassProp) {
+                throw new GradleException("❌ 缺少 keyPassword 属性。请在 Gitee /apks 配置中设置密钥密码。")
+            }
+
+            storeFile file(storeFileProp)
+            storePassword storePassProp
+            keyAlias keyAliasProp
+            keyPassword keyPassProp
+
+            // 🔑 显式启用 V1 + V2 签名，确保生成 META-INF/MANIFEST.MF
             v1SigningEnabled true
             v2SigningEnabled true
         }
@@ -67,87 +61,3 @@ dependencies {
 
 // 移除 node_modules 依赖，Gitee /apks 不执行 npm install
 // 如果有第三方库需要 apply from，在这里手动添加
-
-// 🔑 构建后签名验证与自动补签（确保 V1 签名存在）
-afterEvaluate {
-    tasks.named('assembleRelease').configure { task ->
-        task.doLast {
-            def apkDir = file("${buildDir}/outputs/apk/release/")
-            def apkFile = apkDir.listFiles()?.find { it.name.endsWith('.apk') && !it.name.contains('unsigned') && !it.name.contains('unaligned') }
-            if (apkFile && apkFile.exists()) {
-                println "🔑 检查 APK 签名: ${apkFile.name}"
-
-                // 检查 APK 是否包含 META-INF/MANIFEST.MF (V1 签名)
-                def manifestExists = false
-                exec {
-                    commandLine 'unzip', '-l', apkFile.absolutePath
-                    standardOutput = new ByteArrayOutputStream()
-                    errorOutput = new ByteArrayOutputStream()
-                    ignoreExitValue = true
-                }.with { proc ->
-                    if (proc.exitValue == 0) {
-                        manifestExists = proc.standardOutput.toString().contains('META-INF/MANIFEST.MF')
-                    }
-                }
-
-                if (!manifestExists) {
-                    println "⚠️ 未检测到 META-INF/MANIFEST.MF，V1 签名可能缺失，尝试补签..."
-
-                    // 确保 keystore 存在（与 signingConfigs 逻辑一致）
-                    def ksFile
-                    if (project.hasProperty('storeFile')) {
-                        ksFile = file(project.property('storeFile'))
-                    } else {
-                        def rootKs = rootProject.file('release.keystore')
-                        def appKs = new File(projectDir, 'release.keystore')
-                        ksFile = rootKs.exists() ? rootKs : (appKs.exists() ? appKs : null)
-                        if (ksFile == null) {
-                            // 自动生成到 app 目录
-                            println "⚠️ release.keystore 不存在，自动生成..."
-                            ksFile = new File(projectDir, 'release.keystore')
-                            exec {
-                                commandLine 'keytool', '-genkeypair', '-v',
-                                    '-keystore', ksFile.absolutePath,
-                                    '-alias', 'lingshu-release-key',
-                                    '-keyalg', 'RSA', '-keysize', '2048',
-                                    '-validity', '10000',
-                                    '-storepass', 'Lingshu@123',
-                                    '-keypass', 'Lingshu@123',
-                                    '-dname', 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'
-                            }
-                        }
-                    }
-
-                    // 使用 jarsigner 添加 V1 签名
-                    def keyAlias = project.hasProperty('keyAlias') ? project.property('keyAlias') : 'lingshu-release-key'
-                    def storePass = project.hasProperty('storePassword') ? project.property('storePassword') : 'Lingshu@123'
-                    def keyPass = project.hasProperty('keyPassword') ? project.property('keyPassword') : 'Lingshu@123'
-
-                    println "🔑 使用 jarsigner 添加 V1 签名..."
-                    exec {
-                        commandLine 'jarsigner',
-                            '-verbose',
-                            '-sigalg', 'SHA256withRSA',
-                            '-digestalg', 'SHA-256',
-                            '-keystore', ksFile.absolutePath,
-                            '-storepass', storePass,
-                            '-keypass', keyPass,
-                            apkFile.absolutePath,
-                            keyAlias
-                    }
-
-                    // 验证签名
-                    println "🔑 验证 APK 签名..."
-                    exec {
-                        commandLine 'jarsigner', '-verify', apkFile.absolutePath
-                    }
-                    println "✅ V1 签名已添加并验证"
-                } else {
-                    println "✅ APK 已包含 V1 签名 (META-INF/MANIFEST.MF)"
-                }
-            } else {
-                println "❌ 未找到生成的 APK 文件"
-            }
-        }
-    }
-}
