@@ -19,7 +19,11 @@ android {
             // 🔑 优先使用 APKS 注入的 storeFile 参数，然后 fallback 到已知路径
             // ✅ 直接使用仓库中的 keystore 文件，不依赖 APKS 注入
             def _ks = file('release.keystore')  // 相对于 android/app/ 目录
+            println "🔑 [SIGNING] Looking for keystore at: ${_ks.absolutePath}"
+            println "🔑 [SIGNING] Keystore exists: ${_ks.exists()}"
             if (!_ks.exists()) {
+                println "🔑 [SIGNING] Listing android/app directory:"
+                file('.').eachFile { f -> println "  - ${f.name}" }
                 throw new GradleException("❌ Release keystore not found at: android/app/release.keystore\n" +
                     "Please ensure the file is committed to the repository.")
             }
@@ -28,6 +32,25 @@ android {
             storePassword 'Lingshu@123'
             keyAlias 'lingshu-release-key'
             keyPassword 'Lingshu@123'
+
+            println "✅ [SIGNING] Keystore configured: ${_ks.name}"
+            // 列出 keystore 中的别名，确认别名正确
+            try {
+                def output = new ByteArrayOutputStream()
+                exec {
+                    commandLine 'keytool', '-list', '-v', '-keystore', _ks.absolutePath, '-storepass', 'Lingshu@123'
+                    standardOutput = output
+                    errorOutput = new ByteArrayOutputStream()
+                    ignoreExitValue = true
+                }
+                output.toString().eachLine { line ->
+                    if (line.contains('Alias name:')) {
+                        println "   🔖 ${line.trim()}"
+                    }
+                }
+            } catch (e) {
+                println "⚠️  Could not list keystore aliases: ${e.message}"
+            }
         }
     }
     buildTypes {
