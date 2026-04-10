@@ -44,3 +44,8 @@ dependencies {
         implementation 'com.facebook.react:hermes-android:+'
     }
 }
+
+// 临时关闭 codegen，测试构建是否通过
+project.ext.react = [
+    enableCodegen: false
+]
