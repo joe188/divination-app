@@ -44,8 +44,3 @@ dependencies {
         implementation 'com.facebook.react:hermes-android:+'
     }
 }
-
-// React Native 配置
-react {
-    entryFile = "index.js"
-}
