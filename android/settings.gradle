@@ -1,6 +1,24 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        gradlePluginPortal()
+        maven { url '../node_modules/@react-native/gradle-plugin' }
+    }
+    // 包含 gradle-plugin 作为 build
+    includeBuild('../node_modules/@react-native/gradle-plugin')
+}
+
 rootProject.name = 'DivinationApp'
 
-// 使用 RN autolink（标准方式）
-apply from: file("../node_modules/react-native/react.gradle")
+ext {
+    buildToolsVersion = "34.0.0"
+    minSdkVersion = 24
+    compileSdkVersion = 34
+    targetSdkVersion = 34
+    ndkVersion = "25.1.8937393"
+    kotlinVersion = "1.7.22"
+}
 
 include ':app'
