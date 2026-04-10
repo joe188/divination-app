@@ -1,7 +1,5 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
-// 传统方式：直接加载 react.gradle
-apply from: file("../../node_modules/react-native/react.gradle")
 
 android {
     namespace "com.lingshu.paipan"
@@ -38,5 +36,5 @@ dependencies {
     implementation 'com.facebook.react:react-android:0.73.0'
 }
 
-apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-applyNativeModulesAppBuildGradle(project)
+// 移除 node_modules 依赖，Gitee /apks 不执行 npm install
+// 如果有第三方库需要 apply from，在这里手动添加
