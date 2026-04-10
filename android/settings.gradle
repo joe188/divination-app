@@ -1,5 +1,8 @@
 rootProject.name = 'DivinationApp'
 
+// 启用 React Native autolink（确保库正确链接）
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+
 ext {
     buildToolsVersion = "34.0.0"
     minSdkVersion = 24
@@ -9,5 +12,5 @@ ext {
     kotlinVersion = "1.7.22"
 }
 
-println "⚠️ 已移除对 node_modules 的依赖，使用手动 app 模块配置"
+println "⚠️ 已启用 RN autolink"
 include ':app'
