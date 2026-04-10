@@ -63,3 +63,84 @@ dependencies {
 
 // 移除 node_modules 依赖，Gitee /apks 不执行 npm install
 // 如果有第三方库需要 apply from，在这里手动添加
+
+// 🔑 构建后签名验证与自动补签（确保 V1 签名存在）
+afterEvaluate {
+    tasks.named('assembleRelease').configure { task ->
+        task.doLast {
+            def apkDir = file("${buildDir}/outputs/apk/release/")
+            def apkFile = apkDir.listFiles()?.find { it.name.endsWith('.apk') && !it.name.contains('unsigned') && !it.name.contains('unaligned') }
+            if (apkFile && apkFile.exists()) {
+                println "🔑 检查 APK 签名: ${apkFile.name}"
+
+                // 检查 APK 是否包含 META-INF/MANIFEST.MF (V1 签名)
+                def manifestExists = false
+                exec {
+                    commandLine 'unzip', '-l', apkFile.absolutePath
+                    standardOutput = new ByteArrayOutputStream()
+                    errorOutput = new ByteArrayOutputStream()
+                    ignoreExitValue = true
+                }.with { proc ->
+                    if (proc.exitValue == 0) {
+                        manifestExists = proc.standardOutput.toString().contains('META-INF/MANIFEST.MF')
+                    }
+                }
+
+                if (!manifestExists) {
+                    println "⚠️ 未检测到 META-INF/MANIFEST.MF，V1 签名可能缺失，尝试补签..."
+
+                    // 确保 keystore 存在
+                    def ksFile
+                    if (project.hasProperty('storeFile')) {
+                        ksFile = file(project.property('storeFile'))
+                    } else {
+                        ksFile = new File(projectDir, 'release.keystore')
+                        if (!ksFile.exists()) {
+                            // 自动生成 keystore（仅当不存在时）
+                            println "⚠️ release.keystore 不存在，自动生成..."
+                            exec {
+                                commandLine 'keytool', '-genkeypair', '-v',
+                                    '-keystore', ksFile.absolutePath,
+                                    '-alias', 'lingshu-release-key',
+                                    '-keyalg', 'RSA', '-keysize', '2048',
+                                    '-validity', '10000',
+                                    '-storepass', 'Lingshu@123',
+                                    '-keypass', 'Lingshu@123',
+                                    '-dname', 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'
+                            }
+                        }
+                    }
+
+                    // 使用 jarsigner 添加 V1 签名
+                    def keyAlias = project.hasProperty('keyAlias') ? project.property('keyAlias') : 'lingshu-release-key'
+                    def storePass = project.hasProperty('storePassword') ? project.property('storePassword') : 'Lingshu@123'
+                    def keyPass = project.hasProperty('keyPassword') ? project.property('keyPassword') : 'Lingshu@123'
+
+                    println "🔑 使用 jarsigner 添加 V1 签名..."
+                    exec {
+                        commandLine 'jarsigner',
+                            '-verbose',
+                            '-sigalg', 'SHA256withRSA',
+                            '-digestalg', 'SHA-256',
+                            '-keystore', ksFile.absolutePath,
+                            '-storepass', storePass,
+                            '-keypass', keyPass,
+                            apkFile.absolutePath,
+                            keyAlias
+                    }
+
+                    // 验证签名
+                    println "🔑 验证 APK 签名..."
+                    exec {
+                        commandLine 'jarsigner', '-verify', apkFile.absolutePath
+                    }
+                    println "✅ V1 签名已添加并验证"
+                } else {
+                    println "✅ APK 已包含 V1 签名 (META-INF/MANIFEST.MF)"
+                }
+            } else {
+                println "❌ 未找到生成的 APK 文件"
+            }
+        }
+    }
+}
