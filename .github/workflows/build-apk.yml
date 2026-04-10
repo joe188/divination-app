@@ -32,13 +32,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: 🔍 Verify Java version
+        run: |
+          echo "🔍 JAVA_HOME: $JAVA_HOME"
+          java -version
+          "${JAVA_HOME}/bin/keytool" -version
+
       - name: 🔐 Decode and place keystore
         run: |
           echo "🔑 正在解码 keystore..."
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
           chmod 600 android/app/release.keystore
           ls -la android/app/release.keystore
-          echo "✅ Keystore 已就绪"
 
       - name: 🧱 Build React Native Bundle
         run: |
@@ -90,7 +95,7 @@ jobs:
         run: |
           if [ -f android/app/release.keystore ]; then
             echo "🔑 密钥库 SHA-256 指纹："
-            keytool -list -v -keystore android/app/release.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" 2>/dev/null | grep "SHA256:" | head -1
+            "${JAVA_HOME}/bin/keytool" -list -v -keystore android/app/release.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" 2>/dev/null | grep "SHA256:" | head -1
           else
             echo "⚠️ 未找到 release.keystore"
           fi
