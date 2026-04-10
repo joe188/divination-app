@@ -10,8 +10,8 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost =
       object : ReactNativeHost(this) {
         override fun getJSMainModuleName(): String = "index"
-
         override fun getUseDeveloperSupport(): Boolean = false
+        override fun getPackages(): List<ReactPackage> = emptyList()
       }
 
   override fun onCreate() {
