@@ -64,7 +64,6 @@ stages:
          else
            npm install --legacy-peer-deps
          fi
-         npm audit --audit-level=high || true
 
      - step: shell@bash
        name: build_apk
@@ -72,20 +71,16 @@ stages:
        run: |
          cd /root/workspace/joelinfo/divination-apk/android
 
-         # ==============================================
-         # 🔥 终极修复：直接新建 gradlew，永不丢失
-         # ==============================================
-         echo "🔧 自动重建 gradlew 脚本（CI 专用）"
-         cat > gradlew << 'EOF'
+         # ==========================================
+         # 🔥 强制创建 gradlew（永远不会丢失）
+         # ==========================================
+         cat > gradlew <<'EOF'
  #!/bin/sh
  DIR=$(dirname "$0")
- exec java \
- -Dfile.encoding=UTF-8 \
- -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
+ exec java -Dfile.encoding=UTF-8 -jar "$DIR/gradle/wrapper/gradle-wrapper.jar" "$@"
  EOF
          chmod +x gradlew
 
-         echo "🔨 开始构建 APK..."
          ./gradlew clean assembleRelease \
            -PstoreFile=${RELEASE_KEY} \
            -PstorePassword=${STORE_PASSWORD} \
@@ -99,9 +94,9 @@ stages:
        run: |
          APK="/root/workspace/joelinfo/divination-apk/android/app/build/outputs/apk/release/app-release.apk"
          if [ -f "$APK" ]; then
-           echo "✅ APK 存在: $(ls -lh $APK)"
+           echo "✅ APK 构建成功: $(ls -lh $APK)"
          else
-           echo "❌ APK 未生成"
+           echo "❌ APK 构建失败"
            exit 1
          fi
 
