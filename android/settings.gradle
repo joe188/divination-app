@@ -9,6 +9,8 @@ ext {
 }
 rootProject.name = 'DivinationApp'
 
-// 不再依赖 node_modules 中的 native_modules.gradle，手动声明 app 模块
-println "⚠️ 已移除对 node_modules 的依赖，使用手动 app 模块配置"
+// 启用 React Native autolink
+apply from: file("../node_modules/react-native/react.gradle")
+
+// 手动声明 app 模块
 include ':app'
