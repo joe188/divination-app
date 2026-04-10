@@ -11,6 +11,7 @@ ext {
     kotlinVersion = "1.7.22"  // RN 0.72.7 必须用 1.7.22
 }
 rootProject.name = 'DivinationApp'
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-applyNativeModulesSettingsGradle(settings)
+
+// 不再依赖 node_modules 中的 native_modules.gradle，手动声明 app 模块
+println "⚠️ 已移除对 node_modules 的依赖，使用手动 app 模块配置"
 include ':app'
