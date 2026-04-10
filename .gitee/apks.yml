@@ -4,9 +4,10 @@ android:
   gradle_task: assembleRelease
   signing:
     enabled: true
-    storeFile: android/app/release.keystore
-    storePassword: Lingshu@123
-    keyAlias: lingshu-release-key
-    keyPassword: Lingshu@123
+    keystore:
+      path: android/app/release.keystore
+      alias: lingshu-release-key
+      password: Lingshu@123
+      key_password: Lingshu@123
   cache:
     enabled: true

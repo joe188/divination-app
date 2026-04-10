@@ -16,24 +16,34 @@ android {
     }
     signingConfigs {
         release {
-            // 🔑 智能查找 keystore：优先 APKS 注入路径，fallback 到本地路径
-            def _apksPath = '/workspace/android/app/release.keystore'
-            def _localPath = 'release.keystore'  // 相对于 android/app/ 目录
-            def _ks = file(_apksPath)
-            if (!_ks.exists()) {
-                _ks = file(_localPath)
+            // 🔑 优先使用 APKS 注入的 storeFile 参数，然后 fallback 到已知路径
+            def _propStoreFile = project.findProperty('storeFile')
+            def _ks
+            if (_propStoreFile) {
+                _ks = file(_propStoreFile)
+            } else {
+                // APKS 可能直接复制到标准路径
+                def _apksPath = '/workspace/android/app/release.keystore'
+                def _localPath = 'release.keystore'  // 相对于 android/app/
+                _ks = file(_apksPath)
+                if (!_ks.exists()) {
+                    _ks = file(_localPath)
+                }
             }
             if (!_ks.exists()) {
-                throw new GradleException("❌ Release keystore not found at:\n" +
-                    "  1. ${_apksPath} (APKS injected)\n" +
-                    "  2. ${_localPath} (relative to android/app/)\n" +
-                    "Please ensure 'release.keystore' is committed to the repo in android/app/.")
+                throw new GradleException("❌ Release keystore not found.\n" +
+                    "Checked:\n" +
+                    "  - storeFile property: ${_propStoreFile}\n" +
+                    "  - /workspace/android/app/release.keystore\n" +
+                    "  - release.keystore (relative to android/app/)\n" +
+                    "Please ensure keystore is committed and APKS signing is configured.")
             }
 
             storeFile _ks
-            storePassword 'Lingshu@123'
-            keyAlias 'lingshu-release-key'
-            keyPassword 'Lingshu@123'
+            // 优先使用注入的密码/别名，否则用默认值
+            storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
+            keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
+            keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
         }
     }
     buildTypes {
