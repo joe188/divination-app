@@ -5,6 +5,8 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
 import com.facebook.react.shell.MainReactPackage
+import com.swmansion.rnscreens.ScreensPackage
+import com.th3rdwave.safeareacontext.SafeAreaContextPackage
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -12,7 +14,11 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost =
       object : ReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
-            listOf<ReactPackage>(MainReactPackage())
+            listOf<ReactPackage>(
+                MainReactPackage(),
+                ScreensPackage(),
+                SafeAreaContextPackage()
+            )
 
         override fun getJSMainModuleName(): String = "index"
 
