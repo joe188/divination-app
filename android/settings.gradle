@@ -6,7 +6,6 @@ pluginManagement {
         gradlePluginPortal()
         maven { url '../node_modules/@react-native/gradle-plugin' }
     }
-    // 包含 gradle-plugin 作为 build
     includeBuild('../node_modules/@react-native/gradle-plugin')
 }
 
@@ -20,5 +19,8 @@ ext {
     ndkVersion = "25.1.8937393"
     kotlinVersion = "1.7.22"
 }
+
+// 👇 关键：启用 RN autolink，让 react-native-screens 等库自动链接
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 
 include ':app'
