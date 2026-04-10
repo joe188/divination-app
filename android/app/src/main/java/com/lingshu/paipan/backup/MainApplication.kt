@@ -1,10 +1,10 @@
 package com.lingshu.paipan
 
 import android.app.Application
-import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
 import com.facebook.react.ReactNativeHost
 import com.facebook.react.ReactPackage
+import com.facebook.react.shell.MainReactPackage
 import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
@@ -12,7 +12,7 @@ class MainApplication : Application(), ReactApplication {
   override val reactNativeHost: ReactNativeHost =
       object : ReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages
+            listOf<ReactPackage>(MainReactPackage())
 
         override fun getJSMainModuleName(): String = "index"
 
