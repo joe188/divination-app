@@ -17,21 +17,20 @@ android {
     signingConfigs {
         release {
             // 🔑 智能查找 keystore：优先 APKS 注入路径，fallback 到本地路径
-            def keystorePath = '/workspace/android/app/release.keystore'
-            def localKeystorePath = 'android/app/release.keystore'
-
-            File keystoreFile = file(keystorePath)
-            if (!keystoreFile.exists()) {
-                keystoreFile = file(localKeystorePath)
-                if (!keystoreFile.exists()) {
-                    throw new GradleException("❌ Release keystore not found at:\n" +
-                        "  1. ${keystorePath} (APKS injected)\n" +
-                        "  2. ${localKeystorePath} (local)\n" +
-                        "Please ensure 'release.keystore' is committed to the repo.")
-                }
+            def _apksPath = '/workspace/android/app/release.keystore'
+            def _localPath = 'android/app/release.keystore'
+            def _ks = file(_apksPath)
+            if (!_ks.exists()) {
+                _ks = file(_localPath)
+            }
+            if (!_ks.exists()) {
+                throw new GradleException("❌ Release keystore not found at:\n" +
+                    "  1. ${_apksPath}\n" +
+                    "  2. ${_localPath}\n" +
+                    "Please ensure 'release.keystore' is committed to the repo.")
             }
 
-            storeFile keystoreFile
+            storeFile _ks
             storePassword 'Lingshu@123'
             keyAlias 'lingshu-release-key'
             keyPassword 'Lingshu@123'
