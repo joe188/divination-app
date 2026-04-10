@@ -1,51 +1,6 @@
-pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
-        gradlePluginPortal()
-        maven { url '../node_modules/@react-native/gradle-plugin' }
-    }
-    plugins {
-        id 'com.facebook.react' version '0.73.0'
-    }
-}
-
 rootProject.name = 'DivinationApp'
 
-ext {
-    buildToolsVersion = "34.0.0"
-    minSdkVersion = 24
-    compileSdkVersion = 34
-    targetSdkVersion = 34
-    ndkVersion = "25.1.8937393"
-    kotlinVersion = "1.7.22"
-}
-
-// 手动包含 React Native 核心库
-include ':ReactAndroid'
-project(':ReactAndroid').projectDir = new File(rootProject.projectDir, '../node_modules/react-native/ReactAndroid')
-
-// 手动包含 react-native-screens 和 safe-area-context
-include ':react-native-screens'
-project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
-
-include ':react-native-safe-area-context'
-project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
-
-println "⚠️ 手动链接 RN 核心库和依赖"
+// 使用 RN autolink（标准方式）
+apply from: file("../node_modules/react-native/react.gradle")
 
 include ':app'
-
-// 本地环境：在所有项目配置前设置依赖替换规则
-gradle.beforeProject { p ->
-    p.configurations?.all { cfg ->
-        cfg.resolutionStrategy?.dependencySubstitution { rule ->
-            rule.all { sub ->
-                if (sub.requested.module == 'com.facebook.react:react-native') {
-                    sub.useTarget project(':ReactAndroid')
-                }
-            }
-        }
-    }
-}
