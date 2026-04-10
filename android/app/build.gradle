@@ -16,11 +16,36 @@ android {
     }
     signingConfigs {
         release {
-            // 从 Gradle 属性读取（Gitee 流水线传入 -PstoreFile=...）
-            storeFile rootProject.file(project.findProperty('storeFile') ?: 'release.keystore')
+            // 🔑 关键：使用绝对路径 + 显式启用 V1/V2 签名
+            def ksFile = project.findProperty('storeFile')
+            if (ksFile != null) {
+                storeFile file(ksFile)
+            } else {
+                // 相对于 app 模块目录的路径，确保在任何工作目录下都能找到
+                def defaultKs = new File(projectDir, 'release.keystore')
+                if (!defaultKs.exists()) {
+                    // 自动生成 keystore（理论上仓库已提交，此处为兜底）
+                    println "⚠️ release.keystore 不存在，自动生成..."
+                    exec {
+                        commandLine 'keytool', '-genkeypair', '-v',
+                            '-keystore', defaultKs.absolutePath,
+                            '-alias', 'lingshu-release-key',
+                            '-keyalg', 'RSA', '-keysize', '2048',
+                            '-validity', '10000',
+                            '-storepass', 'Lingshu@123',
+                            '-keypass', 'Lingshu@123',
+                            '-dname', 'CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown'
+                    }
+                }
+                storeFile defaultKs
+            }
             storePassword project.findProperty('storePassword') ?: 'Lingshu@123'
             keyAlias project.findProperty('keyAlias') ?: 'lingshu-release-key'
             keyPassword project.findProperty('keyPassword') ?: 'Lingshu@123'
+
+            // 🔑 核心修复：显式启用 V1 + V2 签名，确保生成 META-INF/MANIFEST.MF
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
     buildTypes {
