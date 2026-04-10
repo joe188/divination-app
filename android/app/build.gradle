@@ -36,11 +36,13 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-android:0.73.0'
+    // React Android 核心库
+    implementation project(':ReactAndroid')
+    // Hermes 引擎
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:0.73.0'
     }
-    // 手动链接 react-native-screens 和 safe-area-context
+    // 手动链接的库
     implementation project(':react-native-screens')
     implementation project(':react-native-safe-area-context')
 }

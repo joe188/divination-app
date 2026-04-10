@@ -9,6 +9,10 @@ ext {
     kotlinVersion = "1.7.22"
 }
 
+// 手动包含 React Native 核心库
+include ':ReactAndroid'
+project(':ReactAndroid').projectDir = new File(rootProject.projectDir, '../node_modules/react-native/ReactAndroid')
+
 // 手动包含 react-native-screens 和 safe-area-context
 include ':react-native-screens'
 project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
@@ -16,5 +20,5 @@ project(':react-native-screens').projectDir = new File(rootProject.projectDir, '
 include ':react-native-safe-area-context'
 project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
 
-println "⚠️ 手动链接 RN 库"
+println "⚠️ 手动链接 RN 核心库和依赖"
 include ':app'
