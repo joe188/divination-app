@@ -1,8 +1,5 @@
 rootProject.name = 'DivinationApp'
 
-// 启用 React Native autolink（确保库正确链接）
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-
 ext {
     buildToolsVersion = "34.0.0"
     minSdkVersion = 24
@@ -12,5 +9,12 @@ ext {
     kotlinVersion = "1.7.22"
 }
 
-println "⚠️ 已启用 RN autolink"
+// 手动包含 react-native-screens 和 safe-area-context
+include ':react-native-screens'
+project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
+
+include ':react-native-safe-area-context'
+project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
+
+println "⚠️ 手动链接 RN 库"
 include ':app'
