@@ -1,3 +1,16 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        gradlePluginPortal()
+        maven { url '../node_modules/@react-native/gradle-plugin' }
+    }
+    plugins {
+        id 'com.facebook.react' version '0.73.0'
+    }
+}
+
 rootProject.name = 'DivinationApp'
 
 ext {
@@ -21,4 +34,15 @@ include ':react-native-safe-area-context'
 project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
 
 println "⚠️ 手动链接 RN 核心库和依赖"
+
 include ':app'
+
+// 本地环境专用：强制替换远程 react-native 为本地 ReactAndroid
+gradle.beforeProject { project ->
+    project.configurations.all { config ->
+        config.resolutionStrategy.dependencySubstitution {
+            substitute module('com.facebook.react:react-native').using project(':ReactAndroid')
+                .because '本地环境使用 ReactAndroid 源码'
+        }
+    }
+}
