@@ -2,5 +2,11 @@ version: 1
 platform: android
 android:
   gradle_task: assembleRelease
+  signing:
+    enabled: true
+    storeFile: android/app/release.keystore
+    storePassword: Lingshu@123
+    keyAlias: lingshu-release-key
+    keyPassword: Lingshu@123
   cache:
     enabled: true
