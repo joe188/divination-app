@@ -1,17 +1,16 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
-apply plugin: "com.facebook.react"
 
 android {
     namespace "com.lingshu.paipan"
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-    ndkVersion rootProject.ext.ndkVersion
+    compileSdkVersion 34
+    buildToolsVersion "34.0.0"
+    ndkVersion "25.1.8937393"
 
     defaultConfig {
         applicationId "com.lingshu.paipan"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 2
         versionName "1.2.2"
         ndk {
@@ -55,8 +54,4 @@ dependencies {
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:+'
     }
-}
-
-react {
-    entryFile = file('../../index.js')
 }

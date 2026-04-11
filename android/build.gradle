@@ -1,4 +1,3 @@
-// 顶层构建文件（必需）
 buildscript {
     ext {
         buildToolsVersion = "34.0.0"
@@ -16,12 +15,13 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.4.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath("com.facebook.react:react-native-gradle-plugin")
     }
 }
 
 allprojects {
     repositories {
-        mavenLocal() // 👈 加上本地 Maven 仓库
+        mavenLocal()
         google()
         mavenCentral()
         maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }

@@ -11,22 +11,22 @@ import com.facebook.soloader.SoLoader
 
 class MainApplication : Application(), ReactApplication {
 
-  override fun getReactNativeHost(): ReactNativeHost =
-      object : ReactNativeHost(this) {
-        override fun getPackages(): List<ReactPackage> =
-            listOf<ReactPackage>(
-                MainReactPackage(),
-                ScreensPackage(),
-                SafeAreaContextPackage()
-            )
+    override fun getReactNativeHost(): ReactNativeHost =
+        object : ReactNativeHost(this) {
+            override fun getPackages(): List<ReactPackage> =
+                listOf<ReactPackage>(
+                    MainReactPackage(),
+                    ScreensPackage(),
+                    SafeAreaContextPackage()
+                )
 
-        override fun getJSMainModuleName(): String = "index"
+            override fun getJSMainModuleName(): String = "index"
 
-        override fun getUseDeveloperSupport(): Boolean = false
-      }
+            override fun getUseDeveloperSupport(): Boolean = false
+        }
 
-  override fun onCreate() {
-    super.onCreate()
-    SoLoader.init(this, false)
-  }
+    override fun onCreate() {
+        super.onCreate()
+        SoLoader.init(this, false)
+    }
 }
