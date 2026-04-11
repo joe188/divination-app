@@ -19,15 +19,6 @@ android {
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
-        // 兼容 RN autolink 时需要关联 node_modules
-        sourceSets {
-            main {
-                java.srcDirs = ['src/main/java', '../../node_modules/react-native-screens/android/src/main/java', '../../node_modules/react-native-safe-area-context/android/src/main/java']
-                jniLibs.srcDir '../../node_modules/react-native-screens/android/src/main/jniLibs'
-                jniLibs.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/jniLibs'
-                // 资源由 RN autolink 自动合并，**不要**手动添加 res.srcDirs！
-            }
-        }
     }
 
     signingConfigs {
@@ -47,6 +38,14 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 }
 
