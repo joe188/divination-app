@@ -40,6 +40,9 @@ android {
 
 dependencies {
     implementation 'com.facebook.react:react-native:+'
+    // 👇 关键：添加编译期依赖，让 Kotlin 能找到类
+    implementation project(':react-native-screens')
+    implementation project(':react-native-safe-area-context')
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:+'
     }

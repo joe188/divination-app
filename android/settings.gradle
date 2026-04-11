@@ -17,7 +17,14 @@ ext {
     compileSdkVersion = 34
     targetSdkVersion = 34
     ndkVersion = "25.1.8937393"
-    kotlinVersion = "1.7.22"
+    kotlinVersion = "1.9.22"  // ✅ 升级 Kotlin 到 1.9+
 }
+
+// 👇 手动 include 原生模块（提供编译期 classpath）
+include ':react-native-screens'
+project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
+
+include ':react-native-safe-area-context'
+project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
 
 include ':app'
