@@ -9,13 +9,13 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="LiuYao" component={LiuYaoScreen} />
-        <Stack.Screen name="BaZiInput" component={BaZiInputScreen} />
-        <Stack.Screen name="QiMen" component={QiMenScreen} />
-        <Stack.Screen name="History" component={HistoryScreen} />
-        <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen} />
-        <Stack.Screen name="Result" component={ResultScreen} />
+        <Stack.Screen name="Home" component={HomeScreen as any} />
+        <Stack.Screen name="LiuYao" component={LiuYaoScreen as any} />
+        <Stack.Screen name="BaZiInput" component={BaZiInputScreen as any} />
+        <Stack.Screen name="QiMen" component={QiMenScreen as any} />
+        <Stack.Screen name="History" component={HistoryScreen as any} />
+        <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen as any} />
+        <Stack.Screen name="Result" component={ResultScreen as any} />
       </Stack.Navigator>
     </NavigationContainer>
   );

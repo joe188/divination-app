@@ -69,11 +69,6 @@ export const GuochaoInput: React.FC<GuochaoInputProps> = ({
     }).start();
   };
 
-  const borderColor = focusAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.gray[300], colors.cinnabarRed],
-  });
-
   return (
     <View style={[styles.container, style]}>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -82,7 +77,7 @@ export const GuochaoInput: React.FC<GuochaoInputProps> = ({
         style={[
           styles.inputContainer,
           { 
-            borderColor: isFocused ? colors.cinnabarRed : colors.gray[300],
+            borderColor: colors.gray[300] as any,
           },
           error && styles.error,
           disabled && styles.disabled,

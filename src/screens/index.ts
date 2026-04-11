@@ -6,6 +6,7 @@ export { HomeScreen } from './HomeScreen';
 export { BaZiInputScreen } from './BaZiInputScreen';
 export { ResultScreen } from './ResultScreen';
 export { LiuYaoScreen } from './LiuYaoScreen';
-export { QiMenScreen } from './QiMenScreen';
+import QiMenScreen from './QiMenScreen';
+export { QiMenScreen };
 export { HistoryScreen } from './HistoryScreen';
 export { HistoryDetailScreen } from './HistoryDetailScreen';

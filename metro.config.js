@@ -1,11 +1,12 @@
 const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('metro-config').MetroConfig}
- */
-const config = {};
+const defaultConfig = getDefaultConfig(__dirname);
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+const config = {
+  resolver: {
+    // 保持默认的 sourceExts（包含 json），只添加 ts/tsx
+    sourceExts: [...defaultConfig.resolver.sourceExts, 'ts', 'tsx'],
+  },
+};
+
+module.exports = mergeConfig(defaultConfig, config);

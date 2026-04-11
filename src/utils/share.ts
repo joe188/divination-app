@@ -12,8 +12,10 @@ export interface ShareOptions {
 /**
  * 分享排盘结果（暂存 stub）
  */
+import { Alert } from 'react-native';
+
 export const shareDivinationResult = async () => {
-  alert('分享功能开发中，敬请期待！');
+  Alert.alert('提示', '分享功能开发中，敬请期待！');
 };
 
 /**

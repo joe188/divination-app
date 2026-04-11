@@ -1,7 +1,6 @@
-plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-}
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "com.facebook.react"
 
 android {
     namespace "com.lingshu.paipan"
@@ -46,19 +45,6 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
-    // 👇 修正：sourceSets 必须在 android 层级，而不是 defaultConfig 内部
-    sourceSets {
-        main {
-            java.srcDirs = [
-                'src/main/java',
-                '../../node_modules/react-native-screens/android/src/main/java',
-                '../../node_modules/react-native-safe-area-context/android/src/main/java'
-            ]
-            jniLibs.srcDir '../../node_modules/react-native-screens/android/src/main/jniLibs'
-            jniLibs.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/jniLibs'
-        }
-    }
 }
 
 dependencies {
@@ -66,12 +52,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
     implementation 'com.google.android.material:material:1.9.0'
-    if (project.hasProperty('hermesEnabled') && project.hermesEnabled.toBoolean()) {
+    if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:+'
     }
 }
 
-repositories {
-    maven { url 'https://maven.google.com' }
-    mavenCentral()
+react {
+    entryFile = file('../../index.js')
 }

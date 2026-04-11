@@ -5,18 +5,18 @@
 
 // 节气数据（简化版：24 节气对应日期范围，实际需按太阳黄经计算）
 const jieqiTable: Record<string, { month: number; day: number; solarTerm: string }> = {
-  '立春': { month: 2, day: 4 }, '雨水': { month: 2, day: 19 },
-  '惊蛰': { month: 3, day: 6 }, '春分': { month: 3, day: 21 },
-  '清明': { month: 4, day: 5 }, '谷雨': { month: 4, day: 20 },
-  '立夏': { month: 5, day: 6 }, '小满': { month: 5, day: 21 },
-  '芒种': { month: 6, day: 6 }, '夏至': { month: 6, day: 22 },
-  '小暑': { month: 7, day: 7 }, '大暑': { month: 7, day: 23 },
-  '立秋': { month: 8, day: 8 }, '处暑': { month: 8, day: 23 },
-  '白露': { month: 9, day: 8 }, '秋分': { month: 9, day: 23 },
-  '寒露': { month: 10, day: 8 }, '霜降': { month: 10, day: 24 },
-  '立冬': { month: 11, day: 7 }, '小雪': { month: 11, day: 22 },
-  '大雪': { month: 12, day: 7 }, '冬至': { month: 12, day: 22 },
-  '小寒': { month: 1, day: 6 }, '大寒': { month: 1, day: 20 },
+  '立春': { month: 2, day: 4, solarTerm: '立春' }, '雨水': { month: 2, day: 19, solarTerm: '雨水' },
+  '惊蛰': { month: 3, day: 6, solarTerm: '惊蛰' }, '春分': { month: 3, day: 21, solarTerm: '春分' },
+  '清明': { month: 4, day: 5, solarTerm: '清明' }, '谷雨': { month: 4, day: 20, solarTerm: '谷雨' },
+  '立夏': { month: 5, day: 6, solarTerm: '立夏' }, '小满': { month: 5, day: 21, solarTerm: '小满' },
+  '芒种': { month: 6, day: 6, solarTerm: '芒种' }, '夏至': { month: 6, day: 22, solarTerm: '夏至' },
+  '小暑': { month: 7, day: 7, solarTerm: '小暑' }, '大暑': { month: 7, day: 23, solarTerm: '大暑' },
+  '立秋': { month: 8, day: 8, solarTerm: '立秋' }, '处暑': { month: 8, day: 23, solarTerm: '处暑' },
+  '白露': { month: 9, day: 8, solarTerm: '白露' }, '秋分': { month: 9, day: 23, solarTerm: '秋分' },
+  '寒露': { month: 10, day: 8, solarTerm: '寒露' }, '霜降': { month: 10, day: 24, solarTerm: '霜降' },
+  '立冬': { month: 11, day: 7, solarTerm: '立冬' }, '小雪': { month: 11, day: 22, solarTerm: '小雪' },
+  '大雪': { month: 12, day: 7, solarTerm: '大雪' }, '冬至': { month: 12, day: 22, solarTerm: '冬至' },
+  '小寒': { month: 1, day: 6, solarTerm: '小寒' }, '大寒': { month: 1, day: 20, solarTerm: '大寒' },
 };
 
 // 天干

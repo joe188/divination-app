@@ -19,7 +19,7 @@ export interface Hexagram {
 export interface LineText {
   position: number; // 1-6，从下往上
   content: string; // 爻辞
-  nineOrSix: '九' | '六'; // 阳爻(九)或阴爻(六)
+  nineOrSix: string; // 阳爻(九)或阴爻(六)，包括'九五','上九'等
 }
 
 // 简化版：前 8 卦数据
@@ -100,8 +100,8 @@ export const hexagramData: Hexagram[] = [
       { position: 2, nineOrSix: '九', content: '九二：需于沙，小有言，终吉。' },
       { position: 3, nineOrSix: '九', content: '九三：需于泥，致寇至。' },
       { position: 4, nineOrSix: '六', content: '六四：需于血，出自穴。' },
-      { position: 5, nineOrSix: '九五', content: '九五：需于酒食，贞吉。' },
-      { position: 6, nineOrSix: '上六', content: '上六：入于穴，有不速之客三人来，敬之终吉。' },
+      { position: 5, nineOrSix: '九', content: '九五：需于酒食，贞吉。' },
+      { position: 6, nineOrSix: '六', content: '上六：入于穴，有不速之客三人来，敬之终吉。' },
     ],
   },
   {
@@ -116,8 +116,8 @@ export const hexagramData: Hexagram[] = [
       { position: 2, nineOrSix: '九', content: '九二：不克讼，归而逋，其邑人三百户无眚。' },
       { position: 3, nineOrSix: '六', content: '六三：食旧德，贞厉，终吉。或从王事，无成。' },
       { position: 4, nineOrSix: '九', content: '九四：不克讼，复即命渝，安贞吉。' },
-      { position: 5, nineOrSix: '九五', content: '九五：讼，元吉。' },
-      { position: 6, nineOrSix: '上九', content: '上九：或锡之鞶带，终朝三褫之。' },
+      { position: 5, nineOrSix: '九', content: '九五：讼，元吉。' },
+      { position: 6, nineOrSix: '九', content: '上九：或锡之鞶带，终朝三褫之。' },
     ],
   },
   {
@@ -148,8 +148,8 @@ export const hexagramData: Hexagram[] = [
       { position: 2, nineOrSix: '六', content: '六二：比之自内，贞吉。' },
       { position: 3, nineOrSix: '六', content: '六三：比之匪人。' },
       { position: 4, nineOrSix: '六', content: '六四：外比之，贞吉。' },
-      { position: 5, nineOrSix: '九五', content: '九五：显比，王用三驱，失前禽，邑人不诫，吉。' },
-      { position: 6, nineOrSix: '上六', content: '上六：比之无首，凶。' },
+      { position: 5, nineOrSix: '九', content: '九五：显比，王用三驱，失前禽，邑人不诫，吉。' },
+      { position: 6, nineOrSix: '六', content: '上六：比之无首，凶。' },
     ],
   },
 ];
@@ -181,11 +181,9 @@ export function getDynamicLines(
 }
 
 // 获取变卦（根据动爻变化）
+// 返回 0(阴) / 1(阳) 数组
 export function getChangedHexagram(
   lines: Array<{ isYang: boolean; isDynamic: boolean }>
 ): number[] {
-  return lines.map((l) => ({
-    isYang: l.isDynamic ? !l.isYang : l.isYang,
-    isDynamic: false,
-  }));
+  return lines.map((l) => (l.isDynamic ? (l.isYang ? 0 : 1) : l.isYang ? 1 : 0));
 }

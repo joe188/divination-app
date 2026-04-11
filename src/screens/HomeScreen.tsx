@@ -102,14 +102,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               variant="outline"
               size="small"
               onPress={onStartLiuYao}
-              style={[styles.secondaryButton, styles.halfButton]}
+              // style={[styles.secondaryButton, styles.halfButton]}
             />
             <GuochaoButton
               title="🗺️ 奇门遁甲"
               variant="outline"
               size="small"
               onPress={onStartQiMen}
-              style={[styles.secondaryButton, styles.halfButton]}
+              // style={[styles.secondaryButton, styles.halfButton]}
             />
           </View>
           
@@ -118,7 +118,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             variant="outline"
             size="medium"
             onPress={onViewHistory}
-            style={styles.secondaryButton}
+            style={styles.secondaryButton as any}
           />
         </View>
 
