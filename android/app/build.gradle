@@ -63,6 +63,9 @@ android {
 
 dependencies {
     implementation 'com.facebook.react:react-native:+'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
+    implementation 'com.google.android.material:material:1.9.0'
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:+'
     }
