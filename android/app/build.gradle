@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.facebook.react'
 }
 
 android {
@@ -41,11 +42,8 @@ android {
 }
 
 dependencies {
-    implementation project(':ReactAndroid')
-    implementation project(':react-native-screens')
-    implementation project(':react-native-safe-area-context')
-    // Hermes can be added later if needed
-    // if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
-    //     implementation 'com.facebook.react:hermes-android:+'
-    // }
+    implementation 'com.facebook.react:react-native:+'
+    if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
+        implementation 'com.facebook.react:hermes-android:+'
+    }
 }

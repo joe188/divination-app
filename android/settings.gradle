@@ -1,3 +1,14 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        gradlePluginPortal()
+        maven { url '../node_modules/@react-native/gradle-plugin' }
+    }
+    includeBuild('../node_modules/@react-native/gradle-plugin')
+}
+
 rootProject.name = 'DivinationApp'
 
 ext {
@@ -9,13 +20,6 @@ ext {
     kotlinVersion = "1.9.22"
 }
 
-include ':ReactAndroid'
-project(':ReactAndroid').projectDir = new File(rootProject.projectDir, '../node_modules/react-native/ReactAndroid')
-
-include ':react-native-screens'
-project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
-
-include ':react-native-safe-area-context'
-project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
+apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
 
 include ':app'
