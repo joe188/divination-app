@@ -41,10 +41,11 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
+    implementation project(':ReactAndroid')
     implementation project(':react-native-screens')
     implementation project(':react-native-safe-area-context')
-    if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
-        implementation 'com.facebook.react:hermes-android:+'
-    }
+    // Hermes can be added later if needed
+    // if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
+    //     implementation 'com.facebook.react:hermes-android:+'
+    // }
 }
