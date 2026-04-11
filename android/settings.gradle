@@ -11,15 +11,4 @@ pluginManagement {
 
 rootProject.name = 'DivinationApp'
 
-ext {
-    buildToolsVersion = "34.0.0"
-    minSdkVersion = 24
-    compileSdkVersion = 34
-    targetSdkVersion = 34
-    ndkVersion = "25.1.8937393"
-    kotlinVersion = "1.9.22"
-}
-
-apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
-
 include ':app'
