@@ -19,6 +19,18 @@ android {
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
+        sourceSets {
+            main {
+                java.srcDirs = [
+                    'src/main/java',
+                    '../../node_modules/react-native-screens/android/src/main/java',
+                    '../../node_modules/react-native-safe-area-context/android/src/main/java'
+                ]
+                jniLibs.srcDir '../../node_modules/react-native-screens/android/src/main/jniLibs'
+                jniLibs.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/jniLibs'
+                // 资源让 RN 插件处理，不添加 res
+            }
+        }
     }
 
     signingConfigs {
