@@ -4,7 +4,9 @@ pluginManagement {
         mavenCentral()
         maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
         gradlePluginPortal()
+        maven { url '../node_modules/@react-native/gradle-plugin' }
     }
+    includeBuild('../node_modules/@react-native/gradle-plugin')
 }
 
 rootProject.name = 'DivinationApp'
