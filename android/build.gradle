@@ -5,7 +5,7 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 34
         targetSdkVersion = 34
-        ndkVersion = "25.1.8937393"
+        ndkVersion = "23.1.7779620"
         kotlinVersion = "1.8.20"
     }
     repositories {
@@ -16,7 +16,6 @@ buildscript {
     dependencies {
         classpath("com.android.tools.build:gradle:7.4.2")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
-        // no react-native-gradle-plugin classpath - loaded via includeBuild
     }
 }
 
