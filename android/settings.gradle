@@ -1,3 +1,13 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        gradlePluginPortal()
+    }
+    includeBuild('../node_modules/react-native/ReactAndroid')
+}
+
 rootProject.name = 'DivinationApp'
 
 apply from: file("../node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
