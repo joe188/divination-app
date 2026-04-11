@@ -43,6 +43,9 @@ dependencies {
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
         implementation 'com.facebook.react:hermes-android:+'
     }
+    // 手动链接的库
+    implementation project(':react-native-screens')
+    implementation project(':react-native-safe-area-context')
 }
 
 // 临时关闭 codegen，测试构建是否通过
