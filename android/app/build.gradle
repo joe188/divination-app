@@ -1,7 +1,6 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.facebook.react'
 }
 
 android {
@@ -16,6 +15,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.2.2"
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
     }
 
     signingConfigs {
@@ -23,7 +25,7 @@ android {
             storeFile file('release.keystore')
             storePassword 'Lingshu@123'
             keyAlias 'lingshu-release-key'
-            keyPassword 'Lingshu@123'
+            keyPassword 'Lingshu@13'
             v1SigningEnabled true
             v2SigningEnabled true
         }
@@ -39,11 +41,18 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
-    // 👇 关键：添加编译期依赖，让 Kotlin 能找到类
-    implementation project(':react-native-screens')
-    implementation project(':react-native-safe-area-context')
+    implementation 'com.facebook.react:react-native:0.72.7'
+    implementation 'com.swmansion.rnscreens:rnscreens:4.24.0'
+    implementation 'com.th3rdwave.safeareacontext:safe-area-context:4.9.0'
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
-        implementation 'com.facebook.react:hermes-android:+'
+        implementation 'com.facebook.react:hermes-android:0.72.7'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        google()
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
     }
 }
