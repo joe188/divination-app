@@ -39,6 +39,22 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // 👇 手动添加 screens 和 safe-area 的源码与资源
+    sourceSets {
+        main {
+            java {
+                srcDir '../../node_modules/react-native-screens/android/src/main/java'
+                srcDir '../../node_modules/react-native-safe-area-context/android/src/main/java'
+            }
+            res.srcDir '../../node_modules/react-native-screens/android/src/main/res'
+            res.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/res'
+            assets.srcDir '../../node_modules/react-native-screens/android/src/main/assets'
+            assets.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/assets'
+            jniLibs.srcDir '../../node_modules/react-native-screens/android/src/main/jniLibs'
+            jniLibs.srcDir '../../node_modules/react-native-safe-area-context/android/src/main/jniLibs'
+        }
+    }
 }
 
 dependencies {
