@@ -41,19 +41,10 @@ android {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:0.72.7'
+    implementation 'com.facebook.react:react-native:+'
     implementation project(':react-native-screens')
     implementation project(':react-native-safe-area-context')
     if (project.hasProperty("hermesEnabled") && project.hermesEnabled.toBoolean()) {
-        implementation 'com.facebook.react:hermes-android:0.72.7'
-    }
-}
-
-allprojects {
-    repositories {
-        mavenCentral()
-        google()
-        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
-        maven { url rootProject.file("../node_modules/react-native/android") }
+        implementation 'com.facebook.react:hermes-android:+'
     }
 }
