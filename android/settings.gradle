@@ -4,9 +4,7 @@ pluginManagement {
         mavenCentral()
         maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
         gradlePluginPortal()
-        maven { url '../node_modules/@react-native/gradle-plugin' }
     }
-    includeBuild('../node_modules/@react-native/gradle-plugin')
 }
 
 rootProject.name = 'DivinationApp'
@@ -19,14 +17,5 @@ ext {
     ndkVersion = "25.1.8937393"
     kotlinVersion = "1.7.22"
 }
-
-// 手动 include react-native-screens 和 safe-area-context (确保打包)
-include ':react-native-screens'
-project(':react-native-screens').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-screens/android')
-
-include ':react-native-safe-area-context'
-project(':react-native-safe-area-context').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-safe-area-context/android')
-
-println "⚠️ 手动链接 RN 原生模块"
 
 include ':app'
