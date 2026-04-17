@@ -1,97 +1,87 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 灵枢智能排盘 (LingshuPaipan)
 
-# Getting Started
+> 国潮风格设计，让传统文化触手可及
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 📱 项目简介
 
-## Step 1: Start Metro
+灵枢智能排盘是一款基于 React Native 0.85.1 开发的易学排盘应用，支持多种传统术数排盘功能。
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## ✨ 功能特性
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- 🔮 **六爻占卜** - 传统六爻预测
+- 📅 **八字排盘** - 四柱八字命理分析
+- 🌌 **奇门遁甲** - 奇门遁甲排盘
+- 📊 **历史记录** - 保存和查看历史排盘记录
+- 🎨 **国潮设计** - 现代国潮风格 UI
 
-```sh
-# Using npm
-npm start
+## 🛠️ 技术栈
 
-# OR using Yarn
-yarn start
+- **React Native**: 0.85.1 (新架构)
+- **React**: 19.2.3
+- **数据库**: @op-engineering/op-sqlite
+- **导航**: @react-navigation/native
+- **UI**: 自定义国潮风格组件
+
+## 📦 安装
+
+```bash
+# 克隆项目
+git clone https://github.com/joe188/LingshuPaipan.git
+
+# 安装依赖
+cd LingshuPaipan
+npm install
+
+# 运行 Android
+npx react-native run-android
+
+# 运行 iOS
+npx react-native run-ios
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 🔧 配置
 
 ### Android
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
+- minSdkVersion: 24
+- compileSdkVersion: 36
+- targetSdkVersion: 36
+- NDK: 27.0.12077973
 
 ### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+- iOS 15.1+
+- Xcode 15+
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 📝 开发说明
 
-```sh
-bundle install
-```
+### 数据库
 
-Then, and every time you update your native dependencies, run:
+使用 @op-engineering/op-sqlite 作为本地数据库，支持：
+- 八卦数据存储
+- 六十四卦数据存储
+- 六爻解读数据存储
+- 历史记录存储
 
-```sh
-bundle exec pod install
-```
+### 架构
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+- **新架构**: 启用 React Native 新架构 (Fabric + TurboModules)
+- **Hermes**: 启用 Hermes JavaScript 引擎
+- **TypeScript**: 使用 TypeScript 进行类型安全开发
 
-```sh
-# Using npm
-npm run ios
+## 🤝 贡献
 
-# OR using Yarn
-yarn ios
-```
+欢迎提交 Issue 和 Pull Request！
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 📄 许可证
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+MIT License
 
-## Step 3: Modify your app
+## 🔗 相关链接
 
-Now that you have successfully run the app, let's make changes!
+- [GitHub](https://github.com/joe188/LingshuPaipan)
+- [Gitee](https://gitee.com/joelinfo/LingshuPaipan)
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+---
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+**让传统文化触手可及** 🎋
