@@ -7,8 +7,14 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar, StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { 
+  checkFirstTime, 
+  checkRollback, 
+  autoCheckUpdate 
+} from './src/utils/UpdateContext';
 import HomeScreen from './src/screens/HomeScreen';
 import LiuYaoScreen from './src/screens/LiuYaoScreen';
+import LiuYaoResultScreen from './src/screens/LiuYaoResultScreen';
 import BaZiInputScreen from './src/screens/BaZiInputScreen';
 import QiMenScreen from './src/screens/QiMenScreen';
 import { HistoryScreen } from './src/screens';
@@ -33,6 +39,7 @@ function AppContent() {
         >
           <Stack.Screen name="Home" component={HomeScreen as any} options={{ title: '灵枢排盘' }} />
           <Stack.Screen name="LiuYao" component={LiuYaoScreen as any} options={{ title: '六爻占卜' }} />
+          <Stack.Screen name="LiuYaoResult" component={LiuYaoResultScreen as any} options={{ title: '六爻结果' }} />
           <Stack.Screen name="BaZiInput" component={BaZiInputScreen as any} options={{ title: '八字排盘' }} />
           <Stack.Screen name="QiMen" component={QiMenScreen as any} options={{ title: '奇门遁甲' }} />
           <Stack.Screen name="History" component={HistoryScreen as any} options={{ title: '历史记录' }} />
@@ -79,6 +86,17 @@ export default function App() {
       }
     };
     initDatabase();
+    
+    // 热更新检查
+    checkFirstTime();
+    checkRollback();
+    
+    // 延迟 5 秒后自动检查更新
+    const timer = setTimeout(() => {
+      autoCheckUpdate();
+    }, 5000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // 根据状态渲染不同的组件
