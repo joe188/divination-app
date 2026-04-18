@@ -1,6 +1,6 @@
 /**
- * BaZiInputScreen - 八字排盘输入页
- * 功能：选择出生年月日时、真太阳时校正、手机定位、本地解析、AI 解析、历史记录保存
+ * BaZiInputScreen - 八字排盘（国潮美化版）
+ * 功能：选择出生年月日时、真太阳时校正、手机定位、本地/AI 解析
  */
 
 import React, { useState } from 'react';
@@ -14,18 +14,17 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
-import { GuochaoButton } from '../components/GuochaoButton';
-import { GuochaoCard } from '../components/GuochaoCard';
 import theme from '../styles/theme';
 import { calculateBaZi, adjustSolarTime, BaZiResult } from '../utils/bazi-calculator';
-import { insertRecord } from '../database/queries/history';
-import type { DivinationRecord } from '../database/models/DivinationRecord';
+import { getCities, getCoordinate } from '../data/city-coordinates-full';
 
 const { colors, fonts, spacing, radii } = theme;
 
 // 小时名称（12 时辰）
 const HOUR_NAMES = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'];
+const HOUR_TIME = ['23-01', '01-03', '03-05', '05-07', '07-09', '09-11', '11-13', '13-15', '15-17', '17-19', '19-21', '21-23'];
 
 // 年份范围
 const CURRENT_YEAR = new Date().getFullYear();
@@ -43,314 +42,490 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   const [loading, setLoading] = useState(false);
   const [solarTimeInfo, setSolarTimeInfo] = useState('');
   
-  // 选择器状态
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [showHourPicker, setShowHourPicker] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+
+  const fadeAnim = new Animated.Value(0);
+
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   /**
-   * 获取当前位置（简化版本：使用城市坐标数据）
+   * 获取当前位置
    */
   const handleGetLocation = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const cityData = require('../data/city-coordinates-full.ts').cityCoordinates;
-      if (cityData && cityData.length > 0) {
-        // 简化：取第一个城市，实际应该用 GPS
-        const firstCity = cityData[0];
-        setLongitude(firstCity.longitude);
-        setLocationName(firstCity.city);
-        Alert.alert('✅ 定位成功', `当前位置：${firstCity.city}\n经度：${firstCity.longitude}°`);
-      }
+      const geolocation = require('react-native-geolocation-service');
+      
+      await geolocation.requestAuthorization('whenInUse');
+      
+      geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLongitude(longitude);
+          
+          // 查找最近城市
+          const cities = getCities();
+          const nearest = cities.find(c => 
+            Math.abs(c.latitude - latitude) < 1 && Math.abs(c.longitude - longitude) < 1
+          );
+          
+          if (nearest) {
+            setLocationName(nearest.city);
+            setLongitude(nearest.longitude);
+            Alert.alert('✅ 定位成功', `当前位置：${nearest.city}\n经度：${nearest.longitude}°`);
+          } else {
+            setLocationName(`自定义地点 (${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°)`);
+            Alert.alert('✅ 定位成功', `获取到坐标，但未找到对应城市`);
+          }
+          setLoading(false);
+        },
+        (error) => {
+          Alert.alert('❌ 定位失败', '无法获取当前位置，请手动选择城市');
+          setLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 10000,
+        }
+      );
     } catch (error) {
-      Alert.alert('❌ 定位失败', '无法获取当前位置，请手动输入经度');
-    } finally {
+      Alert.alert('❌ 错误', '定位功能不可用');
       setLoading(false);
     }
   };
 
   /**
-   * 计算真太阳时
+   * 真太阳时校正
    */
-  const handleCalculateSolarTime = () => {
+  const handleSolarTimeAdjust = () => {
     if (!longitude) {
-      Alert.alert('⚠️ 提示', '请先获取或输入出生地经度');
+      Alert.alert('⚠️ 提示', '请先设置出生地点或经度');
       return;
     }
+
+    const adjusted = adjustSolarTime(year, month, day, hour, longitude);
+    const timeDiff = (longitude - 120) * 4; // 分钟
     
-    // adjustSolarTime 接受时间戳（毫秒）
-    const birthTimestamp = Date.UTC(year, month - 1, day, hour);
-    const correction = adjustSolarTime(longitude, birthTimestamp);
+    setSolarTimeInfo(
+      `出生地经度：${longitude}°\n` +
+      `与东经 120°时差：${timeDiff > 0 ? '+' : ''}${timeDiff.toFixed(1)}分钟\n` +
+      `真太阳时：${adjusted.hour}时 (${HOUR_NAMES[adjusted.hour]})`
+    );
+    setHour(adjusted.hour);
     
-    const sign = correction > 0 ? '+' : '';
-    const minutes = Math.abs(correction);
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
-    
-    let info = `真太阳时校正：${sign}${minutes.toFixed(1)} 分钟\n`;
-    if (hours > 0) {
-      info += `即 ${sign}${hours}小时${mins}分钟`;
-    }
-    
-    setSolarTimeInfo(info);
-    Alert.alert('✅ 计算完成', info);
+    Alert.alert('✅ 校正完成', `真太阳时已调整为${HOUR_NAMES[adjusted.hour]}`);
   };
 
   /**
-   * 本地解析
+   * 开始排盘
    */
-  const handleLocalAnalysis = async () => {
+  const handleDivination = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
+      const result: BaZiResult = calculateBaZi(year, month, day, hour);
       
-      // 计算八字
-      const result = calculateBaZi(year, month, day, hour);
-      
-      // 保存历史记录
-      const record: Partial<DivinationRecord> = {
-        baziType: 'bazi',
-        solarDate: new Date(year, month - 1, day).toISOString(),
-        lunarDate: result.lunarDate,
-        timePeriod: HOUR_NAMES[hour] || '',
-        location: locationName || '未知',
-        aiInterpretation: `八字排盘结果：\n年柱：${result.ganZhi.year.gan}${result.ganZhi.year.zhi}\n月柱：${result.ganZhi.month.gan}${result.ganZhi.month.zhi}\n日柱：${result.ganZhi.day.gan}${result.ganZhi.day.zhi}\n时柱：${result.ganZhi.hour.gan}${result.ganZhi.hour.zhi}\n\n五行分析：木${result.fiveElements.wood} 火${result.fiveElements.fire} 土${result.fiveElements.earth} 金${result.fiveElements.metal} 水${result.fiveElements.water}`,
-        isFavorite: 0,
-      };
-      
-      const recordId = await insertRecord(record as DivinationRecord);
-      
-      // 导航到结果页
-      navigation.navigate('ResultScreen', {
+      navigation.navigate('Result', {
         type: 'bazi',
-        result,
-        recordId,
-        isLocal: true,
+        result: {
+          ...result,
+          year,
+          month,
+          day,
+          hour,
+          location: locationName,
+        },
       });
-    } catch (error) {
-      Alert.alert('❌ 错误', '本地解析失败：' + (error as Error).message);
+    } catch (error: any) {
+      Alert.alert('❌ 错误', `排盘失败：${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * AI 解析
-   */
-  const handleAiAnalysis = async () => {
-    try {
-      setLoading(true);
-      
-      // 计算八字
-      const result = calculateBaZi(year, month, day, hour);
-      
-      // 保存历史记录（AI 解析占位）
-      const record: Partial<DivinationRecord> = {
-        baziType: 'bazi',
-        solarDate: new Date(year, month - 1, day).toISOString(),
-        lunarDate: result.lunarDate,
-        timePeriod: HOUR_NAMES[hour] || '',
-        location: locationName || '未知',
-        aiInterpretation: 'AI 解析中...（需要配置 AI API Key）',
-        isFavorite: 0,
-      };
-      
-      const recordId = await insertRecord(record as DivinationRecord);
-      
-      // 导航到结果页
-      navigation.navigate('ResultScreen', {
-        type: 'bazi',
-        result,
-        recordId,
-        isLocal: false,
-      });
-      
-      Alert.alert('ℹ️ 提示', 'AI 解析功能需要配置 API Key。\n\n请在设置中配置：\n- OpenAI\n- 文心一言\n- 通义千问\n- 讯飞星火');
-    } catch (error) {
-      Alert.alert('❌ 错误', 'AI 解析失败：' + (error as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * 渲染选择器
-   */
-  const renderPicker = (
-    visible: boolean,
-    onClose: () => void,
-    data: number[],
-    value: number,
-    onSelect: (value: number) => void,
-    suffix: string
-  ) => (
+  // 渲染选择器
+  const renderPicker = (items: any[], value: any, onChange: (item: any) => void, visible: boolean, onClose: () => void) => (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.modalButton}>取消</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>请选择</Text>
+            <TouchableOpacity onPress={() => onClose()}>
+              <Text style={[styles.modalButton, styles.modalConfirm]}>确定</Text>
+            </TouchableOpacity>
+          </View>
           <FlatList
-            data={data}
-            keyExtractor={(item) => item.toString()}
+            data={items}
+            keyExtractor={(item, index) => index.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={[styles.pickerItem, item === value && styles.pickerItemSelected]}
-                onPress={() => {
-                  onSelect(item);
-                  onClose();
-                }}
+                style={[
+                  styles.pickerItem,
+                  item === value && styles.pickerItemSelected,
+                ]}
+                onPress={() => onChange(item)}
               >
-                <Text style={[styles.pickerItemText, item === value && styles.pickerItemTextSelected]}>
-                  {item}{suffix}
+                <Text style={[
+                  styles.pickerItemText,
+                  item === value && styles.pickerItemTextSelected,
+                ]}>
+                  {item}
                 </Text>
               </TouchableOpacity>
             )}
+            getItemLayout={(data, index) => ({
+              length: 50,
+              offset: 50 * index,
+              index,
+            })}
+            initialScrollIndex={items.indexOf(value)}
           />
-          <GuochaoButton title="取消" onPress={onClose} />
         </View>
       </View>
     </Modal>
   );
 
   return (
-    <ScrollView style={styles.container}>
-      {/* 出生时间 */}
-      <GuochaoCard title="出生时间">
-        <View style={styles.pickerRow}>
-          <TouchableOpacity style={styles.pickerButton} onPress={() => setShowYearPicker(true)}>
-            <Text style={styles.pickerText}>{year}年</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.pickerButton} onPress={() => setShowMonthPicker(true)}>
-            <Text style={styles.pickerText}>{month}月</Text>
-          </TouchableOpacity>
+    <View style={styles.container}>
+      {/* 头部 */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>八字排盘</Text>
+        <Text style={styles.headerSubtitle}>四柱命理 · 推算人生</Text>
+        <View style={styles.baguaDecor}>
+          <Text style={styles.baguaSymbol}>乾</Text>
+          <Text style={styles.baguaSymbol}>坤</Text>
+          <Text style={styles.baguaSymbol}>震</Text>
+          <Text style={styles.baguaSymbol}>巽</Text>
         </View>
-        
-        <View style={styles.pickerRow}>
-          <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDayPicker(true)}>
-            <Text style={styles.pickerText}>{day}日</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.pickerButton} onPress={() => setShowHourPicker(true)}>
-            <Text style={styles.pickerText}>{HOUR_NAMES[hour]}</Text>
-          </TouchableOpacity>
-        </View>
-      </GuochaoCard>
-
-      {/* 出生地经度 */}
-      <GuochaoCard title="出生地经度（真太阳时校正）">
-        <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color="#8B4513" />
-          ) : (
-            <Text style={styles.locationButtonText}>📍 获取当前位置</Text>
-          )}
-        </TouchableOpacity>
-        
-        {locationName ? (
-          <Text style={styles.locationName}>当前位置：{locationName}</Text>
-        ) : null}
-        
-        <TouchableOpacity 
-          style={styles.pickerButton} 
-          onPress={() => Alert.alert('提示', '经度输入功能开发中，请使用定位按钮')}
-        >
-          <Text style={styles.pickerText}>
-            {longitude !== null ? `东经 ${longitude}°` : '点击输入经度'}
-          </Text>
-        </TouchableOpacity>
-        
-        <GuochaoButton title="计算真太阳时" onPress={handleCalculateSolarTime} />
-        
-        {solarTimeInfo ? (
-          <View style={styles.solarTimeInfoBox}>
-            <Text style={styles.solarTimeInfo}>{solarTimeInfo}</Text>
-          </View>
-        ) : null}
-      </GuochaoCard>
-
-      {/* 操作按钮 */}
-      <View style={styles.buttonContainer}>
-        <GuochaoButton title="🔮 本地解析" onPress={handleLocalAnalysis} disabled={loading} />
-        <GuochaoButton title="🤖 AI 解析" onPress={handleAiAnalysis} disabled={loading} />
       </View>
 
-      {/* 加载遮罩 */}
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#8B4513" />
-          <Text style={styles.loadingText}>正在排盘...</Text>
-        </View>
-      )}
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* 日期选择卡片 */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>📅 出生时间</Text>
+            
+            <View style={styles.dateGrid}>
+              <TouchableOpacity style={styles.dateButton} onPress={() => setShowYearPicker(true)}>
+                <Text style={styles.dateLabel}>年</Text>
+                <Text style={styles.dateValue}>{year}年</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.dateButton} onPress={() => setShowMonthPicker(true)}>
+                <Text style={styles.dateLabel}>月</Text>
+                <Text style={styles.dateValue}>{month}月</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.dateButton} onPress={() => setShowDayPicker(true)}>
+                <Text style={styles.dateLabel}>日</Text>
+                <Text style={styles.dateValue}>{day}日</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.dateButton} onPress={() => setShowHourPicker(true)}>
+                <Text style={styles.dateLabel}>时</Text>
+                <Text style={styles.dateValue}>{HOUR_NAMES[hour]}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.timeDetail}>{HOUR_TIME[hour]} ({hour}时)</Text>
+          </View>
+
+          {/* 地点选择卡片 */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>📍 出生地点</Text>
+            
+            <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator color={colors.cinnabarRed} />
+              ) : (
+                <Text style={styles.locationButtonText}>📍 获取当前位置</Text>
+              )}
+            </TouchableOpacity>
+
+            {locationName ? (
+              <View style={styles.locationInfo}>
+                <Text style={styles.locationLabel}>已选择：</Text>
+                <Text style={styles.locationValue}>{locationName}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={styles.manualLocationButton}
+                onPress={() => setShowLocationPicker(true)}
+              >
+                <Text style={styles.manualLocationText}>🏙️ 手动选择城市</Text>
+              </TouchableOpacity>
+            )}
+
+            {longitude && (
+              <Text style={styles.longitudeText}>经度：{longitude}°</Text>
+            )}
+          </View>
+
+          {/* 真太阳时卡片 */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>☀️ 真太阳时校正</Text>
+            <Text style={styles.cardDesc}>根据出生地经度校正时间</Text>
+            
+            <TouchableOpacity 
+              style={[
+                styles.solarButton,
+                !longitude && styles.solarButtonDisabled,
+              ]}
+              onPress={handleSolarTimeAdjust}
+              disabled={!longitude}
+            >
+              <Text style={styles.solarButtonText}>🔄 校正真太阳时</Text>
+            </TouchableOpacity>
+
+            {solarTimeInfo && (
+              <View style={styles.solarInfo}>
+                <Text style={styles.solarInfoText}>{solarTimeInfo}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* 开始排盘按钮 */}
+          <TouchableOpacity
+            style={[
+              styles.divinationButton,
+              loading && styles.buttonDisabled,
+            ]}
+            onPress={handleDivination}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.divinationButtonText}>🔮 开始排盘</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
 
       {/* 选择器 */}
-      {renderPicker(showYearPicker, () => setShowYearPicker(false), YEAR_RANGE, year, setYear, '年')}
-      {renderPicker(showMonthPicker, () => setShowMonthPicker(false), MONTH_RANGE, month, setMonth, '月')}
-      {renderPicker(showDayPicker, () => setShowDayPicker(false), DAY_RANGE, day, setDay, '日')}
-      {renderPicker(showHourPicker, () => setShowHourPicker(false), HOUR_NAMES.map((_, i) => i), hour, setHour, '')}
-    </ScrollView>
+      {renderPicker(YEAR_RANGE, year, setYear, showYearPicker, () => setShowYearPicker(false))}
+      {renderPicker(MONTH_RANGE, month, setMonth, showMonthPicker, () => setShowMonthPicker(false))}
+      {renderPicker(DAY_RANGE, day, setDay, showDayPicker, () => setShowDayPicker(false))}
+      {renderPicker(HOUR_NAMES.map((_, i) => i), hour, setHour, showHourPicker, () => setShowHourPicker(false))}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F0E6',
-    padding: spacing.lg,
+    backgroundColor: colors.riceWhite,
   },
-  pickerRow: {
+  header: {
+    backgroundColor: colors.cinnabarRed,
+    padding: spacing['2xl'],
+    alignItems: 'center',
+    borderBottomLeftRadius: radii['3xl'],
+    borderBottomRightRadius: radii['3xl'],
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  headerTitle: {
+    fontSize: fonts.sizes['3xl'],
+    fontFamily: fonts.kaiTi,
+    color: colors.white,
+    fontWeight: fonts.weights.bold,
+    marginBottom: spacing.sm,
+  },
+  headerSubtitle: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.songTi,
+    color: colors.white,
+    opacity: 0.9,
+    marginBottom: spacing.lg,
+  },
+  baguaDecor: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  baguaSymbol: {
+    fontSize: 20,
+    color: colors.gold,
+    marginHorizontal: spacing.md,
+    fontFamily: fonts.kaiTi,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.xl,
+  },
+  card: {
+    backgroundColor: colors.white,
+    borderRadius: radii['2xl'],
+    padding: spacing.xl,
+    marginBottom: spacing.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: fonts.sizes.lg,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.bold,
+    marginBottom: spacing.lg,
+  },
+  cardDesc: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
+    marginBottom: spacing.md,
+  },
+  dateGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: spacing.sm,
+    marginBottom: spacing.md,
   },
-  pickerButton: {
+  dateButton: {
     flex: 1,
-    marginHorizontal: spacing.sm,
-    padding: spacing.md,
-    backgroundColor: '#FFF8F0',
-    borderRadius: radii.md,
+    backgroundColor: colors.riceWhite,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
     alignItems: 'center',
+    marginHorizontal: spacing.sm,
     borderWidth: 1,
-    borderColor: '#D4A574',
+    borderColor: colors.gray[200],
   },
-  pickerText: {
-    fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '500',
+  dateLabel: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
+    marginBottom: spacing.xs,
+  },
+  dateValue: {
+    fontSize: fonts.sizes.lg,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.bold,
+  },
+  timeDetail: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
+    textAlign: 'center',
   },
   locationButton: {
-    flexDirection: 'row',
+    backgroundColor: colors.cinnabarRed,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    backgroundColor: '#8B4513',
-    borderRadius: radii.md,
-    marginVertical: spacing.sm,
+    marginBottom: spacing.md,
   },
   locationButtonText: {
-    color: '#FFF8F0',
-    fontSize: 16,
-    marginLeft: spacing.sm,
-    fontWeight: '600',
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.kaiTi,
+    color: colors.white,
+    fontWeight: fonts.weights.semibold,
   },
-  locationName: {
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.riceWhite,
+    borderRadius: radii.md,
+    marginBottom: spacing.md,
+  },
+  locationLabel: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
+  },
+  locationValue: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.semibold,
+  },
+  manualLocationButton: {
+    padding: spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+    borderRadius: radii.md,
+    borderStyle: 'dashed',
+  },
+  manualLocationText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
+  },
+  longitudeText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[600],
     textAlign: 'center',
-    color: '#6B5B4F',
-    marginVertical: spacing.sm,
-    fontSize: 14,
   },
-  solarTimeInfoBox: {
+  solarButton: {
+    backgroundColor: colors.gold,
+    padding: spacing.lg,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+  },
+  solarButtonDisabled: {
+    backgroundColor: colors.gray[300],
+  },
+  solarButtonText: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.semibold,
+  },
+  solarInfo: {
     marginTop: spacing.md,
     padding: spacing.md,
-    backgroundColor: '#FFF8F0',
+    backgroundColor: colors.riceWhite,
     borderRadius: radii.md,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8B4513',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.gold,
   },
-  solarTimeInfo: {
-    color: '#8B4513',
-    fontSize: 14,
+  solarInfoText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.inkBlack,
     lineHeight: 20,
   },
-  buttonContainer: {
+  divinationButton: {
+    backgroundColor: colors.cinnabarRed,
+    padding: spacing.xl,
+    borderRadius: radii.xl,
+    alignItems: 'center',
     marginTop: spacing.lg,
-    gap: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  buttonDisabled: {
+    backgroundColor: colors.gray[300],
+  },
+  divinationButtonText: {
+    fontSize: fonts.sizes.xl,
+    fontFamily: fonts.kaiTi,
+    color: colors.white,
+    fontWeight: fonts.weights.bold,
   },
   modalOverlay: {
     flex: 1,
@@ -358,43 +533,50 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFF8F0',
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    padding: spacing.lg,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radii['2xl'],
+    borderTopRightRadius: radii['2xl'],
     maxHeight: '60%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray[200],
+  },
+  modalButton: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.sourceHan,
+    color: colors.cinnabarRed,
+  },
+  modalConfirm: {
+    fontWeight: fonts.weights.semibold,
+  },
+  modalTitle: {
+    fontSize: fonts.sizes.lg,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.bold,
   },
   pickerItem: {
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8DCC4',
+    borderBottomColor: colors.gray[100],
   },
   pickerItemSelected: {
-    backgroundColor: '#8B4513',
+    backgroundColor: colors.riceWhite,
   },
   pickerItemText: {
-    fontSize: 18,
-    color: '#1A1A1A',
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.sourceHan,
+    color: colors.inkBlack,
     textAlign: 'center',
   },
   pickerItemTextSelected: {
-    color: '#FFF8F0',
-    fontWeight: '600',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    color: '#FFF8F0',
-    fontSize: 16,
+    color: colors.cinnabarRed,
+    fontWeight: fonts.weights.bold,
   },
 });
 
