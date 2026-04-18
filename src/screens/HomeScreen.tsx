@@ -156,6 +156,25 @@ export const HomeScreen: React.FC = () => {
     },
   ];
 
+  // 次要功能卡片
+  const secondaryCards = [
+    {
+      title: '全局设置',
+      icon: '⚙️',
+      backgroundColor: colors.gold,
+      onPress: () => navigation.navigate('Settings'),
+      desc: 'AI 配置\n主题切换',
+    },
+    {
+      title: '使用手册',
+      icon: '📖',
+      backgroundColor: colors.white,
+      borderColor: colors.gold,
+      onPress: () => Alert.alert('📖 使用手册', '功能开发中...\n\n包含：\n- 新手指南\n- 常见问题\n- 功能说明'),
+      desc: '新手指南\n常见问题',
+    },
+  ];
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -237,6 +256,28 @@ export const HomeScreen: React.FC = () => {
               <Text style={[styles.featureIcon, { fontSize: 40, textAlign: 'center' }]}>{feature.icon}</Text>
               <Text style={styles.featureTitle}>{feature.title}</Text>
               <Text style={styles.featureDesc}>{feature.desc}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* 次要功能卡片 */}
+        <View style={styles.secondaryGrid}>
+          {secondaryCards.map((card) => (
+            <TouchableOpacity
+              key={card.title}
+              style={[
+                styles.secondaryCard,
+                {
+                  backgroundColor: card.backgroundColor,
+                  borderColor: card.borderColor || 'transparent',
+                }
+              ]}
+              onPress={card.onPress}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.secondaryIcon, { fontSize: 32, textAlign: 'center' }]}>{card.icon}</Text>
+              <Text style={styles.secondaryTitle}>{card.title}</Text>
+              <Text style={[styles.secondaryDesc, { whiteSpace: 'pre-line' }]}>{card.desc}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -566,6 +607,44 @@ const styles = StyleSheet.create({
     fontSize: fonts.sizes.sm,
     fontFamily: fonts.sourceHan,
     color: colors.gray[500],
+  },
+  
+  // 次要功能卡片
+  secondaryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.md,
+  },
+  secondaryCard: {
+    width: (width - spacing['2xl'] * 2 - spacing.md) / 2,
+    aspectRatio: 1.3,
+    borderRadius: radii.xl,
+    padding: spacing.lg,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 2,
+  },
+  secondaryIcon: {
+    textAlign: 'center',
+  },
+  secondaryTitle: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.bold,
+    textAlign: 'center',
+  },
+  secondaryDesc: {
+    fontSize: fonts.sizes.xs,
+    fontFamily: fonts.sourceHan,
+    color: colors.gray[700],
+    textAlign: 'center',
+    opacity: 0.8,
+    lineHeight: 16,
   },
   
   // 底部

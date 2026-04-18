@@ -18,6 +18,7 @@ import LiuYaoResultScreen from './src/screens/LiuYaoResultScreen';
 import LiuYaoDetailScreen from './src/screens/LiuYaoDetailScreen';
 import BaZiInputScreen from './src/screens/BaZiInputScreen';
 import QiMenScreen from './src/screens/QiMenScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 import { HistoryScreen } from './src/screens';
 import HistoryDetailScreen from './src/screens/HistoryDetailScreen';
 import ResultScreen from './src/screens/ResultScreen';
@@ -44,6 +45,7 @@ function AppContent() {
           <Stack.Screen name="LiuYaoDetail" component={LiuYaoDetailScreen as any} options={{ title: '六爻详解' }} />
           <Stack.Screen name="BaZiInput" component={BaZiInputScreen as any} options={{ title: '八字排盘' }} />
           <Stack.Screen name="QiMen" component={QiMenScreen as any} options={{ title: '奇门遁甲' }} />
+          <Stack.Screen name="Settings" component={SettingsScreen as any} options={{ title: '全局设置' }} />
           <Stack.Screen name="History" component={HistoryScreen as any} options={{ title: '历史记录' }} />
           <Stack.Screen name="HistoryDetail" component={HistoryDetailScreen as any} options={{ title: '详情' }} />
           <Stack.Screen name="Result" component={ResultScreen as any} options={{ title: '排盘结果' }} />
