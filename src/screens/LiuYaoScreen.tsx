@@ -14,7 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import theme from '../styles/theme';
-import { calculateHexagramNumber, getHexagramByNumber, GUA64_NAME } from '../utils/meihua-yi';
+import { calculateHexagramNumber, GUA64_NAME } from '../utils/liuyao-data';
 
 const { colors, fonts, spacing, radii } = theme;
 
@@ -83,15 +83,17 @@ export const LiuYaoScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
    * 查看结果
    */
   const handleViewResult = () => {
-    const hexagramNum = calculateHexagramNumber(yaoList);
-    const guaName = GUA64_NAME[hexagramNum] || '未知卦';
+    const result = calculateHexagramNumber(yaoList.map(isYang => ({ isYang: isYang === 1 })));
+    const guaName = GUA64_NAME[result.hexagram] || '未知卦';
     
     navigation.navigate('LiuYaoResult', {
-      hexagram: yaoList.join(''),
-      guaName,
-      lines: yaoList,
-      movingLines,
-    });
+      result: {
+        hexagram: yaoList.join(''),
+        guaName,
+        lines: yaoList,
+        movingLines,
+      },
+    } as any);
   };
 
   return (

@@ -191,7 +191,7 @@ export async function updateRecord(
   const setClause = Object.keys(fields)
     .map(col => `${col} = ?`)
     .join(', ');
-  const params = [...Object.values(fields), id];
+  const params: any[] = [...Object.values(fields), id];
 
   db.executeSync(
     `UPDATE divination_history SET ${setClause} WHERE id = ?`,
@@ -258,8 +258,8 @@ export async function getStatistics(): Promise<{
      GROUP BY bazi_type`
   );
   const byType: Record<string, number> = {};
-  for (const item of typeResult.rows) {
-    byType[item.bazi_type as string] = item.count as number;
+  for (const item of typeResult.rows?.[0] ? typeResult.rows : []) {
+    byType[item.bazi_type as string] = Number(item.count) || 0;
   }
 
   // 最近7天
@@ -268,13 +268,28 @@ export async function getStatistics(): Promise<{
     `SELECT COUNT(*) as count FROM divination_history WHERE created_at > ?`,
     [weekAgo]
   );
-  const recent7Days = recentResult.rows[0]?.count || 0;
+  const recent7Days = Number(recentResult.rows[0]?.count) || 0;
 
   // 收藏数
   const favResult = db.executeSync(
     `SELECT COUNT(*) as count FROM divination_history WHERE is_favorite = 1`
   );
-  const favoriteCount = favResult.rows[0]?.count || 0;
+  const favoriteCount = Number((favResult.rows?.[0] as any)?.count) || 0;
 
-  return { total, byType, recent7Days, favoriteCount };
+  return { 
+    total: Number(total) || 0, 
+    byType, 
+    recent7Days: Number(recent7Days) || 0, 
+    favoriteCount: Number(favoriteCount) || 0 
+  };
 }
+
+export default {
+  getRecentRecords,
+  getRecordById,
+  insertRecord,
+  updateRecord,
+  toggleFavorite,
+  deleteRecord,
+  getStatistics,
+};

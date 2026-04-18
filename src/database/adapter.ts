@@ -1,64 +1,49 @@
-// react-native-quick-sqlite API 适配器
-// 提供与旧代码兼容的 API
+/**
+ * 数据库适配器 - 基于 @op-engineering/op-sqlite
+ */
 
-import { DB } from 'react-native-quick-sqlite';
 import { getDatabase } from './Database';
 
 export class DatabaseAdapter {
-  private db: DB;
+  private db: any;
 
-  constructor(db: DB) {
+  constructor(db: any) {
     this.db = db;
   }
 
   // 执行 SQL 语句（不返回结果）
   async executeSql(sql: string, params: any[] = []): Promise<void> {
-    this.db.run(sql, params);
+    await this.db.execute(sql, params);
   }
 
   // 执行查询（返回结果）
   async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-    const result = this.db.execute(sql, params);
-    return result.rows?._array || [];
+    const result = await this.db.query(sql, params);
+    return result as T[];
   }
 
-  // 执行单个查询
-  async querySingle<T = any>(sql: string, params: any[] = []): Promise<T | null> {
-    const result = this.db.execute(sql, params);
-    return result.rows?._array?.[0] || null;
+  // 同步执行（用于兼容旧代码）
+  executeSync(sql: string, params: any[] = []): any {
+    return this.db.execute(sql, params);
   }
 
-  // 执行事务
-  async executeTransaction(callback: (tx: TransactionAdapter) => Promise<void>): Promise<void> {
-    // react-native-quick-sqlite 不支持事务，直接执行回调
-    const tx = new TransactionAdapter(this.db);
-    await callback(tx);
-  }
-}
-
-export class TransactionAdapter {
-  private db: DB;
-
-  constructor(db: DB) {
-    this.db = db;
+  // 同步查询
+  querySync<T = any>(sql: string, params: any[] = []): T[] {
+    return this.db.query(sql, params) as T[];
   }
 
-  async executeSql(sql: string, params: any[] = []): Promise<void> {
-    this.db.run(sql, params);
+  // 事务
+  async transaction(fn: (tx: any) => Promise<void>): Promise<void> {
+    await this.db.transaction(fn);
+  }
+
+  // 关闭数据库
+  async close(): Promise<void> {
+    await this.db.close();
   }
 }
 
-// 辅助函数
-export const adaptDatabase = (db: DB): DatabaseAdapter => {
-  return new DatabaseAdapter(db);
-};
+// 导出类型
+export type Scalar = string | number | boolean | null;
 
-// 全局适配器实例
-let adapter: DatabaseAdapter | null = null;
-
-export const getAdapter = (): DatabaseAdapter => {
-  if (!adapter) {
-    adapter = new DatabaseAdapter(getDatabase());
-  }
-  return adapter;
-};
+export default DatabaseAdapter;

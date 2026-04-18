@@ -228,13 +228,13 @@ export const HomeScreen: React.FC = () => {
               style={[
                 styles.featureCard,
                 {
-                  background: `linear-gradient(135deg, ${feature.gradient[0]}, ${feature.gradient[1]})`,
+                  backgroundColor: feature.gradient[0],
                 }
               ]}
               onPress={feature.onPress}
               activeOpacity={0.8}
             >
-              <View style={styles.featureIcon}>{feature.icon}</View>
+              <Text style={[styles.featureIcon, { fontSize: 40, textAlign: 'center' }]}>{feature.icon}</Text>
               <Text style={styles.featureTitle}>{feature.title}</Text>
               <Text style={styles.featureDesc}>{feature.desc}</Text>
             </TouchableOpacity>
