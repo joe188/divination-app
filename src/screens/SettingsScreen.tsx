@@ -1,9 +1,9 @@
 /**
- * SettingsScreen - 全局设置（简化版 - 无 AsyncStorage 依赖）
- * 功能：AI 配置（自动获取模型列表）、主题设置
+ * SettingsScreen - 全局设置（国潮美化版 - 带持久化存储）
+ * 功能：AI 配置（自动获取模型列表）、主题设置、关于应用
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,26 +16,39 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import theme from '../styles/theme';
 
 const { colors, fonts, spacing, radii } = theme;
 
-// 内存存储
-let memoryConfig: any = {
-  baseUrl: '',
-  apiKey: '',
-  model: '',
-  models: [],
-};
-
 export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
-  const [baseUrl, setBaseUrl] = useState(memoryConfig.baseUrl || '');
-  const [apiKey, setApiKey] = useState(memoryConfig.apiKey || '');
-  const [selectedModel, setSelectedModel] = useState(memoryConfig.model || '');
-  const [models, setModels] = useState<string[]>(memoryConfig.models || []);
+  const [baseUrl, setBaseUrl] = useState('');
+  const [apiKey, setApiKey] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [models, setModels] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
+
+  // 加载设置
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const aiConfig = await AsyncStorage.getItem('ai_config');
+      if (aiConfig) {
+        const config = JSON.parse(aiConfig);
+        setBaseUrl(config.baseUrl || '');
+        setApiKey(config.apiKey || '');
+        setSelectedModel(config.model || '');
+        setModels(config.models || []);
+      }
+    } catch (error) {
+      console.error('加载设置失败:', error);
+    }
+  };
 
   // 自动获取模型列表
   const fetchModels = async () => {
@@ -79,7 +92,6 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       }
 
       setModels(modelList);
-      memoryConfig.models = modelList;
       Alert.alert('✅ 成功', `获取到 ${modelList.length} 个模型`);
     } catch (error: any) {
       Alert.alert('❌ 获取失败', `无法获取模型列表\n\n${error.message}`);
@@ -125,25 +137,30 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
   };
 
   // 保存配置
-  const saveSettings = () => {
+  const saveSettings = async () => {
     if (!baseUrl || !apiKey) {
       Alert.alert('⚠️ 提示', '请填写 Base URL 和 API Key');
       return;
     }
 
-    memoryConfig = {
-      baseUrl,
-      apiKey,
-      model: selectedModel,
-      models,
-      updatedAt: Date.now(),
-    };
+    try {
+      const config = {
+        baseUrl,
+        apiKey,
+        model: selectedModel,
+        models,
+        updatedAt: Date.now(),
+      };
 
-    Alert.alert('✅ 成功', '配置已保存（本次会话有效）');
+      await AsyncStorage.setItem('ai_config', JSON.stringify(config));
+      Alert.alert('✅ 成功', '配置已保存（永久有效）');
+    } catch (error: any) {
+      Alert.alert('❌ 错误', `保存失败：${error.message}`);
+    }
   };
 
   // 清除配置
-  const clearConfig = () => {
+  const clearConfig = async () => {
     Alert.alert(
       '⚠️ 确认清除',
       '确定要清除所有 AI 配置吗？',
@@ -152,12 +169,12 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
         {
           text: '清除',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await AsyncStorage.removeItem('ai_config');
             setBaseUrl('');
             setApiKey('');
             setSelectedModel('');
             setModels([]);
-            memoryConfig = { baseUrl: '', apiKey: '', model: '', models: [] };
             Alert.alert('✅ 已清除', 'AI 配置已重置');
           },
         },
@@ -308,7 +325,6 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
                   ]}
                   onPress={() => {
                     setSelectedModel(item);
-                    memoryConfig.model = item;
                     setShowModelPicker(false);
                   }}
                 >
