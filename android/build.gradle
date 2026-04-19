@@ -8,13 +8,33 @@ buildscript {
         kotlinVersion = "2.1.20"
     }
     repositories {
-        google()
+        // 1. 本地 flatDir
+        flatDir { dirs '${rootProject.projectDir}/libs' }
+        // 2. 本地 Maven 仓库
+        maven { url uri('/Users/joel/.m2/repository') }
+        // 3. 国内镜像
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
+        maven { url 'https://repo.huaweicloud.com/repository/google/' }
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("com.android.tools.build:gradle:8.4.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.20")
+    }
+}
+
+allprojects {
+    repositories {
+        // 1. 本地 flatDir 仓库（最高优先级）
+        flatDir {
+            dirs '${rootProject.projectDir}/libs'
+        }
+        // 2. 本地 Maven 仓库 (~/.m2/repository)
+        maven { url uri('/Users/joel/.m2/repository') }
+        // 3. 国内镜像（作为后备）
+        maven { url 'https://repo.huaweicloud.com/repository/maven/' }
+        maven { url 'https://repo.huaweicloud.com/repository/google/' }
+        mavenCentral()
     }
 }
 
