@@ -279,6 +279,17 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
           </View>
         </View>
 
+        {/* 知识库入口 */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📚 易学知识库</Text>
+          <TouchableOpacity
+            style={styles.knowledgeButton}
+            onPress={() => navigation.navigate('Knowledge')}
+          >
+            <Text style={styles.knowledgeButtonText}>📖 进入知识库</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.bottomPadding} />
       </ScrollView>
 
