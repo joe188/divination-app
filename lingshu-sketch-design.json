@@ -111,7 +111,7 @@
                   "type": "rectangle",
                   "name": "liuyao-card",
                   "width": 343,
-                  "height": 120,
+                  "height": 100,
                   "style": { 
                     "backgroundColor": "#667eea",
                     "cornerRadius": 16
@@ -120,18 +120,18 @@
                     {
                       "type": "text",
                       "value": "🪙 六爻占卜",
-                      "style": { "fontSize": 20, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
-                      "x": 0,
-                      "y": 20,
-                      "width": 343
+                      "style": { "fontSize": 18, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
+                      "x": 20,
+                      "y": 15,
+                      "width": 303
                     },
                     {
                       "type": "text",
                       "value": "摇卦问事，洞察天机",
-                      "style": { "fontSize": 14, "color": "#FFFFFF", "opacity": 0.9, "textAlign": "center" },
-                      "x": 0,
-                      "y": 60,
-                      "width": 343
+                      "style": { "fontSize": 13, "color": "#FFFFFF", "opacity": 0.9 },
+                      "x": 20,
+                      "y": 55,
+                      "width": 303
                     }
                   ]
                 },
@@ -139,7 +139,7 @@
                   "type": "rectangle",
                   "name": "bazi-card",
                   "width": 343,
-                  "height": 120,
+                  "height": 100,
                   "style": { 
                     "backgroundColor": "#f093fb",
                     "cornerRadius": 16
@@ -148,18 +148,18 @@
                     {
                       "type": "text",
                       "value": "🔮 八字排盘",
-                      "style": { "fontSize": 20, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
-                      "x": 0,
-                      "y": 20,
-                      "width": 343
+                      "style": { "fontSize": 18, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
+                      "x": 20,
+                      "y": 15,
+                      "width": 303
                     },
                     {
                       "type": "text",
                       "value": "四柱命理，推算人生",
-                      "style": { "fontSize": 14, "color": "#FFFFFF", "opacity": 0.9, "textAlign": "center" },
-                      "x": 0,
-                      "y": 60,
-                      "width": 343
+                      "style": { "fontSize": 13, "color": "#FFFFFF", "opacity": 0.9 },
+                      "x": 20,
+                      "y": 55,
+                      "width": 303
                     }
                   ]
                 },
@@ -167,7 +167,7 @@
                   "type": "rectangle",
                   "name": "qimen-card",
                   "width": 343,
-                  "height": 120,
+                  "height": 100,
                   "style": { 
                     "backgroundColor": "#4facfe",
                     "cornerRadius": 16
@@ -176,18 +176,83 @@
                     {
                       "type": "text",
                       "value": "🗺️ 奇门遁甲",
-                      "style": { "fontSize": 20, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
-                      "x": 0,
-                      "y": 20,
-                      "width": 343
+                      "style": { "fontSize": 18, "fontFamily": "Kaiti SC", "color": "#FFFFFF", "textAlign": "center" },
+                      "x": 20,
+                      "y": 15,
+                      "width": 303
                     },
                     {
                       "type": "text",
                       "value": "排局布阵，趋吉避凶",
-                      "style": { "fontSize": 14, "color": "#FFFFFF", "opacity": 0.9, "textAlign": "center" },
-                      "x": 0,
-                      "y": 60,
-                      "width": 343
+                      "style": { "fontSize": 13, "color": "#FFFFFF", "opacity": 0.9 },
+                      "x": 20,
+                      "y": 55,
+                      "width": 303
+                    }
+                  ]
+                },
+                {
+                  "type": "group",
+                  "name": "secondary-cards",
+                  "layout": { "type": "horizontal-stack", "gap": 16 },
+                  "children": [
+                    {
+                      "type": "rectangle",
+                      "name": "settings-card",
+                      "width": 163.5,
+                      "height": 100,
+                      "style": { 
+                        "backgroundColor": "#FFD700",
+                        "cornerRadius": 16
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "value": "⚙️ 全局设置",
+                          "style": { "fontSize": 16, "fontFamily": "Kaiti SC", "color": "#1A1A1A", "textAlign": "center" },
+                          "x": 0,
+                          "y": 15,
+                          "width": 163.5
+                        },
+                        {
+                          "type": "text",
+                          "value": "AI 配置\n主题切换",
+                          "style": { "fontSize": 12, "color": "#1A1A1A", "opacity": 0.8, "textAlign": "center", "lineHeight": 18 },
+                          "x": 0,
+                          "y": 50,
+                          "width": 163.5
+                        }
+                      ]
+                    },
+                    {
+                      "type": "rectangle",
+                      "name": "help-card",
+                      "width": 163.5,
+                      "height": 100,
+                      "style": { 
+                        "backgroundColor": "#FFFFFF",
+                        "cornerRadius": 16,
+                        "borderWidth": 2,
+                        "borderColor": "#D4A76A"
+                      },
+                      "children": [
+                        {
+                          "type": "text",
+                          "value": "📖 使用手册",
+                          "style": { "fontSize": 16, "fontFamily": "Kaiti SC", "color": "#1A1A1A", "textAlign": "center" },
+                          "x": 0,
+                          "y": 15,
+                          "width": 163.5
+                        },
+                        {
+                          "type": "text",
+                          "value": "新手指南\n常见问题",
+                          "style": { "fontSize": 12, "color": "#666666", "opacity": 0.9, "textAlign": "center", "lineHeight": 18 },
+                          "x": 0,
+                          "y": 50,
+                          "width": 163.5
+                        }
+                      ]
                     }
                   ]
                 }
