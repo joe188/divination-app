@@ -3,8 +3,7 @@
  * 支持公历农历转换、干支纪年、节气、节日
  */
 
-const lunar = require('lunar-javascript');
-const { Solar, Lunar } = lunar;
+import { Solar, Lunar } from 'lunar-typescript';
 
 // 天干
 const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];

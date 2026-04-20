@@ -1,5 +1,4 @@
-const lunar = require('lunar-javascript');
-const { Solar, Lunar } = lunar;
+import { Solar, Lunar } from 'lunar-typescript';
 
 /**
  * 获取指定公历日期的农历信息
@@ -7,43 +6,33 @@ const { Solar, Lunar } = lunar;
  */
 export const getLunarInfo = (
   date: Date | string
-): {
-  lunarText: string; // 完整农历文本，如 "正月初一"
-  lunarDayChinese: string; // 农历日期（中文），如 "初一"
-  festivals: string[]; // 节日（农历+公历）
-  jieQi: string; // 节气
-  ganZhi: string; // 干支纪年
-  isLeap: boolean; // 是否闰月
-  lunarMonth: number; // 农历月份（1-12）
-  lunarMonthChinese: string; // 农历月份（中文），如 "正"
-  lunarDay: number; // 农历日期（1-30）
-  yearGanZhi: string; // 年干支
-  monthGanZhi: string; // 月干支
-  dayGanZhi: string; // 日干支
-  zodiac: string; // 生肖
-} | null => {
+) => {
   try {
-    let solar: Solar;
+    let solar: any;
     if (typeof date === 'string') {
       const [year, month, day] = date.split('-').map(Number);
       solar = Solar.fromYmd(year, month, day);
     } else {
-      solar = Solar.fromDate(date);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      solar = Solar.fromYmd(year, month, day);
     }
-    const lunar: Lunar = solar.getLunar();
 
-    const festivals = lunar.getFestivals() as string[];
-    const jieQi = solar.getJieQi() as string;
+    const lunar = solar.getLunar();
+
+    // 获取公历节日
+    const solarTerm = solar.getJieQi() || '';
 
     return {
-      lunarText: lunar.toString(), // 如 "正月初一"
-      lunarDayChinese: lunar.getDayInChinese(), // 如 "初一"
-      festivals,
-      jieQi,
+      lunarText: lunar.toString(),
+      lunarDayChinese: lunar.getDayInChinese(),
+      festivals: lunar.getFestivals() || [],
+      jieQi: solarTerm,
       ganZhi: lunar.getYearInGanZhi(),
       isLeap: lunar.isLeap(),
       lunarMonth: lunar.getMonth(),
-      lunarMonthChinese: lunar.getMonthInChinese(), // 如 "正"
+      lunarMonthChinese: lunar.getMonthInChinese(),
       lunarDay: lunar.getDay(),
       yearGanZhi: lunar.getYearInGanZhi(),
       monthGanZhi: lunar.getMonthInGanZhi(),
