@@ -235,3 +235,88 @@ export const getHourName = (hour: number): { name: string; time: string } => {
     time: HOUR_TIME[index],
   };
 };
+
+/**
+ * 获取今日吉凶（简化版）
+ * 实际生产环境应使用完整的万年历算法
+ */
+export const getTodayFortune = (year: number, month: number, day: number): {
+  yi: string[]; // 宜
+  ji: string[]; // 忌
+  jishen: string[]; // 吉神
+  xiongsha: string[]; // 凶煞
+  chong: string; // 冲
+  sha: string; // 煞
+} => {
+  // 简化算法：根据日期生成宜忌
+  const dayIndex = (year + month + day) % 10;
+  console.log('getTodayFortune: params', { year, month, day, dayIndex });
+  
+  const yiOptions = [
+    ['祭祀', '祈福', '求嗣', '开光'],
+    ['嫁娶', '纳采', '订盟', '造车器'],
+    ['出行', '移徙', '入宅', '安床'],
+    ['开市', '立券', '交易', '纳财'],
+    ['动土', '破土', '安葬', '修坟'],
+    ['修造', '动土', '竖柱', '上梁'],
+    ['纳畜', '牧养', '理发', '冠笄'],
+    ['求医', '治病', '针灸', '服药'],
+    ['开仓', '出货', '放水', '栽种'],
+    ['安床', '解除', '拆卸', '修造'],
+  ];
+  
+  const jiOptions = [
+    ['开市', '动土', '破土'],
+    ['安葬', '开生坟', '行丧'],
+    ['嫁娶', '纳采', '订盟'],
+    ['出行', '移徙', '入宅'],
+    ['开市', '立券', '交易'],
+    ['动土', '破土', '安葬'],
+    ['修造', '动土', '竖柱'],
+    ['纳畜', '牧养', '理发'],
+    ['求医', '治病', '针灸'],
+    ['开仓', '出货', '放水'],
+  ];
+  
+  const jishenOptions = [
+    ['天德', '月德', '天恩'],
+    ['天愿', '天赦', '月恩'],
+    ['四相', '阳德', '三合'],
+    ['天马', '时阳', '生气'],
+    ['益后', '五合', '鸣犬'],
+    ['月空', '天马', '天德'],
+    ['三合', '天喜', '天医'],
+    ['天愿', '月恩', '四相'],
+    ['阳德', '三合', '天马'],
+    ['时阳', '生气', '益后'],
+  ];
+  
+  const xiongshaOptions = [
+    ['月破', '大耗', '月刑'],
+    ['月厌', '地火', '九空'],
+    ['五虚', '大耗', '月刑'],
+    ['月破', '大耗', '月厌'],
+    ['地火', '九空', '五虚'],
+    ['月刑', '月破', '大耗'],
+    ['月厌', '地火', '九空'],
+    ['五虚', '大耗', '月刑'],
+    ['月破', '大耗', '月厌'],
+    ['地火', '九空', '五虚'],
+  ];
+  
+  // 计算冲煞
+  const zhiIndex = (year + month + day) % 12;
+  const chongOptions = ['冲鼠', '冲牛', '冲虎', '冲兔', '冲龙', '冲蛇', '冲马', '冲羊', '冲猴', '冲鸡', '冲狗', '冲猪'];
+  const shaOptions = ['煞北', '煞西', '煞南', '煞东', '煞北', '煞西', '煞南', '煞东', '煞北', '煞西', '煞南', '煞东'];
+  
+  const result = {
+    yi: yiOptions[dayIndex],
+    ji: jiOptions[dayIndex],
+    jishen: jishenOptions[dayIndex],
+    xiongsha: xiongshaOptions[dayIndex], // 使用 dayIndex，与 yi/ji/jishen 一致
+    chong: chongOptions[zhiIndex],
+    sha: shaOptions[zhiIndex],
+  };
+  console.log('getTodayFortune: result', result);
+  return result;
+};

@@ -3,7 +3,7 @@
  * 功能：展示今日运势、开始排盘入口、历史记录
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import { DivinationRecord } from '../database/models/DivinationRecord';
 import theme from '../styles/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { solarToLunar, getGanZhiYear, getZodiac } from '../utils/lunar-calendar';
+import { solarToLunar, getGanZhiYear, getZodiac, getTodayFortune } from '../utils/lunar-calendar';
 
 const { colors, fonts, spacing, radii } = theme;
 const { width, height } = Dimensions.get('window');
@@ -42,30 +42,66 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'H
 
 // 获取今日日期信息
 const getTodayInfo = () => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1;
-  const day = today.getDate();
-  const weekDay = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][today.getDay()];
-  
-  // 使用万年历获取农历信息
-  const lunarInfo = solarToLunar(year, month, day);
-  
-  return {
-    date: `${year} 年 ${month} 月 ${day} 日 ${weekDay}`,
-    lunar: `农历${lunarInfo.lunarMonthName}${lunarInfo.lunarDayName}`,
-    ganZhiYear: lunarInfo.ganZhiYear,
-    ganZhiMonth: lunarInfo.ganZhiMonth,
-    ganZhiDay: lunarInfo.ganZhiDay,
-    zodiac: lunarInfo.zodiac,
-    wuxing: {
-      wood: 25,
-      fire: 30,
-      earth: 20,
-      metal: 15,
-      water: 10,
-    },
-  };
+  try {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    const weekDay = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][today.getDay()];
+    
+    // 使用万年历获取农历信息
+    const lunarInfo = solarToLunar(year, month, day);
+    
+    // 获取今日吉凶
+    const fortune = getTodayFortune(year, month, day);
+    console.log('getTodayInfo: fortune returned:', fortune);
+    console.log('getTodayInfo: fortune.yi length:', fortune.yi?.length);
+    console.log('getTodayInfo: fortune.ji length:', fortune.ji?.length);
+    console.log('getTodayInfo: fortune.jishen length:', fortune.jishen?.length);
+    
+    return {
+      date: `${year} 年 ${month} 月 ${day} 日 ${weekDay}`,
+      lunar: `农历${lunarInfo.lunarMonthName}${lunarInfo.lunarDayName}`,
+      ganZhiYear: lunarInfo.ganZhiYear,
+      ganZhiMonth: lunarInfo.ganZhiMonth,
+      ganZhiDay: lunarInfo.ganZhiDay,
+      zodiac: lunarInfo.zodiac,
+      fortune, // 添加今日吉凶
+      wuxing: {
+        wood: 25,
+        fire: 30,
+        earth: 20,
+        metal: 15,
+        water: 10,
+      },
+    };
+  } catch (error) {
+    console.error('获取今日信息失败:', error);
+    // 返回默认值
+    return {
+      date: '2026 年 4 月 20 日 星期一',
+      lunar: '农历三月初三',
+      ganZhiYear: '丙午',
+      ganZhiMonth: '壬辰',
+      ganZhiDay: '甲寅',
+      zodiac: '马',
+      fortune: {
+        yi: ['祭祀', '祈福'],
+        ji: ['动土', '破土'],
+        jishen: ['天德', '月德'],
+        xiongsha: ['月破', '大耗'],
+        chong: '冲鼠',
+        sha: '煞北',
+      },
+      wuxing: {
+        wood: 25,
+        fire: 30,
+        earth: 20,
+        metal: 15,
+        water: 10,
+      },
+    };
+  }
 };
 
 const todayInfo = getTodayInfo();
@@ -78,7 +114,7 @@ export const HomeScreen: React.FC = () => {
   const [history, setHistory] = useState<DivinationRecord[]>([]);
   const [stats, setStats] = useState<{ total: number; favoriteCount: number }>({ total: 0, favoriteCount: 0 });
   const [loading, setLoading] = useState(true);
-  const fadeAnim = new Animated.Value(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // 加载历史记录和统计
   useEffect(() => {
@@ -221,6 +257,34 @@ export const HomeScreen: React.FC = () => {
           </Text>
           <Text style={styles.fortuneZodiac}>生肖：{todayInfo.zodiac}</Text>
         </View>
+        
+        {/* 今日吉凶 */}
+        <View style={styles.fortuneDetail}>
+          <View style={styles.fortuneRow}>
+            <Text style={styles.fortuneLabel}>宜：</Text>
+            <Text style={styles.fortuneValueYi}>{todayInfo.fortune.yi.join('、')}</Text>
+          </View>
+          <View style={styles.fortuneRow}>
+            <Text style={styles.fortuneLabel}>忌：</Text>
+            <Text style={styles.fortuneValueJi}>{todayInfo.fortune.ji.join('、')}</Text>
+          </View>
+          <View style={styles.fortuneRow}>
+            <Text style={styles.fortuneLabel}>吉神：</Text>
+            <Text style={styles.fortuneValue}>{todayInfo.fortune.jishen.join('、')}</Text>
+          </View>
+          <View style={styles.fortuneRow}>
+            <Text style={styles.fortuneLabel}>冲煞：</Text>
+            <Text style={styles.fortuneValue}>{todayInfo.fortune.chong} {todayInfo.fortune.sha}</Text>
+          </View>
+        </View>
+        
+        {/* 查看万年历按钮 */}
+        <TouchableOpacity 
+          style={styles.calendarButton}
+          onPress={() => Alert.alert('万年历', '功能开发中...\n\n将支持：\n- 查看完整日历\n- 选择日期进行排盘\n- 查看每日吉凶')}
+        >
+          <Text style={styles.calendarButtonText}>📅 查看万年历</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       {/* 功能入口 */}
@@ -275,6 +339,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.riceWhite,
+    paddingBottom: spacing['3xl'], // 避免底部内容被遮挡
   },
   loadingContainer: {
     flex: 1,
@@ -331,7 +396,7 @@ const styles = StyleSheet.create({
   // 运势卡片
   fortuneCard: {
     margin: spacing.lg,
-    marginTop: -30,
+    marginTop: spacing.md,
     backgroundColor: colors.white,
     borderRadius: radii['2xl'],
     padding: spacing.lg,
@@ -365,10 +430,62 @@ const styles = StyleSheet.create({
   },
   fortuneZodiac: {
     fontSize: fonts.sizes.sm,
-    fontFamily: fonts.sourceHan,
-    color: colors.gray[700],
+    fontFamily: fonts.songTi,
+    color: colors.gray[600],
     marginTop: spacing.xs,
   },
+  
+  // 今日吉凶详情
+  fortuneDetail: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  fortuneRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.xs,
+  },
+  fortuneLabel: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.kaiTi,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.semibold,
+    width: 60,
+  },
+  fortuneValue: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.songTi,
+    color: colors.gray[700],
+    flex: 1,
+  },
+  fortuneValueYi: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.songTi,
+    color: colors.success,
+    flex: 1,
+  },
+  fortuneValueJi: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.songTi,
+    color: colors.cinnabarRed,
+    flex: 1,
+  },
+  
+  // 万年历按钮
+  calendarButton: {
+    marginTop: spacing.md,
+    backgroundColor: colors.cinnabarRed,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.lg,
+    alignItems: 'center',
+  },
+  calendarButtonText: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.kaiTi,
+    color: colors.white,
+    fontWeight: fonts.weights.semibold,
+  },
+  
   fortuneMain: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -458,7 +575,7 @@ const styles = StyleSheet.create({
   },
   featureCard: {
     width: (width - spacing.lg * 2 - spacing.md) / 2,
-    height: 100,
+    height: 120, // 增加高度
     borderRadius: radii.xl,
     padding: spacing.md,
     justifyContent: 'center',
@@ -471,11 +588,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   featureIcon: {
-    fontSize: 32,
+    fontSize: 38,
     textAlign: 'center',
   },
   featureTitle: {
-    fontSize: fonts.sizes.md,
+    fontSize: fonts.sizes.lg,
     fontFamily: fonts.kaiTi,
     color: colors.white,
     fontWeight: fonts.weights.bold,
