@@ -1,0 +1,66 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4AF37;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D4AF37;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 圆形背景 -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#D4AF37" stroke-width="8"/>
+  
+  <!-- 太极图 -->
+  <g transform="translate(256, 256)">
+    <!-- 外圆 -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="url(#goldGradient)" stroke-width="6"/>
+    
+    <!-- 阴阳鱼 -->
+    <path d="M 0,-120 A 120,120 0 0,1 0,120 A 60,60 0 0,0 0,0 A 60,60 0 0,1 0,-120" fill="#FFD700"/>
+    <path d="M 0,120 A 120,120 0 0,1 0,-120 A 60,60 0 0,0 0,0 A 60,60 0 0,1 0,120" fill="#1A1A1A"/>
+    
+    <!-- 阴阳眼 -->
+    <circle cx="0" cy="-60" r="15" fill="#1A1A1A"/>
+    <circle cx="0" cy="60" r="15" fill="#FFD700"/>
+  </g>
+  
+  <!-- 八卦符号（简化版） -->
+  <g transform="translate(256, 256)" font-family="serif" font-size="24" fill="#FFD700" text-anchor="middle">
+    <!-- 乾 -->
+    <text x="0" y="-170">☰</text>
+    <!-- 坤 -->
+    <text x="0" y="185">☷</text>
+    <!-- 离 -->
+    <text x="170" y="10">☲</text>
+    <!-- 坎 -->
+    <text x="-170" y="10">☵</text>
+  </g>
+  
+  <!-- AI元素 - 电路纹理 -->
+  <g stroke="#FFD700" stroke-width="2" fill="none" opacity="0.6">
+    <!-- 左侧电路 -->
+    <path d="M 80,200 L 100,200 L 100,220 L 120,220"/>
+    <path d="M 80,256 L 100,256 L 100,276 L 120,276"/>
+    <path d="M 80,312 L 100,312 L 100,292 L 120,292"/>
+    
+    <!-- 右侧电路 -->
+    <path d="M 432,200 L 412,200 L 412,220 L 392,220"/>
+    <path d="M 432,256 L 412,256 L 412,276 L 392,276"/>
+    <path d="M 432,312 L 412,312 L 412,292 L 392,292"/>
+    
+    <!-- 电路节点 -->
+    <circle cx="120" cy="220" r="4" fill="#FFD700"/>
+    <circle cx="120" cy="276" r="4" fill="#FFD700"/>
+    <circle cx="120" cy="292" r="4" fill="#FFD700"/>
+    <circle cx="392" cy="220" r="4" fill="#FFD700"/>
+    <circle cx="392" cy="276" r="4" fill="#FFD700"/>
+    <circle cx="392" cy="292" r="4" fill="#FFD700"/>
+  </g>
+  
+  <!-- 标题文字 -->
+  <text x="256" y="450" font-family="serif" font-size="48" fill="#FFD700" text-anchor="middle" font-weight="bold">灵枢排盘</text>
+</svg>
