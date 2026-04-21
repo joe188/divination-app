@@ -17,7 +17,8 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
-import { insertRecord } from '../database/queries/history';
+import { insertRecord, getRecord, updateRecord } from '../database/queries/history';
+import { getAIInterpretation } from '../utils/ai-interpret';
 import { DivinationRecord } from '../database/models/DivinationRecord';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
@@ -73,23 +74,21 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 }) => {
   const route = useRoute();
   const navigation = useNavigation();
-  
-  // AI 解卦结果状态
-  const [aiResult, setAiResult] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  
+
+  // AI 解卦结果状态（已改为数据库持久化）
+
   // 从 route.params 获取数据
   const routeParams = (route.params as any);
-  
+
   // 调试日志
   console.log('🔍 route.params:', JSON.stringify(routeParams, null, 2));
   console.log('🔍 routeParams?.result:', JSON.stringify(routeParams?.result, null, 2));
-  
+
   // BaZiInputScreen 传递的是 { type: 'bazi', result: { ...result, year, month, day, hour, location } }
   // 需要将其转换为 ResultScreen 期望的格式
   const result = routeParams?.result;
-  
-  // 安全检查：确保 result 存在且包含必要字段
+
+  // 安全检查:确保 result 存在且包含必要字段
   const baziData = result && result.ganZhi ? {
     year: result.year,
     month: result.month,
@@ -108,28 +107,82 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       wuxingDistribution: result.wuxingDistribution,
     },
   } : null;
-  
+
   console.log('🔍 baziData:', JSON.stringify(baziData, null, 2));
   console.log('🔍 baziData?.baziResult?.ganZhi:', JSON.stringify(baziData?.baziResult?.ganZhi, null, 2));
-  
+
   const [activeTab, setActiveTab] = useState<'wuxing' | 'shishen'>('wuxing');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [recordId, setRecordId] = useState<number | null>(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiInterpretation, setAiInterpretation] = useState<string>('');
+  const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 使用传入的 baziData 或默认空数据（必须先定义，供 useEffect 使用）
+  // 使用传入的 baziData 或默认空数据(必须先定义,供 useEffect 使用)
   const data = baziData?.baziResult;
   const hasData = !!data && !!data.ganZhi;
 
-  // 计算 ganZhi（如果数据存在）
+  // 计算 ganZhi(如果数据存在)
   const ganZhi = data?.ganZhi;
 
-  // 自动保存排盘结果到数据库
+  // 自动保存排盘结果到数据库(并触发 AI 生成)
   useEffect(() => {
     if (hasData && !saved && !saving) {
       saveToDatabase();
     }
   }, [hasData]);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 触发后台 AI 解读生成
+  const generateAIInterpretation = async (id: number) => {
+    try {
+      setAiGenerating(true);
+      const fourPillars = {
+        year: ganZhi.year.gan + ganZhi.year.zhi,
+        month: ganZhi.month.gan + ganZhi.month.zhi,
+        day: ganZhi.day.gan + ganZhi.day.zhi,
+        hour: ganZhi.hour.gan + ganZhi.hour.zhi,
+      };
+      const fiveElements = data?.fiveElements || { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+      const interpretation = await getAIInterpretation({ fourPillars, fiveElements });
+      // 更新数据库
+      await updateRecord(id, { aiInterpretation: interpretation });
+      // 更新本地状态
+      setAiInterpretation(interpretation);
+      setAiGenerating(false);
+    } catch (error) {
+      console.error('❌ AI 生成失败:', error);
+      // 即使失败也停止生成状态
+      setAiGenerating(false);
+    }
+  };
+
+  // 轮询等待 AI 结果(备用同步)
+  const startPollingAIResult = (id: number) => {
+    pollingTimerRef.current = setInterval(async () => {
+      try {
+        const record = await getRecord(id);
+        if (record?.aiInterpretation) {
+          setAiInterpretation(record.aiInterpretation);
+          setAiGenerating(false);
+          if (pollingTimerRef.current) {
+            clearInterval(pollingTimerRef.current);
+          }
+        }
+      } catch (e) {
+        console.error('Polling error:', e);
+      }
+    }, 2000);
+  };
 
   // 保存到数据库
   const saveToDatabase = async () => {
@@ -151,7 +204,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         shishenData: JSON.stringify(data.shishen),
         location: baziData.location,
         timeCorrection: baziData.solarCorrection ? 0 : undefined,
-        aiInterpretation: '', // TODO: 从 AI 结果中获取
+        aiInterpretation: '', // 初始为空,后台会填充
         userNotes: '',
         isFavorite: 0,
       };
@@ -160,6 +213,12 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       setRecordId(id);
       setSaved(true);
       console.log('✅ Record saved to database, ID:', id);
+
+      // 触发后台 AI 解读生成
+      generateAIInterpretation(id);
+
+      // 开始轮询等待 AI 结果
+      startPollingAIResult(id);
     } catch (error) {
       console.error('❌ Failed to save record:', error);
       Alert.alert('保存失败', '无法保存到本地数据库,请稍后重试');
@@ -185,24 +244,12 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     ? `${data?.lunarDate} ${baziData?.hourLabel}`
     : `${data?.solarDate} ${baziData?.hourLabel}`;
 
-  // 使用上方已定义的 ganZhi（data?.ganZhi），如果 data 存在
+  // 使用上方已定义的 ganZhi(data?.ganZhi),如果 data 存在
 
   // AI 解卦函数
-  const handleAIInterpret = async () => {
-    // 立即导航到 AIResultScreen，在新页面中调用 AI 服务
-    navigation.navigate('AIResult', {
-      baziInfo: {
-        ganZhi,
-        solarDate: data?.solarDate || '',
-        lunarDate: data?.lunarDate || '',
-        hourLabel: baziData?.hourLabel || '',
-        location: baziData?.location || '',
-      },
-      aiResult: null, // 初始为 null，在 AIResultScreen 中调用 AI 服务
-    });
-  };
+  // AI 解卦直接在本页面展示，无需单独导航
 
-  // 如果数据不存在，显示空状态
+  // 如果数据不存在,显示空状态
   if (!hasData || !ganZhi) {
     return (
       <View style={styles.container}>
@@ -419,6 +466,22 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           )}
         </GuochaoCard>
 
+        {/* AI 解卦 */}
+        <GuochaoCard title="💡 AI 解卦" variant="silk">
+          {aiGenerating ? (
+            <View style={styles.aiStatusLoading}>
+              <ActivityIndicator size="small" color={colors.cinnabarRed} />
+              <Text style={styles.aiStatusText}>AI 正在解卦中...</Text>
+            </View>
+          ) : aiInterpretation ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Text style={styles.aiResultText}>{aiInterpretation}</Text>
+            </ScrollView>
+          ) : (
+            <Text style={styles.aiPlaceholder}>等待生成...</Text>
+          )}
+        </GuochaoCard>
+
         {/* 五行分析(简化,后续可增强) */}
         <GuochaoCard title="五行分析" variant="elevated">
           <View style={styles.analysisContent}>
@@ -437,38 +500,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           </View>
         </GuochaoCard>
 
-        {/* AI 解卦入口 */}
-        <View style={styles.aiSection}>
-          <GuochaoCard variant="pattern" style={styles.aiCard}>
-            <View style={styles.aiContent}>
-              <Text style={styles.aiIcon}>🤖</Text>
-              <View style={styles.aiText}>
-                <Text style={styles.aiTitle}>AI 智能解卦</Text>
-                <Text style={styles.aiDesc}>
-                  结合现代语境,为你解读八字奥秘
-                </Text>
-              </View>
-            </View>
-            <GuochaoButton
-              title={aiLoading ? "解卦中..." : "立即解读"}
-              variant="outline"
-              size="medium"
-              onPress={handleAIInterpret}
-              style={styles.aiButton}
-              disabled={aiLoading}
-              loading={aiLoading}
-            />
-            
-            {/* AI 解卦结果 */}
-            {aiResult && (
-              <View style={styles.aiResultContainer}>
-                <Text style={styles.aiResultTitle}>🤖 AI 解卦结果</Text>
-                <Text style={styles.aiResultText}>{aiResult}</Text>
-              </View>
-            )}
-          </GuochaoCard>
-        </View>
-
+        {/* 已在上方 AI 解卦卡片中集成 */}
         <View style={styles.spacer} />
       </ScrollView>
     </View>
@@ -801,6 +833,33 @@ const styles = StyleSheet.create({
     fontFamily: fonts.kaiTi,
     fontSize: fonts.sizes.xl,
     color: colors.gray[500],
+  },
+
+  // AI 解卦状态
+  aiStatusLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  aiStatusText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.cinnabarRed,
+    marginLeft: spacing.sm,
+  },
+  aiResultText: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.inkBlack,
+    lineHeight: 28,
+    whiteSpace: 'pre-wrap',
+  },
+  aiPlaceholder: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.md,
+    color: colors.gray[400],
+    fontStyle: 'italic',
+    paddingVertical: spacing.md,
   },
 });
 
