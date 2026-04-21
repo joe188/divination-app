@@ -28,6 +28,15 @@ const { colors, fonts, spacing, radii } = theme;
 const HOUR_NAMES = ['子时', '丑时', '寅时', '卯时', '辰时', '巳时', '午时', '未时', '申时', '酉时', '戌时', '亥时'];
 const HOUR_TIME = ['23-01', '01-03', '03-05', '05-07', '07-09', '09-11', '11-13', '13-15', '15-17', '17-19', '19-21', '21-23'];
 
+// 时辰索引 → 实际小时（用于计算）
+const INDEX_TO_HOUR = [23, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21];
+
+// 实际小时 → 时辰索引
+const HOUR_TO_INDEX: Record<number, number> = {
+  23:0, 0:0, 1:1, 2:1, 3:2, 4:2, 5:3, 6:3, 7:4, 8:4, 9:5, 10:5,
+  11:6, 12:6, 13:7, 14:7, 15:8, 16:8, 17:9, 18:9, 19:10, 20:10, 21:11, 22:11
+};
+
 // 年份范围（1900-2100，共 201 年）
 const MIN_YEAR = 1900;
 const MAX_YEAR = 2100;
@@ -151,18 +160,24 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
       return;
     }
 
-    const localTime = hour + 0.5; // 假设当前小时的中间值
+    // 当前选择的实际小时
+    const currentHour = INDEX_TO_HOUR[hour];
+    const localTime = currentHour + 0.5; // 该时辰中点
     const adjustedHour: number = adjustSolarTime(longitude, localTime);
     const timeDiff = (longitude - 120) * 4; // 分钟
-    
+
+    // 计算校正后的时辰索引（取整并用模处理跨天）
+    const rounded = Math.round(adjustedHour) % 24;
+    const adjustedIndex = HOUR_TO_INDEX[rounded] ?? hour;
+    setHour(adjustedIndex);
+
     setSolarTimeInfo(
       `出生地经度：${longitude}°\n` +
       `与东经 120°时差：${timeDiff > 0 ? '+' : ''}${timeDiff.toFixed(1)}分钟\n` +
-      `真太阳时：${adjustedHour}时 (${HOUR_NAMES[adjustedHour]})`
+      `真太阳时：${HOUR_NAMES[adjustedIndex]} (${adjustedHour.toFixed(1)}时)`
     );
-    setHour(adjustedHour);
-    
-    Alert.alert('✅ 校正完成', `真太阳时已调整为${HOUR_NAMES[adjustedHour]}`);
+
+    Alert.alert('✅ 校正完成', `真太阳时已调整为${HOUR_NAMES[adjustedIndex]}`);
   };
 
   /**
@@ -171,7 +186,9 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   const handleDivination = async () => {
     setLoading(true);
     try {
-      const result: BaZiResult = calculateBaZi(year, month, day, hour);
+      // 将时辰索引转换为实际小时
+      const actualHour = INDEX_TO_HOUR[hour];
+      const result: BaZiResult = calculateBaZi(year, month, day, actualHour, isLunar);
       
       // 调试日志
       console.log('🔍 calculateBaZi result:', JSON.stringify(result, null, 2));
@@ -185,7 +202,10 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           month,
           day,
           hour,
+          hourLabel: HOUR_NAMES[hour],
           location: locationName,
+          calendarType: isLunar ? 'lunar' : 'solar',
+          solarCorrection: !!longitude,
         },
       });
     } catch (error: any) {
@@ -423,7 +443,7 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.timeDetail}>{HOUR_TIME[hour]} ({hour}时)</Text>
+            <Text style={styles.timeDetail}>{HOUR_TIME[hour]} ({INDEX_TO_HOUR[hour]}时)</Text>
             
             {/* 农历切换 */}
             <View style={styles.lunarToggle}>

@@ -95,10 +95,10 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     month: result.month,
     day: result.day,
     hour: result.hour,
-    hourLabel: `${result.hour}时`,
+    hourLabel: result.hourLabel || `${result.hour}时`,
     location: result.location || '',
-    calendarType: 'solar' as const,
-    solarCorrection: false,
+    calendarType: result.calendarType || ('solar' as const),
+    solarCorrection: result.solarCorrection || false,
     baziResult: {
       solarDate: result.solarDate,
       lunarDate: result.lunarDate,
