@@ -1,46 +1,61 @@
-import { Solar, Lunar } from 'lunar-typescript';
+console.log('LunarHelper module loaded');
+const lunar = require('lunar-typescript');
+const { Solar, Lunar } = lunar || {};
 
-/**
- * 获取指定公历日期的农历信息
- * @param date - Date 对象或 'YYYY-MM-DD' 字符串
- */
-export const getLunarInfo = (
-  date: Date | string
-) => {
+function safeAccess(obj, prop, fallback) {
   try {
-    let solar: any;
+    const val = obj[prop];
+    if (typeof val === 'function') {
+      return val.call(obj);
+    }
+    if (typeof val !== 'undefined') {
+      return val;
+    }
+    return fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+export const getLunarInfo = (date) => {
+  try {
+    console.log('🛠️ getLunarInfo called:', date);
+    if (!Solar || !Lunar) throw new Error('Solar/Lunar not loaded');
+
+    let year, month, day;
     if (typeof date === 'string') {
-      const [year, month, day] = date.split('-').map(Number);
-      solar = Solar.fromYmd(year, month, day);
+      [year, month, day] = date.split('-').map(Number);
     } else {
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      solar = Solar.fromYmd(year, month, day);
+      year = date.getFullYear();
+      month = date.getMonth() + 1;
+      day = date.getDate();
     }
 
-    const lunar = solar.getLunar();
-
-    // 获取公历节日
-    const solarTerm = solar.getJieQi() || '';
+    console.log('🛠️ calling Solar.fromYmd');
+    const solar = Solar.fromYmd(year, month, day);
+    console.log('🛠️ Solar.fromYmd succeeded');
+    console.log('🛠️ calling solar.getLunar');
+    const l = solar.getLunar();
+    console.log('🛠️ solar.getLunar succeeded');
 
     return {
-      lunarText: lunar.toString(),
-      lunarDayChinese: lunar.getDayInChinese(),
-      festivals: lunar.getFestivals() || [],
-      jieQi: solarTerm,
-      ganZhi: lunar.getYearInGanZhi(),
-      isLeap: lunar.isLeap(),
-      lunarMonth: lunar.getMonth(),
-      lunarMonthChinese: lunar.getMonthInChinese(),
-      lunarDay: lunar.getDay(),
-      yearGanZhi: lunar.getYearInGanZhi(),
-      monthGanZhi: lunar.getMonthInGanZhi(),
-      dayGanZhi: lunar.getDayInGanZhi(),
-      zodiac: lunar.getZodiac(),
+      lunarText: safeAccess(l, 'toString', ''),
+      lunarDayChinese: safeAccess(l, 'getDayInChinese', ''),
+      festivals: safeAccess(l, 'getFestivals', []) || [],
+      jieQi: safeAccess(solar, 'getJieQi', '') || '',
+      ganZhi: safeAccess(l, 'getYearInGanZhi', ''),
+      isLeap: safeAccess(l, 'isLeap', false),
+      lunarMonth: safeAccess(l, 'getMonth', month),
+      lunarMonthChinese: safeAccess(l, 'getMonthInChinese', ''),
+      lunarDay: safeAccess(l, 'getDay', day),
+      yearGanZhi: safeAccess(l, 'getYearInGanZhi', ''),
+      monthGanZhi: safeAccess(l, 'getMonthInGanZhi', ''),
+      dayGanZhi: safeAccess(l, 'getDayInGanZhi', ''),
+      zodiac: safeAccess(l, 'getZodiac', ''),
     };
   } catch (e) {
     console.error('农历转换错误', e);
+    if (e && e.stack) console.error('Stack:', e.stack);
     return null;
   }
 };

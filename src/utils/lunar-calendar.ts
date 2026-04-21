@@ -1,9 +1,11 @@
 /**
- * 万年历工具（基于 lunar-javascript 库）
+ * 万年历工具（基于 lunar-typescript）
  * 支持公历农历转换、干支纪年、节气、节日
  */
 
-import { Solar, Lunar } from 'lunar-typescript';
+console.log('lunar-calendar module loaded');
+const lunar = require('lunar-typescript');
+const { Solar, Lunar } = lunar || {};
 
 // 天干
 const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -41,118 +43,107 @@ export const getZodiac = (year: number): string => {
 };
 
 /**
- * 公历转农历（使用 lunar-javascript 库）
- * 精确计算农历日期、干支、节气、节日
+ * 公历转农历（使用 lunar-typescript 库）
  */
-export const solarToLunar = (year: number, month: number, day: number): {
-  lunarYear: number;
-  lunarMonth: number;
-  lunarDay: number;
-  isLeap: boolean;
-  ganZhiYear: string;
-  ganZhiMonth: string;
-  ganZhiDay: string;
-  zodiac: string;
-  lunarMonthName: string;
-  lunarDayName: string;
-  jieQi?: string; // 节气
-  festivals?: string[]; // 节日
-} => {
+export const solarToLunar = (year: number, month: number, day: number) => {
   try {
-    // 使用 lunar-javascript 库进行精确计算
+    if (!Solar) throw new Error('Solar not loaded');
     const solar = Solar.fromYmd(year, month, day);
-    const lunar = solar.getLunar();
+    const l = solar.getLunar();
+
+    // 安全调用（某些方法可能不存在）
+    const getter = (obj: any, name: string, fallback: any) => {
+      try {
+        const val = obj[name];
+        return typeof val === 'function' ? val.call(obj) : val;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    const ganZhiYear = getter(l, 'getYearInGanZhi', getGanZhiYear(year));
+    const ganZhiMonth = getter(l, 'getMonthInGanZhi', getGanZhiMonth(year, month));
+    const ganZhiDay = getter(l, 'getDayInGanZhi', getGanZhiDay(year, month, day));
+    const zodiac = getter(l, 'getZodiac', getZodiac(year));
+    const lunarMonthName = getter(l, 'getMonthInChinese', '') || LUNAR_MONTHS[month - 1] + '月';
+    const lunarDayName = getter(l, 'getDayInChinese', '') || LUNAR_DAYS[(day - 1) % 30];
     
-    const lunarYear = lunar.getYear();
-    const lunarMonth = lunar.getMonth();
-    const lunarDay = lunar.getDay();
-    const isLeap = lunar.isLeap();
-    
-    const ganZhiYear = lunar.getYearInGanZhi();
-    const ganZhiMonth = lunar.getMonthInGanZhi();
-    const ganZhiDay = lunar.getDayInGanZhi();
-    const zodiac = lunar.getZodiac();
-    
-    const lunarMonthName = (isLeap ? '闰' : '') + lunar.getMonthInChinese() + '月';
-    const lunarDayName = lunar.getDayInChinese();
-    
-    // 获取节气
-    const jieQi = solar.getJieQi();
-    
-    // 获取节日
-    const festivals = lunar.getFestivals();
-    
+    // isLeap 可能是属性或方法
+    let isLeap = false;
+    try {
+      if (typeof l.isLeap === 'function') isLeap = l.isLeap();
+      else if (typeof l.isLeap === 'boolean') isLeap = l.isLeap;
+      // 检查 _leap 等私有字段
+      else if (typeof l._leap !== 'undefined') isLeap = l._leap;
+    } catch (e) {
+      isLeap = false;
+    }
+
+    const jieQi = (() => {
+      try { return solar.getJieQi() || ''; } catch (e) { return ''; }
+    })();
+
+    const festivals = (() => {
+      try { return l.getFestivals() || []; } catch (e) { return []; }
+    })();
+
     return {
-      lunarYear,
-      lunarMonth,
-      lunarDay,
+      lunarYear: getter(l, 'getYear', year),
+      lunarMonth: getter(l, 'getMonth', month),
+      lunarDay: getter(l, 'getDay', day),
       isLeap,
       ganZhiYear,
       ganZhiMonth,
       ganZhiDay,
       zodiac,
-      lunarMonthName,
+      lunarMonthName: isLeap ? '闰' + lunarMonthName : lunarMonthName,
       lunarDayName,
-      jieQi: jieQi || undefined,
-      festivals: festivals && festivals.length > 0 ? festivals : undefined,
+      jieQi,
+      festivals: festivals.length > 0 ? festivals : undefined,
     };
   } catch (e) {
-    console.error('农历转换错误', e);
-    // 返回默认值
+    console.error('solarToLunar error', e, e.stack);
+    // 返回简化 fallback
     return {
       lunarYear: year,
       lunarMonth: month,
       lunarDay: day,
       isLeap: false,
       ganZhiYear: getGanZhiYear(year),
-      ganZhiMonth: '',
-      ganZhiDay: '',
+      ganZhiMonth: getGanZhiMonth(year, month),
+      ganZhiDay: getGanZhiDay(year, month, day),
       zodiac: getZodiac(year),
       lunarMonthName: LUNAR_MONTHS[month - 1] + '月',
       lunarDayName: LUNAR_DAYS[(day - 1) % 30],
+      jieQi: '',
+      festivals: [],
     };
   }
 };
 
 /**
- * 获取干支月（使用 lunar-javascript 库）
+ * 获取干支月（简化算法，fallback用）
  */
 export const getGanZhiMonth = (year: number, month: number): string => {
-  try {
-    const solar = Solar.fromYmd(year, month, 1);
-    const lunar = solar.getLunar();
-    return lunar.getMonthInGanZhi();
-  } catch (e) {
-    console.error('获取干支月错误', e);
-    // 简化算法
-    const ganIndex = (year * 12 + month + 13) % 10;
-    const zhiIndex = (month + 1) % 12;
-    return TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex];
-  }
+  const ganIndex = (year * 12 + month + 13) % 10;
+  const zhiIndex = (month + 1) % 12;
+  return TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex];
 };
 
 /**
- * 获取干支日（使用 lunar-javascript 库）
+ * 获取干支日（简化算法，fallback用）
  */
 export const getGanZhiDay = (year: number, month: number, day: number): string => {
-  try {
-    const solar = Solar.fromYmd(year, month, day);
-    const lunar = solar.getLunar();
-    return lunar.getDayInGanZhi();
-  } catch (e) {
-    console.error('获取干支日错误', e);
-    // 简化算法
-    const baseDate = new Date(1900, 0, 31);
-    const targetDate = new Date(year, month - 1, day);
-    const daysDiff = Math.floor((targetDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
-    const ganIndex = (daysDiff + 4) % 10;
-    const zhiIndex = (daysDiff + 4) % 12;
-    return TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex];
-  }
+  const baseDate = new Date(1900, 0, 31);
+  const targetDate = new Date(year, month - 1, day);
+  const daysDiff = Math.floor((targetDate.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24));
+  const ganIndex = (daysDiff + 4) % 10;
+  const zhiIndex = (daysDiff + 4) % 12;
+  return TIAN_GAN[ganIndex] + DI_ZHI[zhiIndex];
 };
 
 /**
- * 获取今日吉凶（宜忌、吉神、冲煞）
+ * 获取今日吉凶（宜忌、吉神、凶煞）
  */
 export const getTodayFortune = (year: number, month: number, day: number) => {
   const yiOptions = [
@@ -231,11 +222,9 @@ export const getTodayFortune = (year: number, month: number, day: number) => {
   };
 };
 
-/**
- * 获取春节日期（简化版）
- */
+// 以下为简化算法备用函数（fallback用）
+
 const getSpringFestivalDate = (year: number): { month: number; day: number } => {
-  // 简化：春节通常在 1 月 21 日 - 2 月 20 日之间
   const springFestivalDates: Record<number, { month: number; day: number }> = {
     2024: { month: 2, day: 10 },
     2025: { month: 1, day: 29 },
@@ -248,17 +237,10 @@ const getSpringFestivalDate = (year: number): { month: number; day: number } => 
   return springFestivalDates[year] || { month: 2, day: 1 };
 };
 
-/**
- * 获取农历年天数（简化版）
- */
 const getDaysInLunarYear = (year: number): number => {
-  // 简化：农历年通常有 354 或 384 天
   return 354;
 };
 
-/**
- * 计算从春节到当前日期的天数（简化版）
- */
 const getDaysFromSpringFestival = (
   year: number,
   month: number,

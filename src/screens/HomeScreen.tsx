@@ -23,6 +23,7 @@ import theme from '../styles/theme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { solarToLunar, getGanZhiYear, getZodiac, getTodayFortune } from '../utils/lunar-calendar';
+import { getLunarInfo } from '../utils/LunarHelper';
 
 const { colors, fonts, spacing, radii } = theme;
 const { width, height } = Dimensions.get('window');
