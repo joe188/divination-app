@@ -3,6 +3,8 @@
  * 显示和管理排盘历史
  */
 import React, { useState, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   View,
   Text,
@@ -38,12 +40,29 @@ interface HistoryItem {
   };
 }
 
+type RootStackParamList = {
+  HistoryDetail: { record: HistoryItem };
+  // ... other routes
+};
+
 interface HistoryScreenProps {
   onBack: () => void;
-  onViewItem: (item: HistoryItem) => void;
+  onViewItem?: (item: HistoryItem) => void;
 }
 
-export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewItem }) => {
+export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewItem: externalOnViewItem }) => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const handleViewItem = (item: HistoryItem) => {
+    // 显示弹窗详情，避免导航参数不匹配导致闪退
+    const wuxing = item.fiveElements
+      ? `木${item.fiveElements.wood}% 火${item.fiveElements.fire}% 土${item.fiveElements.earth}% 金${item.fiveElements.metal}% 水${item.fiveElements.water}%`
+      : '无';
+    Alert.alert(
+      '排盘详情',
+      `类型：${item.baziType}\n日期：${item.solarDate}\n农历：${item.lunarDate}\n时辰：${item.timePeriod}\n干支：${item.yearGanzhi || ''} ${item.monthGanzhi || ''} ${item.dayGanzhi || ''} ${item.hourGanzhi || ''}\n地点：${item.location || '未记录'}\n五行：${wuxing}`,
+      [{ text: '关闭' }]
+    );
+  };
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -137,7 +156,7 @@ export const HistoryScreen: React.FC<HistoryScreenProps> = ({ onBack, onViewItem
           title="查看"
           size="small"
           variant="primary"
-          onPress={() => onViewItem(item)}
+          onPress={() => handleViewItem(item)}
         />
         <GuochaoButton
           title="删除"

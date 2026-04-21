@@ -224,22 +224,7 @@ export const HomeScreen: React.FC = () => {
       icon: '⚙️',
       backgroundColor: colors.gold,
       onPress: () => navigation.navigate('Settings'),
-      desc: 'AI 配置\n主题切换',
-    },
-    {
-      title: '历史记录',
-      icon: '📜',
-      gradient: ['#f6d365', '#fda085'],
-      onPress: () => navigation.navigate('History'),
-      desc: '查阅过往排盘记录',
-    },
-    {
-      title: '使用手册',
-      icon: '📖',
-      backgroundColor: colors.white,
-      borderColor: colors.gold,
-      onPress: () => Alert.alert('📖 使用手册', '功能开发中...\n\n包含：\n- 新手指南\n- 常见问题\n- 功能说明'),
-      desc: '新手指南\n常见问题',
+      desc: '系统设置',
     },
   ];
 
