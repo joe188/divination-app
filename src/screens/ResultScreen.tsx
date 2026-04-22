@@ -278,7 +278,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     
     try {
       const analysis = generateFullBaZiAnalysis(data);
-      const fullText = `${analysis.summary}\n\n${analysis.analysis.ganZhi}\n\n${analysis.analysis.fiveElements}\n\n${analysis.analysis.shishen}\n\n${analysis.analysis.dayMaster}\n\n${analysis.analysis.yongShen}\n\n${analysis.analysis.cangGan}\n\n${analysis.analysis.shenSha}\n\n${analysis.analysis.naYin}\n\n${analysis.analysis.kongWang}\n\n${analysis.analysis.geJu}\n\n${analysis.advice}`;
+      const fullText = `${analysis.summary}\n\n${analysis.analysis.ganZhi}\n\n${analysis.analysis.fiveElements}\n\n${analysis.analysis.shishen}\n\n${analysis.analysis.dayMaster}\n\n${analysis.analysis.yongShen}\n\n${analysis.analysis.cangGan}\n\n${analysis.analysis.shenSha}\n\n${analysis.analysis.naYin}\n\n${analysis.analysis.kongWang}\n\n${analysis.analysis.geJu}\n\n${analysis.analysis.daYun}\n\n${analysis.analysis.liuNian}\n\n${analysis.advice}`;
       setLocalInterpretation(fullText);
     } catch (error) {
       console.error('本地解析失败:', error);

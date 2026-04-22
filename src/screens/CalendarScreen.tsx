@@ -146,7 +146,11 @@ export default function CalendarScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollContent}
+        scrollEnabled={!showYearSelector && !showMonthSelector}
+      >
         {/* 日历主体（星期 + 日期网格，一个整体） */}
         <View style={styles.calendarContainer}>
           {/* 星期行 */}
@@ -295,7 +299,17 @@ export default function CalendarScreen() {
                 style={{ flex: 1 }}
                 contentContainerStyle={{ paddingBottom: 10 }}
                 showsVerticalScrollIndicator
-                removeClippedSubviews={false}
+                removeClippedSubviews={true}
+                nestedScrollEnabled={true}
+                initialNumToRender={25}
+                maxToRenderPerBatch={25}
+                windowSize={5}
+                updateCellsBatchingPeriod={10}
+                getItemLayout={(data, index) => ({
+                  length: 44,
+                  offset: 44 * index,
+                  index,
+                })}
                 renderItem={({ item: year }) => (
                   <TouchableOpacity
                     style={[
@@ -477,11 +491,13 @@ const styles = StyleSheet.create({
   },
   pickerGridItem: {
     width: '18%',
-    paddingVertical: 8,
+    height: 40,
+    paddingVertical: 4,
     paddingHorizontal: 2,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 6,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   pickerGridItemSelected: { backgroundColor: '#e3f2fd' },
   pickerGridItemText: { fontSize: 13, color: '#333', textAlign: 'center' },

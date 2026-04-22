@@ -18,6 +18,8 @@ export interface BaZiAnalysis {
     naYin: string; // 纳音分析
     kongWang: string; // 空亡分析
     geJu: string; // 格局分析
+    daYun: string; // 大运分析
+    liuNian: string; // 流年分析
   };
   advice: string; // 建议
 }
@@ -43,6 +45,8 @@ export const generateFullBaZiAnalysis = (result: BaZiResult): BaZiAnalysis => {
     naYin: analyzeNaYin(ganZhi),
     kongWang: analyzeKongWang(ganZhi),
     geJu: analyzeGeJu(ganZhi, fiveElements),
+    daYun: analyzeDaYun(ganZhi, result.year),
+    liuNian: analyzeLiuNian(ganZhi, result.year),
   };
   
   // 建议
@@ -73,8 +77,17 @@ const generateBaZiSummary = (ganZhi: any, fiveElements: any): string => {
   const strongest = sorted[0];
   const weakest = sorted[sorted.length - 1];
   
-  summary += `• 五行最旺：${strongest[0]}（${strongest[1]}个）\n`;
-  summary += `• 五行最弱：${weakest[0]}（${weakest[1]}个）\n`;
+  // 五行英文名转中文
+  const elementMap: Record<string, string> = {
+    wood: '木',
+    fire: '火',
+    earth: '土',
+    metal: '金',
+    water: '水',
+  };
+  
+  summary += `• 五行最旺：${elementMap[strongest[0]] || strongest[0]}（${strongest[1]}个）\n`;
+  summary += `• 五行最弱：${elementMap[weakest[0]] || weakest[0]}（${weakest[1]}个）\n`;
   
   // 五行平衡度
   const total = elements.reduce((sum, [, count]) => sum + count, 0);
@@ -235,8 +248,17 @@ const analyzeYongShen = (ganZhi: any, fiveElements: any): string => {
   const strongest = sorted[0][0];
   const weakest = sorted[sorted.length - 1][0];
   
-  analysis += `• 五行最旺：${strongest}\n`;
-  analysis += `• 五行最弱：${weakest}\n`;
+  // 五行英文名转中文
+  const elementMap: Record<string, string> = {
+    wood: '木',
+    fire: '火',
+    earth: '土',
+    metal: '金',
+    water: '水',
+  };
+  
+  analysis += `• 五行最旺：${elementMap[strongest] || strongest}\n`;
+  analysis += `• 五行最弱：${elementMap[weakest] || weakest}\n`;
   
   // 用神建议
   const yongShenMap: { [key: string]: string } = {
@@ -455,17 +477,29 @@ const generateBaZiAdvice = (ganZhi: any, fiveElements: any): string => {
   const strongest = sorted[0][0];
   const weakest = sorted[sorted.length - 1][0];
   
+  // 五行英文名转中文
+  const elementMap: Record<string, string> = {
+    wood: '木',
+    fire: '火',
+    earth: '土',
+    metal: '金',
+    water: '水',
+  };
+  
+  const strongestCn = elementMap[strongest] || strongest;
+  const weakestCn = elementMap[weakest] || weakest;
+  
   advice += `【五行平衡】\n`;
-  advice += `• 最旺：${strongest}，宜适当克制\n`;
-  advice += `• 最弱：${weakest}，宜适当补充\n`;
+  advice += `• 最旺：${strongestCn}，宜适当克制\n`;
+  advice += `• 最弱：${weakestCn}，宜适当补充\n`;
   
   advice += `\n【事业建议】\n`;
-  advice += `• 宜从事与${weakest}相关的行业\n`;
-  advice += `• 避免从事与${strongest}冲突的行业\n`;
+  advice += `• 宜从事与${weakestCn}相关的行业\n`;
+  advice += `• 避免从事与${strongestCn}冲突的行业\n`;
   
   advice += `\n【健康建议】\n`;
-  advice += `• 注意${weakest}对应器官的保养\n`;
-  advice += `• 避免过度消耗${strongest}相关的能量\n`;
+  advice += `• 注意${weakestCn}对应器官的保养\n`;
+  advice += `• 避免过度消耗${strongestCn}相关的能量\n`;
   
   advice += `\n【注意事项】\n`;
   advice += `• 以上分析仅供参考\n`;
@@ -473,6 +507,96 @@ const generateBaZiAdvice = (ganZhi: any, fiveElements: any): string => {
   advice += `• 建议咨询专业命理师\n`;
   
   return advice;
+};
+
+/**
+ * 大运分析
+ */
+const analyzeDaYun = (ganZhi: any, birthYear: number): string => {
+  let analysis = '【大运分析】\n';
+  analysis += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  // 起运年龄（简化计算：3 天=1 岁）
+  const startAge = 3;
+  
+  // 大运干支（简化版，实际需要根据月柱和性别推算）
+  const daYunList = [
+    { gan: '甲', zhi: '子', age: `${startAge}-${startAge+9}` },
+    { gan: '乙', zhi: '丑', age: `${startAge+10}-${startAge+19}` },
+    { gan: '丙', zhi: '寅', age: `${startAge+20}-${startAge+29}` },
+    { gan: '丁', zhi: '卯', age: `${startAge+30}-${startAge+39}` },
+    { gan: '戊', zhi: '辰', age: `${startAge+40}-${startAge+49}` },
+    { gan: '己', zhi: '巳', age: `${startAge+50}-${startAge+59}` },
+    { gan: '庚', zhi: '午', age: `${startAge+60}-${startAge+69}` },
+    { gan: '辛', zhi: '未', age: `${startAge+70}-${startAge+79}` },
+  ];
+  
+  analysis += `• 起运年龄：${startAge}岁\n`;
+  analysis += `• 大运周期：每 10 年一换\n\n`;
+  
+  analysis += `【大运排盘】\n`;
+  daYunList.forEach((dy, index) => {
+    analysis += `${index + 1}. ${dy.gan}${dy.zhi}运（${dy.age}岁）`;
+    
+    // 简评
+    if (index < 2) {
+      analysis += ' - 青少年时期，学业为主\n';
+    } else if (index < 4) {
+      analysis += ' - 青年时期，事业起步\n';
+    } else if (index < 6) {
+      analysis += ' - 中年时期，事业发展\n';
+    } else {
+      analysis += ' - 晚年时期，安享晚年\n';
+    }
+  });
+  
+  analysis += `\n【大运提示】\n`;
+  analysis += `• 每步大运影响 10 年运势\n`;
+  analysis += `• 需结合流年综合分析\n`;
+  analysis += `• 大运好则事半功倍，大运差则韬光养晦\n`;
+  
+  return analysis;
+};
+
+/**
+ * 流年分析
+ */
+const analyzeLiuNian = (ganZhi: any, birthYear: number): string => {
+  let analysis = '【流年分析】\n';
+  analysis += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  const currentYear = new Date().getFullYear();
+  const currentAge = currentYear - birthYear;
+  
+  // 近 5 年流年
+  const liuNianList = [];
+  for (let i = 0; i < 5; i++) {
+    const year = currentYear + i;
+    const age = currentAge + i;
+    // 简化计算年干支
+    const ganIndex = (year - 4) % 10;
+    const zhiIndex = (year - 4) % 12;
+    const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'][ganIndex];
+    const diZhi = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'][zhiIndex];
+    liuNianList.push({ year, age, ganZhi: `${tianGan}${diZhi}` });
+  }
+  
+  analysis += `【近五年流年】\n`;
+  liuNianList.forEach((ln, index) => {
+    analysis += `• ${ln.year}年（${ln.age}岁）：${ln.ganZhi}\n`;
+  });
+  
+  analysis += `\n【流年提示】\n`;
+  analysis += `• 流年管一年吉凶\n`;
+  analysis += `• 需与大运、命局综合判断\n`;
+  analysis += `• 流年好则顺风顺水，流年差则谨言慎行\n`;
+  
+  analysis += `\n【${currentYear}年建议】\n`;
+  analysis += `• 根据流年五行调整事业方向\n`;
+  analysis += `• 注意健康，定期体检\n`;
+  analysis += `• 保持良好心态，顺势而为\n`;
+  
+  return analysis;
 };
 
 /**

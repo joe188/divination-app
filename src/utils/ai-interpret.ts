@@ -74,8 +74,18 @@ export function generateLocalInterpretation(
 }
 
 function getElementName(key: string): string {
-  const map: Record<string, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };
-  return map[key] || key;
+  const map: Record<string, string> = { 
+    wood: '木', 
+    fire: '火', 
+    earth: '土', 
+    metal: '金', 
+    water: '水' 
+  };
+  // 如果已经是中文，直接返回；如果是英文 key，转换为中文
+  if (['木', '火', '土', '金', '水'].includes(key)) {
+    return key;
+  }
+  return map[key] || '未知';
 }
 
 // AI API 配置
