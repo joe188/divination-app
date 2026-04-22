@@ -1,6 +1,6 @@
 /**
  * BaZiInputScreen - 八字排盘（国潮美化版）
- * 功能：选择出生年月日时、真太阳时校正、手机定位、本地/AI 解析
+ * 功能：选择出生年月日时、真太阳时校正、选择出生地、本地/AI 解析
  */
 
 import React, { useState, useRef } from 'react';
@@ -93,62 +93,10 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   }, []);
 
   /**
-   * 获取当前位置
+   * 选择出生地
    */
-  const handleGetLocation = async () => {
-    setLoading(true);
-    try {
-      const geolocation = require('react-native-geolocation-service');
-      
-      // 检查是否有定位权限
-      let hasPermission = false;
-      try {
-        const result = await geolocation.requestAuthorization('whenInUse');
-        hasPermission = result === 'granted';
-      } catch (e) {
-        console.log('📍 requestAuthorization not available, trying to get position directly');
-        hasPermission = true; // 尝试直接获取位置
-      }
-      
-      console.log('📍 定位权限:', hasPermission);
-      
-      geolocation.getCurrentPosition(
-        (position: any) => {
-          const { latitude, longitude } = position.coords;
-          console.log('📍 定位成功:', { latitude, longitude });
-          setLongitude(longitude);
-          
-          // 查找最近城市
-          const nearest = CITY_COORDINATES.find((c: any) => 
-            Math.abs(c.latitude - latitude) < 1 && Math.abs(c.longitude - longitude) < 1
-          );
-          
-          if (nearest) {
-            setLocationName(`${nearest.province} ${nearest.city} ${nearest.district}`);
-            setLongitude(nearest.longitude);
-            Alert.alert('✅ 定位成功', `当前位置：${nearest.province} ${nearest.city} ${nearest.district}\n经度：${nearest.longitude.toFixed(2)}° 纬度：${nearest.latitude.toFixed(2)}°`);
-          } else {
-            setLocationName(`自定义地点 (${latitude.toFixed(2)}°, ${longitude.toFixed(2)}°)`);
-            Alert.alert('✅ 定位成功', `经度：${longitude.toFixed(2)}° 纬度：${latitude.toFixed(2)}°\n未找到对应城市，请手动选择`);
-          }
-          setLoading(false);
-        },
-        (error: any) => {
-          console.error('📍 定位失败:', error);
-          Alert.alert('❌ 定位失败', `错误：${error.message}\n请手动选择城市`);
-          setLoading(false);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 10000,
-        }
-      );
-    } catch (error: any) {
-      console.error('📍 定位错误:', error);
-      Alert.alert('❌ 错误', `定位功能不可用：${error.message}`);
-      setLoading(false);
-    }
+  const handleSelectLocation = () => {
+    setShowLocationPicker(true);
   };
 
   /**
@@ -267,6 +215,50 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
       </View>
     </Modal>
   );
+  // 渲染年份选择器（网格状）
+  const renderYearPicker = () => (
+    <Modal visible={showYearPicker} transparent animationType="slide" onRequestClose={() => setShowYearPicker(false)}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowYearPicker(false)}>
+              <Text style={styles.modalButton}>取消</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>选择年份</Text>
+            <TouchableOpacity onPress={() => setShowYearPicker(false)}>
+              <Text style={[styles.modalButton, styles.modalConfirm]}>确定</Text>
+            </TouchableOpacity>
+          </View>
+          <FlatList
+            data={YEAR_RANGE}
+            keyExtractor={(item) => item.toString()}
+            numColumns={5}
+            contentContainerStyle={{ padding: spacing.md }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.yearGridItem,
+                  item === year && styles.yearGridItemSelected,
+                ]}
+                onPress={() => {
+                  setYear(item);
+                  setShowYearPicker(false);
+                }}
+              >
+                <Text style={[
+                  styles.yearGridText,
+                  item === year && styles.yearGridTextSelected,
+                ]}>
+                  {item}年
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+
   const renderPicker = (items: any[], value: any, onChange: (item: any) => void, visible: boolean, onClose: () => void) => (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
@@ -415,7 +407,7 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing['3xl'] }}>
         <Animated.View style={[{ opacity: fadeAnim }]}>
           {/* 日期选择卡片 */}
           <View style={styles.card}>
@@ -475,26 +467,15 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
           <View style={styles.card}>
             <Text style={styles.cardTitle}>📍 出生地点</Text>
             
-            <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color={colors.cinnabarRed} />
-              ) : (
-                <Text style={styles.locationButtonText}>📍 获取当前位置</Text>
-              )}
+            <TouchableOpacity style={styles.locationButton} onPress={handleSelectLocation}>
+              <Text style={styles.locationButtonText}>🏙️ 选择出生地</Text>
             </TouchableOpacity>
 
-            {locationName ? (
+            {locationName && (
               <View style={styles.locationInfo}>
                 <Text style={styles.locationLabel}>已选择：</Text>
                 <Text style={styles.locationValue}>{locationName}</Text>
               </View>
-            ) : (
-              <TouchableOpacity 
-                style={styles.manualLocationButton}
-                onPress={() => setShowLocationPicker(true)}
-              >
-                <Text style={styles.manualLocationText}>🏙️ 手动选择城市</Text>
-              </TouchableOpacity>
             )}
 
             {longitude && (
@@ -544,7 +525,7 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
       </ScrollView>
 
       {/* 选择器 */}
-      {renderPicker(YEAR_RANGE, year, setYear, showYearPicker, () => setShowYearPicker(false))}
+      {renderYearPicker()}
       {renderPicker(MONTH_RANGE, month, setMonth, showMonthPicker, () => setShowMonthPicker(false))}
       {renderPicker(DAY_RANGE, day, setDay, showDayPicker, () => setShowDayPicker(false))}
       {renderHourPicker()}
@@ -648,21 +629,23 @@ const styles = StyleSheet.create({
   dateButton: {
     flex: 1,
     backgroundColor: colors.riceWhite,
-    padding: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     borderRadius: radii.lg,
     alignItems: 'center',
     marginHorizontal: spacing.sm,
     borderWidth: 1,
     borderColor: colors.gray[200],
+    minHeight: 60,
   },
   dateLabel: {
-    fontSize: fonts.sizes.sm,
+    fontSize: fonts.sizes.xs,
     fontFamily: fonts.sourceHan,
     color: colors.gray[600],
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   dateValue: {
-    fontSize: fonts.sizes.lg,
+    fontSize: fonts.sizes.md,
     fontFamily: fonts.kaiTi,
     color: colors.inkBlack,
     fontWeight: fonts.weights.bold,
@@ -792,6 +775,29 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[200],
+  },
+  yearGridItem: {
+    flex: 1,
+    margin: 2,
+    padding: spacing.md,
+    backgroundColor: colors.riceWhite,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.gray[200],
+  },
+  yearGridItemSelected: {
+    backgroundColor: colors.cinnabarRed,
+    borderColor: colors.cinnabarRed,
+  },
+  yearGridText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.inkBlack,
+  },
+  yearGridTextSelected: {
+    color: colors.white,
+    fontWeight: fonts.weights.bold,
   },
   modalButton: {
     fontSize: fonts.sizes.md,
