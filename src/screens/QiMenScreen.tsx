@@ -20,6 +20,7 @@ import { GuochaoCard } from '../components/GuochaoCard';
 import { QiMenPanView } from '../components/QiMenPanView';
 import theme from '../styles/theme';
 import { calculateQiMen, QiMenResult } from '../utils/qimen-calculator';
+import { generateFullQiMenAnalysis } from '../utils/qimen-interpret';
 import { insertRecord, updateRecord } from '../database/queries/history';
 import type { DivinationRecord } from '../database/models/DivinationRecord';
 
@@ -51,6 +52,7 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<QiMenResult | null>(null);
   const [interpretation, setInterpretation] = useState('');
+  const [localInterpretation, setLocalInterpretation] = useState('');
   const [recordId, setRecordId] = useState<number | null>(null);
   
   // 选择器状态
@@ -95,24 +97,11 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     try {
       setLoading(true);
       
-      // 生成本地解析文本
-      const text = `【奇门局象】\n\n` +
-        `节气：${jieqi}\n` +
-        `时间：${year}年${month}月${day}日 ${SHI_CHEN[hourIndex]}\n` +
-        `日干支：${result.dayGanZhi}\n` +
-        `时干支：${result.hourGanZhi}\n\n` +
-        `【值符】${result.zhiFu}\n` +
-        `【值使】${result.zhiShi}\n\n` +
-        `【九宫格局】\n` +
-        `这是一个简化的本地解析版本。\n\n` +
-        `完整的解析需要结合：\n` +
-        `- 八门（休生伤杜景死惊开）\n` +
-        `- 九星（天蓬天任天冲天辅天英天芮天柱天心天禽）\n` +
-        `- 八神（值符腾阴合虎武地天）\n` +
-        `- 三奇六仪（戊己庚辛壬癸丁丙乙）\n\n` +
-        `建议咨询专业奇门遁甲师进行详细解读。`;
+      // 使用新的解析模块生成详细解析
+      const analysis = generateFullQiMenAnalysis(result);
+      const text = `${analysis.summary}\n\n${analysis.analysis.ju}\n\n${analysis.analysis.zhiFu}\n\n${analysis.analysis.zhiShi}\n\n${analysis.analysis.baMen}\n\n${analysis.analysis.jiuXing}\n\n${analysis.analysis.baShen}\n\n${analysis.analysis.siPan}\n\n${analysis.analysis.keYing}\n\n${analysis.analysis.wangShuai}\n\n${analysis.analysis.fuYinFanYin}\n\n${analysis.advice}`;
       
-      setInterpretation(text);
+      setLocalInterpretation(text);
       
       // 保存或更新历史记录
       if (recordId) {
@@ -129,13 +118,15 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           location: '',
           aiInterpretation: text,
           isFavorite: 0,
+          jieqi,
+          juName: result.solarTerm,
         };
         
         const newRecordId = await insertRecord(record as DivinationRecord);
         setRecordId(newRecordId);
       }
       
-      Alert.alert('✅ 解析完成', text);
+      Alert.alert('✅ 解析完成', '已生成详细的奇门遁甲解析');
     } catch (error) {
       Alert.alert('❌ 错误', '本地解析失败：' + (error as Error).message);
     } finally {
@@ -172,6 +163,35 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       },
       aiResult: null, // 初始为 null，在 AIResultScreen 中调用 AI 服务
     });
+  };
+
+  const handleSave = async () => {
+    if (!result) {
+      Alert.alert('⚠️ 提示', '请先起局');
+      return;
+    }
+    if (!localInterpretation || localInterpretation.trim() === '') {
+      Alert.alert('⚠️ 提示', '请先进行本地解析');
+      return;
+    }
+    try {
+      const record: Partial<DivinationRecord> = {
+        createdAt: Date.now(),
+        baziType: 'qimen',
+        solarDate: new Date(year, month - 1, day).toISOString(),
+        lunarDate: '',
+        timePeriod: SHI_CHEN[hourIndex],
+        location: '',
+        aiInterpretation: localInterpretation,
+        isFavorite: 0,
+        jieqi,
+        juName: result.solarTerm,
+      };
+      await insertRecord(record as DivinationRecord);
+      Alert.alert('✅ 成功', '已保存到历史记录');
+    } catch (error) {
+      Alert.alert('❌ 错误', '保存失败：' + (error as Error).message);
+    }
   };
 
   /**
@@ -240,6 +260,8 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           <Text style={styles.pickerText}>节气：{jieqi}</Text>
         </TouchableOpacity>
 
+        <View style={styles.separator} />
+
         <GuochaoButton title="🔮 起局" onPress={handleCalculate} disabled={loading} />
       </GuochaoCard>
 
@@ -256,13 +278,14 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         <View style={styles.buttonContainer}>
           <GuochaoButton title="🔮 本地解析" onPress={handleLocalAnalysis} disabled={loading} />
           <GuochaoButton title="🤖 AI 解析" onPress={handleAiAnalysis} disabled={loading} />
+          <GuochaoButton title="💾 保存到历史" onPress={handleSave} disabled={loading} />
         </View>
       )}
 
       {/* 解析结果 */}
-      {interpretation ? (
+      {localInterpretation ? (
         <GuochaoCard title="解析结果">
-          <Text style={styles.interpretationText}>{interpretation}</Text>
+          <Text style={styles.interpretationText}>{localInterpretation}</Text>
         </GuochaoCard>
       ) : null}
 
@@ -278,7 +301,7 @@ export const QiMenScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       {renderPicker(showYearPicker, () => setShowYearPicker(false), YEAR_RANGE, year, setYear, (y) => `${y}年`)}
       {renderPicker(showMonthPicker, () => setShowMonthPicker(false), MONTH_RANGE, month, setMonth, (m) => `${m}月`)}
       {renderPicker(showDayPicker, () => setShowDayPicker(false), DAY_RANGE, day, setDay, (d) => `${d}日`)}
-      {renderPicker(showHourPicker, () => setShowHourPicker(false), SHI_CHEN, hourIndex, (i) => i, (h) => h)}
+      {renderPicker(showHourPicker, () => setShowHourPicker(false), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], hourIndex, setHourIndex, (i) => SHI_CHEN[i])}
       {renderPicker(showJieqiPicker, () => setShowJieqiPicker(false), JIEQI_LIST, jieqi, setJieqi, (j) => j)}
     </ScrollView>
   );
@@ -310,6 +333,9 @@ const styles = StyleSheet.create({
   },
   jieqiButton: {
     marginTop: spacing.md,
+  },
+  separator: {
+    height: spacing.lg,
   },
   pickerText: {
     fontSize: 16,

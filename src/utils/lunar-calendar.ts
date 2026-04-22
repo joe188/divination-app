@@ -66,7 +66,17 @@ export const solarToLunar = (year: number, month: number, day: number) => {
     const ganZhiDay = getter(l, 'getDayInGanZhi', getGanZhiDay(year, month, day));
     let zodiac = getter(l, 'getZodiac', null);
     if (!zodiac) zodiac = getZodiac(year);
-    const lunarMonthName = getter(l, 'getMonthInChinese', '') || LUNAR_MONTHS[month - 1] + '月';
+    // 农历月份名称，确保以"月"结尾
+    let rawMonthName = getter(l, 'getMonthInChinese', '');
+    if (!rawMonthName) {
+      // 使用 lunarMonth 而不是 month（公历）
+      const lunarMonthValue = getter(l, 'getMonth', month);
+      rawMonthName = LUNAR_MONTHS[lunarMonthValue - 1] || '';
+    }
+    if (rawMonthName && !rawMonthName.includes('月')) {
+      rawMonthName += '月';
+    }
+    const lunarMonthNameBase = rawMonthName;
     const lunarDayName = getter(l, 'getDayInChinese', '') || LUNAR_DAYS[(day - 1) % 30];
     
     // isLeap 可能是属性或方法
@@ -88,6 +98,32 @@ export const solarToLunar = (year: number, month: number, day: number) => {
       try { return l.getFestivals() || []; } catch (e) { return []; }
     })();
 
+    // 获取宜忌、吉神、冲煞（使用 lunar-typescript 的正确方法名）
+    const yi = (() => {
+      try { return l.getDayYi() || []; } catch (e) { return []; }
+    })();
+
+    const ji = (() => {
+      try { return l.getDayJi() || []; } catch (e) { return []; }
+    })();
+
+    const jishen = (() => {
+      try { return l.getDayJiShen() || []; } catch (e) { return []; }
+    })();
+
+    const xiongsha = (() => {
+      try { return l.getDayXiongSha() || []; } catch (e) { return []; }
+    })();
+
+    // 获取冲煞
+    const chong = (() => {
+      try { return l.getDayChong() || ''; } catch (e) { return ''; }
+    })();
+
+    const sha = (() => {
+      try { return l.getDaySha() || ''; } catch (e) { return ''; }
+    })();
+
     return {
       lunarYear: getter(l, 'getYear', year),
       lunarMonth: getter(l, 'getMonth', month),
@@ -97,14 +133,32 @@ export const solarToLunar = (year: number, month: number, day: number) => {
       ganZhiMonth,
       ganZhiDay,
       zodiac,
-      lunarMonthName: isLeap ? '闰' + lunarMonthName : lunarMonthName,
+      lunarMonthName: isLeap ? '闰' + lunarMonthNameBase : lunarMonthNameBase,
       lunarDayName,
       jieQi,
       festivals: festivals.length > 0 ? festivals : undefined,
+      // 宜忌
+      yi: yi.length > 0 ? yi.join(', ') : '',
+      ji: ji.length > 0 ? ji.join(', ') : '',
+      // 吉神
+      jishen: jishen.length > 0 ? jishen.join(', ') : '',
+      // 凶煞
+      xiongsha: xiongsha.length > 0 ? xiongsha.join(', ') : '',
+      // 冲煞
+      chongsha: chong ? chong + (sha ? ' ' + sha : '') : '',
+      // 详细农历信息
+      pengZuGan: (() => { try { return l.getPengZuGan() || ''; } catch (e) { return ''; } })(),
+      pengZuZhi: (() => { try { return l.getPengZuZhi() || ''; } catch (e) { return ''; } })(),
+      jianChu: (() => { try { return l.getJianChu() || ''; } catch (e) { return ''; } })(),
+      xiu: (() => { try { return l.getXiu() || ''; } catch (e) { return ''; } })(),
+      tianShen: (() => { try { return l.getDayTianShen() || ''; } catch (e) { return ''; } })(),
+      naYin: (() => { try { return l.getDayNaYin() || ''; } catch (e) { return ''; } })(),
+      nineStar: (() => { try { return l.getDayNineStar() || ''; } catch (e) { return ''; } })(),
     };
   } catch (e) {
     console.error('solarToLunar error', e, e.stack);
-    // 返回简化 fallback
+    // 返回简化 fallback（使用 getTodayFortune 获取宜忌）
+    const fortune = getTodayFortune(year, month, day);
     return {
       lunarYear: year,
       lunarMonth: month,
@@ -118,6 +172,11 @@ export const solarToLunar = (year: number, month: number, day: number) => {
       lunarDayName: LUNAR_DAYS[(day - 1) % 30],
       jieQi: '',
       festivals: [],
+      yi: fortune.yi ? fortune.yi.join(', ') : '',
+      ji: fortune.ji ? fortune.ji.join(', ') : '',
+      jishen: fortune.jishen ? fortune.jishen.join(', ') : '',
+      xiongsha: fortune.xiongsha ? fortune.xiongsha.join(', ') : '',
+      chongsha: fortune.chong ? fortune.chong + (fortune.sha ? ' ' + fortune.sha : '') : '',
     };
   }
 };

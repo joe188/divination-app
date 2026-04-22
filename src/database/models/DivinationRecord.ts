@@ -20,6 +20,12 @@ export interface DivinationRecord {
   aiInterpretation?: string;  // AI 解读内容
   userNotes?: string;         // 用户笔记
   isFavorite?: number;        // 是否收藏：0=否，1=是
+  // 六爻特有
+  hexagram?: string;          // 卦名（如：乾为天）
+  movingLines?: string;       // 动爻索引（逗号分隔）
+  // 奇门特有
+  jieqi?: string;             // 节气
+  juName?: string;            // 局名（如：阳遁一局）
 }
 
 // 简化的记录（列表显示用）

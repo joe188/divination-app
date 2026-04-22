@@ -19,6 +19,7 @@ import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { insertRecord, getRecordById as getRecord, updateRecord } from '../database/queries/history';
 import { generateAIInterpretation as callAIInterpretationAPI } from '../utils/ai-interpret';
+import { generateFullBaZiAnalysis } from '../utils/bazi-interpret';
 import { DivinationRecord } from '../database/models/DivinationRecord';
 import theme from '../styles/theme';
 const { colors, fonts, spacing, radii } = theme;
@@ -117,6 +118,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const [recordId, setRecordId] = useState<number | null>(null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiInterpretation, setAiInterpretation] = useState<string>('');
+  const [localInterpretation, setLocalInterpretation] = useState<string>('');
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 使用传入的 baziData 或默认空数据(必须先定义,供 useEffect 使用)
@@ -236,6 +238,20 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
   // AI 解卦函数
   // AI 解卦直接在本页面展示，无需单独导航
+
+  // 本地解卦函数
+  const handleLocalInterpretation = () => {
+    if (!data) return;
+    
+    try {
+      const analysis = generateFullBaZiAnalysis(data);
+      const fullText = `${analysis.summary}\n\n${analysis.analysis.ganZhi}\n\n${analysis.analysis.fiveElements}\n\n${analysis.analysis.shishen}\n\n${analysis.analysis.dayMaster}\n\n${analysis.analysis.yongShen}\n\n${analysis.analysis.cangGan}\n\n${analysis.analysis.shenSha}\n\n${analysis.analysis.naYin}\n\n${analysis.analysis.kongWang}\n\n${analysis.analysis.geJu}\n\n${analysis.advice}`;
+      setLocalInterpretation(fullText);
+    } catch (error) {
+      console.error('本地解析失败:', error);
+      Alert.alert('解析失败', '本地解析出现问题，请重试');
+    }
+  };
 
   // 如果数据不存在,显示空状态
   if (!hasData || !ganZhi) {
@@ -451,6 +467,23 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 </View>
               ))}
             </View>
+          )}
+        </GuochaoCard>
+
+        {/* 本地解卦 */}
+        <GuochaoCard title="📖 本地解卦" variant="pattern">
+          {localInterpretation ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Text style={styles.aiResultText}>{localInterpretation}</Text>
+            </ScrollView>
+          ) : (
+            <GuochaoButton
+              title="点击查看本地解卦"
+              variant="primary"
+              size="medium"
+              onPress={handleLocalInterpretation}
+              style={{ marginTop: spacing.sm }}
+            />
           )}
         </GuochaoCard>
 

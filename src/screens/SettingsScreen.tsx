@@ -24,6 +24,21 @@ export const SettingsScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
       </View>
 
       <View style={styles.content}>
+        {/* 用户手册入口 */}
+        <TouchableOpacity
+          style={styles.menuCard}
+          onPress={() => navigation.navigate('Manual')}
+        >
+          <View style={styles.menuIcon}>
+            <Text style={styles.menuEmoji}>📖</Text>
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>用户手册</Text>
+            <Text style={styles.menuDesc}>详细使用说明和 AI 配置指南</Text>
+          </View>
+          <Text style={styles.menuArrow}>›</Text>
+        </TouchableOpacity>
+
         {/* AI 配置入口 */}
         <TouchableOpacity
           style={styles.menuCard}

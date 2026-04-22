@@ -1,403 +1,492 @@
-import React, { useState, useMemo, useCallback } from 'react';
+/**
+ * CalendarScreen - 万年历
+ * 每个日期下方显示农历（使用缓存避免渲染时调用 lunar-typescript）
+ */
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  ActivityIndicator,
 } from 'react-native';
-import { Calendar, LocaleConfig, DateData } from 'react-native-calendars';
-import { Solar, Lunar } from 'lunar-javascript';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/types';
+import { solarToLunar } from '../utils/lunar-calendar';
 
-type CalendarNavigationProp = StackNavigationProp<RootStackParamList, 'Calendar'>;
+const { width } = Dimensions.get('window');
+// calendarContainer 左右 margin 各 16，内部无额外 padding
+const CALENDAR_WIDTH = width - 32; // 容器宽度
+const DAY_WIDTH = CALENDAR_WIDTH / 7; // 每个单元格宽度
 
-// 1. 配置中文语言（react-native-calendars 默认是英文，需配置）
-LocaleConfig.locales['zh-cn'] = {
-  monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-  monthNamesShort: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-  dayNames: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
-  dayNamesShort: ['日', '一', '二', '三', '四', '五', '六'],
-  today: '今天'
-};
-LocaleConfig.defaultLocale = 'zh-cn';
-
-/**
- * 获取指定公历日期的农历信息
- */
-const getLunarInfo = (date: Date | string) => {
-  try {
-    let solar: Solar;
-    if (typeof date === 'string') {
-      const d = new Date(date);
-      if (isNaN(d.getTime())) {
-        return getDefaultLunarInfo();
-      }
-      solar = Solar.fromDate(d);
-    } else if (date instanceof Date) {
-      solar = Solar.fromDate(date);
-    } else {
-      return getDefaultLunarInfo();
-    }
-    
-    const lunar = solar.getLunar();
-    
-    return {
-      lunarText: lunar.toString(),
-      lunarDayChinese: lunar.getDayInChinese() || '',
-      festivals: lunar.getFestivals() || [],
-      jieQi: solar.getJieQi(),
-      solarHoliday: solar.getHoliday(),
-      ganZhi: lunar.getYearInGanZhi(),
-      isLeap: lunar.isLeap(),
-      lunarMonth: lunar.getMonth(),
-      lunarMonthChinese: lunar.getMonthInChinese(),
-      lunarDay: lunar.getDay(),
-      yearGanZhi: lunar.getYearInGanZhi(),
-      monthGanZhi: lunar.getMonthInGanZhi(),
-      dayGanZhi: lunar.getDayInGanZhi(),
-      zodiac: lunar.getZodiac(),
-    };
-  } catch (e) {
-    console.error('农历转换错误', e);
-    return getDefaultLunarInfo();
-  }
-};
-
-// 安全默认值
-const getDefaultLunarInfo = () => ({
-  lunarText: '',
-  lunarDayChinese: '',
-  festivals: [],
-  jieQi: '',
-  solarHoliday: '',
-  ganZhi: '',
-  isLeap: false,
-  lunarMonth: 0,
-  lunarMonthChinese: '',
-  lunarDay: 0,
-  yearGanZhi: '',
-  monthGanZhi: '',
-  dayGanZhi: '',
-  zodiac: '',
-});
-
-/**
- * 获取指定日期的宜忌
- */
-const getTodayFortune = (year: number, month: number, day: number) => {
-  const yiOptions = [
-    ['祭祀', '祈福', '求嗣', '开光'],
-    ['开市', '立券', '交易', '纳财'],
-    ['嫁娶', '出行', '搬家', '动土'],
-    ['修造', '起基', '安门', '安床'],
-    ['入殓', '破土', '启攒', '安葬'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-    ['祭祀', '祈福', '求嗣', '开光', '出行', '解除'],
-  ];
-  const jiOptions = [
-    ['动土', '破土'],
-    ['嫁娶'],
-    ['开市', '立券'],
-    ['安葬'],
-    ['出行'],
-    ['祭祀', '祈福'],
-    ['动土', '破土'],
-    ['嫁娶'],
-    ['开市', '立券'],
-    ['安葬'],
-    ['出行'],
-    ['祭祀', '祈福'],
-  ];
-  const jishenOptions = [
-    ['天德', '月德', '天恩'],
-    ['天愿', '天赦', '月恩'],
-    ['四相', '时德', '民日'],
-    ['三合', '临日', '天喜'],
-    ['五富', '不将', '六合'],
-    ['圣心', '五合', '官日'],
-    ['天马', '要安', '驿马'],
-    ['民日', '天巫', '福德'],
-    ['天德', '月德', '天恩'],
-    ['天愿', '天赦', '月恩'],
-    ['四相', '时德', '民日'],
-    ['三合', '临日', '天喜'],
-  ];
-  const xiongshaOptions = [
-    ['月破', '大耗'],
-    ['灾煞', '天火'],
-    ['血忌', '天贼'],
-    ['五虚', '土符'],
-    ['归忌', '流血'],
-    ['天牢', '黑道'],
-    ['朱雀', '白虎'],
-    ['勾陈', '玄武'],
-    ['天牢', '黑道'],
-    ['朱雀', '白虎'],
-    ['勾陈', '玄武'],
-    ['天牢', '黑道'],
-  ];
-  const chongOptions = [
-    '冲鼠', '冲牛', '冲虎', '冲兔', '冲龙', '冲蛇', '冲马', '冲羊', '冲猴', '冲鸡', '冲狗', '冲猪'
-  ];
-  const shaOptions = [
-    '煞北', '煞西', '煞南', '煞东', '煞北', '煞西', '煞南', '煞东', '煞北', '煞西', '煞南', '煞东'
-  ];
-
-  const dayIndex = (year + month + day) % 12;
-  const zhiIndex = (year + month + day) % 12;
-
-  return {
-    yi: yiOptions[dayIndex] || [],
-    ji: jiOptions[dayIndex] || [],
-    jishen: jishenOptions[dayIndex] || [],
-    xiongsha: xiongshaOptions[dayIndex] || [],
-    chong: chongOptions[zhiIndex] || '',
-    sha: shaOptions[zhiIndex] || '',
-  };
-};
+interface DayData {
+  date: number;
+  dateStr: string;
+  isToday: boolean;
+  isSelected: boolean;
+  lunarText?: string;
+  isJieQi?: boolean;
+}
 
 export default function CalendarScreen() {
-  const navigation = useNavigation<CalendarNavigationProp>();
+  const navigation = useNavigation();
   const today = new Date();
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth() + 1);
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [selectedLunar, setSelectedLunar] = useState<any>(null);
+  const [calendarDays, setCalendarDays] = useState<DayData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showYearSelector, setShowYearSelector] = useState(false);
+  const [showMonthSelector, setShowMonthSelector] = useState(false);
 
-  // 生成日历月视图的 markedDates
-  const markedDates = useMemo(() => {
-    const marks: Record<string, any> = {};
+  // 当月份变化时，预先计算所有日期的农历
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      try {
+        const firstDay = new Date(currentYear, currentMonth - 1, 1);
+        const lastDay = new Date(currentYear, currentMonth, 0);
+        const startDayOfWeek = firstDay.getDay();
+        const totalDays = lastDay.getDate();
 
-    if (selectedDate) {
-      marks[selectedDate] = {
-        selected: true,
-        selectedColor: '#2196f3',
-      };
-    }
-
-    if (!marks[todayStr]) {
-      marks[todayStr] = {
-        marked: true,
-        dotColor: '#2196f3',
-      };
-    }
-
-    return marks;
-  }, [selectedDate, todayStr]);
-
-  const onDayPress = (day: DateData) => {
-    setSelectedDate(day.dateString);
-  };
-
-  // 渲染底部详情卡片
-  const renderDetailCard = () => {
-    if (!selectedDate) return null;
-    const [year, month, day] = selectedDate.split('-').map(Number);
-    const lunarInfo = getLunarInfo(selectedDate);
-    const fortune = getTodayFortune(year, month, day);
-
-    if (!lunarInfo) return null;
-
-    return (
-      <View style={styles.detailCard}>
-        <Text style={styles.detailTitle}>
-          {year}年{month}月{day}日 {lunarInfo.lunarText}
-          {lunarInfo.jieQi && ` · ${lunarInfo.jieQi}`}
-        </Text>
-
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>宜：</Text>
-          <Text style={[styles.detailValue, styles.detailValueYi]}>{fortune.yi.join('、')}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>忌：</Text>
-          <Text style={[styles.detailValue, styles.detailValueJi]}>{fortune.ji.join('、')}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>吉神：</Text>
-          <Text style={styles.detailValue}>{fortune.jishen.join('、')}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>冲煞：</Text>
-          <Text style={styles.detailValue}>{fortune.chong} {fortune.sha}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>凶煞：</Text>
-          <Text style={styles.detailValue}>{fortune.xiongsha.join('、')}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  // 自定义日期单元格 - 实现优先级显示
-  const renderDay = useCallback(
-    (date: any) => {
-      const { date: dateStr, state } = date;
-      if (!dateStr) return <View style={styles.dayWrapper} />;
-      
-      const parts = dateStr.split('-');
-      if (parts.length < 3) return <View style={styles.dayWrapper} />;
-      
-      const dayNum = Number(parts[2]);
-      const lunarInfo = getLunarInfo(dateStr);
-      const isSelected = dateStr === selectedDate;
-
-      const textColor =
-        state === 'disabled'
-          ? '#ccc'
-          : isSelected
-          ? '#fff'
-          : state === 'today'
-          ? '#2196f3'
-          : '#333';
-
-      // 核心逻辑：优先级显示
-      // 1. 公历节日 → 红色
-      // 2. 农历节日 → 红色
-      // 3. 节气 → 橙色
-      // 4. 农历初一 → 显示"X月"
-      // 5. 普通 → 显示农历日期
-      
-      let displayText = lunarInfo?.lunarDayChinese || '';
-      let lunarTextColor = isSelected ? '#fff' : '#666';
-      
-      // 优先级判断
-      if (lunarInfo?.solarHoliday) {
-        // 公历节日（如国庆节）
-        displayText = lunarInfo.solarHoliday;
-        lunarTextColor = isSelected ? '#fff' : '#e53935'; // 红色
-      } else if (lunarInfo?.festivals && lunarInfo.festivals.length > 0) {
-        // 农历节日（如春节、中秋）
-        displayText = lunarInfo.festivals[0];
-        lunarTextColor = isSelected ? '#fff' : '#e53935'; // 红色
-      } else if (lunarInfo?.jieQi) {
-        // 节气（如立春、冬至）
-        displayText = lunarInfo.jieQi;
-        lunarTextColor = isSelected ? '#fff' : '#ff9800'; // 橙色
-      } else if (lunarInfo?.lunarDayChinese === '初一') {
-        // 农历初一显示月份
-        displayText = (lunarInfo.lunarMonthChinese || '') + '月';
-        lunarTextColor = isSelected ? '#fff' : '#666';
+        const days: DayData[] = [];
+        
+        for (let i = 0; i < startDayOfWeek; i++) {
+          days.push({ date: 0, dateStr: '', isToday: false, isSelected: false });
+        }
+        
+        for (let day = 1; day <= totalDays; day++) {
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isToday = dateStr === todayStr;
+          const isSelected = dateStr === selectedDate;
+          
+          const lunarInfo = solarToLunar(currentYear, currentMonth, day);
+          let lunarText = lunarInfo.lunarDayName;
+          let isJieQi = false;
+          
+          if (lunarInfo.jieQi) {
+            lunarText = lunarInfo.jieQi;
+            isJieQi = true;
+          } else if (lunarInfo.festivals && lunarInfo.festivals.length > 0) {
+            lunarText = lunarInfo.festivals[0];
+          } else if (lunarInfo.lunarDay === 1) {
+            lunarText = lunarInfo.lunarMonthName + '月';
+          }
+          
+          days.push({ date: day, dateStr, isToday, isSelected, lunarText, isJieQi });
+        }
+        
+        setCalendarDays(days);
+        setLoading(false);
+      } catch (e) {
+        console.error('[Calendar] 计算农历失败:', e);
+        setLoading(false);
       }
+    }, 10);
+  }, [currentYear, currentMonth, selectedDate, todayStr]);
 
-      return (
-        <View style={[styles.dayWrapper, isSelected && styles.dayWrapperSelected]}>
-          <Text style={[styles.dayNumber, { color: textColor }]}>{dayNum}</Text>
-          {displayText && (
-            <Text style={[styles.lunarText, { color: lunarTextColor }]}>
-              {displayText}
-            </Text>
-          )}
-        </View>
-      );
-    },
-    [selectedDate]
-  );
+  // 当选中日期变化时，更新详情
+  useEffect(() => {
+    if (!selectedDate) return;
+    try {
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const lunarInfo = solarToLunar(year, month, day);
+      setSelectedLunar(lunarInfo);
+    } catch (e) {
+      console.error('[Calendar] 详情农历计算错误:', e);
+      setSelectedLunar(null);
+    }
+  }, [selectedDate]);
+
+  const prevMonth = () => {
+    if (currentMonth === 1) { setCurrentMonth(12); setCurrentYear(currentYear - 1); }
+    else { setCurrentMonth(currentMonth - 1); }
+  };
+
+  const nextMonth = () => {
+    if (currentMonth === 12) { setCurrentMonth(1); setCurrentYear(currentYear + 1); }
+    else { setCurrentMonth(currentMonth + 1); }
+  };
+
+  const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+  const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+  // 选择年份
+  const selectYear = (year: number) => {
+    setCurrentYear(year);
+    setShowYearSelector(false);
+  };
+
+  // 选择月份
+  const selectMonth = (month: number) => {
+    setCurrentMonth(month);
+    setShowMonthSelector(false);
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Calendar
-        style={styles.calendar}
-        current={todayStr}
-        markedDates={markedDates}
-        onDayPress={onDayPress}
-        renderDay={renderDay}
-        hideExtraDays
-        theme={{
-          backgroundColor: '#f5f5f5',
-          calendarBackground: '#f5f5f5',
-          headerBackground: '#f5f5f5',
-          monthTextColor: '#222',
-          textSectionTitleColor: '#666',
-          selectedDayBackgroundColor: '#2196f3',
-          selectedDayTextColor: '#fff',
-          todayTextColor: '#2196f3',
-          dayTextColor: '#333',
-          textDisabledColor: '#ccc',
-          arrowColor: '#333',
-          monthTextFontSize: 18,
-          textDayFontSize: 16,
-        }}
-      />
+    <View style={styles.container}>
+      {/* 顶部导航栏 - 年/月选择按钮 */}
+      <View style={styles.header}>
+        <View style={styles.placeholder} />
+        
+        {/* 年份按钮 */}
+        <TouchableOpacity onPress={() => setShowYearSelector(true)} style={styles.yearMonthButton}>
+          <Text style={styles.yearMonthButtonText}>{currentYear}年</Text>
+        </TouchableOpacity>
+        
+        {/* 月份按钮 */}
+        <TouchableOpacity onPress={() => setShowMonthSelector(true)} style={styles.yearMonthButton}>
+          <Text style={styles.yearMonthButtonText}>{monthNames[currentMonth - 1]}</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.placeholder} />
+      </View>
 
-      {renderDetailCard()}
-    </ScrollView>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* 日历主体（星期 + 日期网格，一个整体） */}
+        <View style={styles.calendarContainer}>
+          {/* 星期行 */}
+          <View style={styles.weekRow}>
+            {weekDays.map((day, index) => (
+              <View key={index} style={styles.weekCell}>
+                <Text style={[styles.weekText, (index === 0 || index === 6) && styles.weekendText]}>
+                  {day}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* 日期网格 */}
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color="#2196f3" />
+            </View>
+          ) : (
+            <View style={styles.daysGrid}>
+              {calendarDays.map((item, index) => {
+                if (item.date === 0) {
+                  return <View key={`empty-${index}`} style={styles.dayCell} />;
+                }
+                const { date, dateStr, isToday, isSelected, lunarText, isJieQi } = item;
+                return (
+                  <TouchableOpacity
+                    key={dateStr}
+                    style={[styles.dayCell, isSelected && styles.selectedDay]}
+                    onPress={() => setSelectedDate(dateStr)}
+                  >
+                    <Text style={[styles.dayNumber, isToday && styles.todayNumber, isSelected && styles.selectedNumber]}>
+                      {date}
+                    </Text>
+                    {lunarText ? (
+                      <Text
+                        style={[
+                          styles.cellLunarText,
+                          isJieQi && styles.cellJieQiText,
+                          isToday && styles.cellTodayLunar,
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                      >
+                        {lunarText}
+                      </Text>
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
+
+        {/* 详情卡片 */}
+        <View style={styles.detailCard}>
+          {selectedLunar ? (
+            <>
+              {/* 标题：公历日期 */}
+              <Text style={styles.detailTitle}>
+                {selectedDate.split('-')[0]}年{parseInt(selectedDate.split('-')[1])}月{parseInt(selectedDate.split('-')[2])}日
+              </Text>
+              
+              {/* 农历日期 + 生肖 */}
+              <Text style={styles.lunarDate}>
+                {selectedLunar.lunarMonthName}{selectedLunar.lunarDayName}  {selectedLunar.zodiac}年
+              </Text>
+              
+              {/* 干支纪年 */}
+              <Text style={styles.ganZhiText}>
+                {selectedLunar.ganZhiYear}年 {selectedLunar.ganZhiMonth}月 {selectedLunar.ganZhiDay}日
+              </Text>
+
+              {/* 分割线 */}
+              <View style={styles.divider} />
+
+              {/* 宜 */}
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabelGreen}>宜</Text>
+                <Text style={styles.detailValueGreen}>{selectedLunar.yi || '无'}</Text>
+              </View>
+              
+              {/* 忌 */}
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabelRed}>忌</Text>
+                <Text style={styles.detailValueRed}>{selectedLunar.ji || '无'}</Text>
+              </View>
+
+              {/* 分割线 */}
+              <View style={styles.divider} />
+
+              {/* 吉神宜趋 */}
+              {selectedLunar.jishen ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>吉神</Text>
+                  <Text style={styles.detailValue}>{selectedLunar.jishen}</Text>
+                </View>
+              ) : null}
+
+              {/* 凶煞宜忌 */}
+              {selectedLunar.xiongsha ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>凶煞</Text>
+                  <Text style={styles.detailValue}>{selectedLunar.xiongsha}</Text>
+                </View>
+              ) : null}
+
+              {/* 冲煞 */}
+              {selectedLunar.chongsha ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>冲煞</Text>
+                  <Text style={styles.detailValue}>{selectedLunar.chongsha}</Text>
+                </View>
+              ) : null}
+
+              {/* 节气 */}
+              {selectedLunar.jieQi ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>节气</Text>
+                  <Text style={[styles.detailValue, { color: '#ff9800', fontWeight: '500' }]}>{selectedLunar.jieQi}</Text>
+                </View>
+              ) : null}
+
+              {/* 节日 */}
+              {selectedLunar.festivals && selectedLunar.festivals.length > 0 ? (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>节日</Text>
+                  <Text style={[styles.detailValue, { color: '#e53935', fontWeight: '500' }]}>{selectedLunar.festivals.join(', ')}</Text>
+                </View>
+              ) : null}
+            </>
+          ) : (
+            <ActivityIndicator size="small" color="#2196f3" />
+          )}
+        </View>
+
+        {/* 年份选择器弹窗 - 平铺网格可滚动 */}
+        {showYearSelector && (
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerTitle}>选择年份</Text>
+              <ScrollView 
+                style={{ maxHeight: 350 }}
+                contentContainerStyle={{ paddingBottom: 8 }}
+                showsVerticalScrollIndicator
+              >
+                <View style={styles.pickerGrid}>
+                  {Array.from({ length: 101 }, (_, i) => 1950 + i).map((year) => (
+                    <TouchableOpacity
+                      key={year}
+                      style={[
+                        styles.pickerGridItem,
+                        year === currentYear && styles.pickerGridItemSelected,
+                      ]}
+                      onPress={() => selectYear(year)}
+                    >
+                      <Text
+                        style={[
+                          styles.pickerGridItemText,
+                          year === currentYear && styles.pickerGridItemTextSelected,
+                        ]}
+                      >
+                        {year}年
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              <TouchableOpacity onPress={() => setShowYearSelector(false)} style={styles.pickerClose}>
+                <Text style={styles.pickerCloseText}>关闭</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* 月份选择器弹窗 - 平铺网格 */}
+        {showMonthSelector && (
+          <View style={styles.pickerOverlay}>
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerTitle}>选择月份</Text>
+              <View style={styles.pickerGrid}>
+                {monthNames.map((name, index) => (
+                  <TouchableOpacity
+                    key={name}
+                    style={[
+                      styles.pickerGridItem,
+                      (index + 1) === currentMonth && styles.pickerGridItemSelected,
+                    ]}
+                    onPress={() => selectMonth(index + 1)}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerGridItemText,
+                        (index + 1) === currentMonth && styles.pickerGridItemTextSelected,
+                      ]}
+                    >
+                      {name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity onPress={() => setShowMonthSelector(false)} style={styles.pickerClose}>
+                <Text style={styles.pickerCloseText}>关闭</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: '#faf8f5', borderBottomWidth: 1, borderBottomColor: '#e0e0e0',
   },
-  content: {
-    paddingBottom: 32,
+  backButton: { padding: 8 },
+  backButtonText: { fontSize: 24, color: '#333' },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  placeholder: { width: 40 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingBottom: 20 },
+  // 日历容器（星期 + 日期网格，一个整体）
+  calendarContainer: {
+    backgroundColor: '#fff',
+    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  calendar: {
-    backgroundColor: '#f5f5f5',
+  // 星期行
+  weekRow: {
+    flexDirection: 'row',
+    paddingTop: 10,
+    paddingBottom: 4,
+    backgroundColor: '#fafafa',
   },
-  dayWrapper: {
-    width: 38,
-    height: 48,
-    justifyContent: 'center',
+  weekCell: {
+    width: DAY_WIDTH,
     alignItems: 'center',
-    borderRadius: 4,
-    margin: 2,
+    justifyContent: 'center',
   },
-  dayWrapperSelected: {
-    backgroundColor: '#2196f3',
+  weekText: { fontSize: 12, color: '#999', fontWeight: '600' },
+  weekendText: { color: '#e53935' },
+
+  // 日期网格
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: CALENDAR_WIDTH,
   },
-  dayNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  dayCell: {
+    width: DAY_WIDTH,
+    height: DAY_WIDTH * 1.1, // 紧凑行距
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  lunarText: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginTop: 1,
-  },
+  dayNumber: { fontSize: 15, fontWeight: '500', color: '#333' },
+  todayNumber: { color: '#2196f3', fontWeight: 'bold' },
+  selectedNumber: { color: '#fff' },
+  selectedDay: { backgroundColor: '#2196f3', borderRadius: 18 },
+  // 日期格子内的农历文字
+  cellLunarText: { fontSize: 9, color: '#bbb', marginTop: 1 },
+  cellJieQiText: { fontSize: 9, color: '#ff9800', fontWeight: '500' },
+  cellTodayLunar: { color: '#2196f3' },
+
+  loadingContainer: { padding: 20, alignItems: 'center' },
+
+  // 详情卡片
   detailCard: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    marginTop: 16,
+    marginTop: 8,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
-  detailTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#222',
-    marginBottom: 12,
-    textAlign: 'center',
+  detailTitle: { fontSize: 18, fontWeight: 'bold', color: '#222', textAlign: 'center' },
+  lunarDate: { fontSize: 15, color: '#c62828', textAlign: 'center', marginTop: 6, fontWeight: '600' },
+  ganZhiText: { fontSize: 13, color: '#888', textAlign: 'center', marginTop: 4 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#eee', marginVertical: 10 },
+  detailRow: { flexDirection: 'row', marginBottom: 8, alignItems: 'flex-start' },
+  detailLabel: { fontSize: 13, color: '#999', width: 65, fontWeight: '500' },
+  detailValue: { fontSize: 13, color: '#333', flex: 1, textAlign: 'left' },
+  detailLabelGreen: { fontSize: 13, color: '#2e7d32', width: 65, fontWeight: 'bold' },
+  detailValueGreen: { fontSize: 13, color: '#2e7d32', flex: 1, fontWeight: '500' },
+  detailLabelRed: { fontSize: 13, color: '#c62828', width: 65, fontWeight: 'bold' },
+  detailValueRed: { fontSize: 13, color: '#c62828', flex: 1, fontWeight: '500' },
+  // 年份/月份按钮
+  yearMonthButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    minWidth: 80,
+    alignItems: 'center',
   },
-  detailRow: {
+  yearMonthButtonText: { fontSize: 16, fontWeight: '500', color: '#333' },
+  // 选择器弹窗（平铺网格）
+  pickerOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center',
+    zIndex: 1000,
+  },
+  pickerContainer: {
+    backgroundColor: '#fff', borderRadius: 16, width: 320, maxHeight: 450,
+    overflow: 'hidden', padding: 16,
+  },
+  pickerTitle: {
+    fontSize: 18, fontWeight: 'bold', color: '#333', textAlign: 'center',
+    marginBottom: 16,
+  },
+  pickerGrid: {
     flexDirection: 'row',
-    marginBottom: 6,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  detailLabel: {
-    fontSize: 14,
-    color: '#666',
-    width: 50,
+  pickerGridItem: {
+    width: '30%',
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  detailValue: {
-    fontSize: 14,
-    color: '#333',
-    flex: 1,
+  pickerGridItemSelected: { backgroundColor: '#e3f2fd' },
+  pickerGridItemText: { fontSize: 15, color: '#333' },
+  pickerGridItemTextSelected: { fontSize: 15, color: '#1976d2', fontWeight: 'bold' },
+  pickerClose: {
+    marginTop: 8,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#eee',
   },
-  detailValueYi: {
-    color: '#2e7d32',
-  },
-  detailValueJi: {
-    color: '#c62828',
-  },
+  pickerCloseText: { fontSize: 16, color: '#666', textAlign: 'center' },
 });

@@ -106,6 +106,7 @@ export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({route, 
 
   const renderQiMenDetail = (data: any) => (
     <GuochaoCard title="奇门遁甲" variant="pattern">
+      {/* 基本信息 */}
       <View style={styles.detailRow}>
         <Text style={styles.label}>节气</Text>
         <Text style={styles.value}>{data?.jieQi || '--'}</Text>
@@ -114,20 +115,19 @@ export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({route, 
         <Text style={styles.label}>时辰</Text>
         <Text style={styles.value}>{data?.diZhi || '--'}</Text>
       </View>
-      <View style={styles.detailRow}>
-        <Text style={styles.label}>值符</Text>
-        <Text style={styles.value}>{data?.fuShen || '--'}</Text>
-      </View>
-      {data?.tianPan && (
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>天盘</Text>
-          <Text style={styles.value}>{data.tianPan.join(' ')}</Text>
+      
+      {/* 详细解析 */}
+      {data?.summary && (
+        <View style={styles.summary}>
+          <Text style={styles.summaryTitle}>详细解析</Text>
+          <Text style={styles.summaryText}>{data.summary}</Text>
         </View>
       )}
-      {data?.diPan && (
-        <View style={styles.detailRow}>
-          <Text style={styles.label}>地盘</Text>
-          <Text style={styles.value}>{data.diPan.join(' ')}</Text>
+      
+      {/* 如果无解析，显示提示 */}
+      {!data?.summary && (
+        <View style={styles.summary}>
+          <Text style={styles.summaryText}>暂无详细解析</Text>
         </View>
       )}
     </GuochaoCard>
@@ -148,7 +148,7 @@ export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({route, 
 
   return (
     <View style={styles.container}>
-      <View style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         {/* 头部 */}
         <View style={[styles.header, { paddingTop: spacing.xl }]}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>
@@ -222,7 +222,7 @@ export const HistoryDetailScreen: React.FC<HistoryDetailScreenProps> = ({route, 
         )}
 
         <View style={styles.spacer} />
-      </View>
+      </ScrollView>
 
       {/* 删除按钮 */}
       <View style={styles.footer}>
@@ -245,85 +245,86 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.lg,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gold + '40',
+    backgroundColor: colors.white,
   },
   backButton: {
-    padding: spacing.sm,
+    padding: spacing.xs,
   },
   backButtonText: {
-    fontSize: fonts.sizes.xl,
+    fontSize: 20,
     color: colors.inkBlack,
   },
   headerTitle: {
     fontFamily: fonts.kaiTi,
-    fontSize: fonts.sizes['2xl'],
+    fontSize: 18,
     fontWeight: '600',
     color: colors.inkBlack,
   },
   headerPlaceholder: {
-    width: 40,
+    width: 30,
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
+    paddingVertical: 6,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray[100],
   },
   label: {
-    fontFamily: fonts.sourceHan,
-    fontSize: fonts.sizes.md,
+    fontSize: 13,
     color: colors.gray[600],
   },
   value: {
-    fontFamily: fonts.kaiTi,
-    fontSize: fonts.sizes.md,
+    fontSize: 14,
     color: colors.inkBlack,
     fontWeight: '600',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 12,
   },
   yaoList: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
   },
   yaoText: {
     fontFamily: fonts.kaiTi,
-    fontSize: fonts.sizes.sm,
+    fontSize: 12,
     color: colors.gray[700],
-    lineHeight: 22,
-    marginBottom: spacing.xs,
+    lineHeight: 18,
+    marginBottom: 2,
   },
   summary: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   summaryTitle: {
-    fontFamily: fonts.sourceHan,
-    fontSize: fonts.sizes.md,
-    color: colors.inkBlack,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: spacing.sm,
+    marginBottom: 4,
   },
   summaryText: {
-    fontFamily: fonts.sourceHan,
-    fontSize: fonts.sizes.sm,
+    fontSize: 13,
     color: colors.gray[600],
-    lineHeight: 22,
+    lineHeight: 18,
   },
   unknown: {
     textAlign: 'center',
     color: colors.gray[500],
-    marginTop: spacing.xl,
+    marginTop: 20,
   },
   spacer: {
-    height: spacing['6xl'],
+    height: 20,
   },
   footer: {
-    padding: spacing.lg,
+    padding: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.gray[200],
     backgroundColor: colors.white,
@@ -333,27 +334,27 @@ const styles = StyleSheet.create({
   },
   // 典籍学习样式
   refSection: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   refContent: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   refIcon: {
-    fontSize: 32,
-    marginRight: spacing.md,
+    fontSize: 24,
+    marginRight: spacing.sm,
   },
   refText: {
     flex: 1,
   },
   refTitle: {
     fontFamily: fonts.kaiTi,
-    fontSize: fonts.sizes.lg,
+    fontSize: 14,
     color: colors.inkBlack,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   refDesc: {
-    fontFamily: fonts.sourceHan,
-    fontSize: fonts.sizes.sm,
+    fontSize: 11,
     color: colors.gray[600],
   },
 });
