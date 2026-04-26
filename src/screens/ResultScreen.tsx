@@ -532,7 +532,18 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               <Text style={styles.aiResultText}>{aiInterpretation}</Text>
             </ScrollView>
           ) : (
-            <Text style={styles.aiPlaceholder}>等待生成...</Text>
+            <TouchableOpacity
+              style={styles.aiButton}
+              onPress={() => {
+                if (id) {
+                  triggerAIInterpretation(id);
+                } else {
+                  Alert.alert('错误', '记录未保存，无法生成 AI 解卦');
+                }
+              }}
+            >
+              <Text style={styles.aiButtonText}>生成 AI 解卦</Text>
+            </TouchableOpacity>
           )}
         </GuochaoCard>
 
@@ -907,12 +918,33 @@ const styles = StyleSheet.create({
     color: colors.inkBlack,
     lineHeight: 28,
   },
-  aiPlaceholder: {
-    fontFamily: fonts.sourceHan,
+  aiButton: {
+    backgroundColor: colors.cinnabarRed,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.sm,
+    alignSelf: 'flex-start',
+  },
+  aiButtonText: {
+    color: '#fff',
+    fontFamily: fonts.bold,
+    fontSize: fonts.sizes.lg,
+  },
+  aiStatusLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  aiStatusText: {
+    marginLeft: spacing.sm,
+    color: colors.textSecondary,
+    fontFamily: fonts.medium,
     fontSize: fonts.sizes.md,
-    color: colors.gray[400],
-    fontStyle: 'italic',
-    paddingVertical: spacing.md,
+  },
+  aiResultText: {
+    fontSize: fonts.sizes.base,
+    lineHeight: 24,
+    color: colors.text,
+    fontFamily: fonts.regular,
   },
 });
 

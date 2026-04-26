@@ -42,6 +42,13 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
   const [showYearSelector, setShowYearSelector] = useState(false);
   const [showMonthSelector, setShowMonthSelector] = useState(false);
+  const [selectedCentury, setSelectedCentury] = useState(Math.floor(today.getFullYear() / 100)); // 当前世纪(1900-2099)
+  const [selectedHalfCentury, setSelectedHalfCentury] = useState(Math.floor((today.getFullYear() % 100) / 50)); // 上半世纪 (0) 或下半世纪 (1)
+
+  // 当世纪变化时，重置半世纪为 0
+  useEffect(() => {
+    setSelectedHalfCentury(0);
+  }, [selectedCentury]);
 
   // 当月份变化时，预先计算所有日期的农历
   useEffect(() => {
@@ -287,24 +294,60 @@ export default function CalendarScreen() {
           )}
         </View>
 
-        {/* 年份选择器弹窗 - 5 列网格可滚动（200 年范围） */}
+        {/* 年份选择器弹窗 - 分段式（先选世纪，再选年份） */}
         {showYearSelector && (
           <View style={styles.pickerOverlay}>
             <View style={styles.pickerContainer}>
               <Text style={styles.pickerTitle}>选择年份</Text>
+              
+              {/* 世纪和半世纪选择 */}
+              <View style={styles.centurySelector}>
+                <View style={styles.centuryRow}>
+                  <TouchableOpacity
+                    style={styles.centuryButton}
+                    onPress={() => {
+                      if (selectedHalfCentury === 0) {
+                        setSelectedCentury(Math.max(10, selectedCentury - 1));
+                      } else {
+                        setSelectedHalfCentury(0);
+                      }
+                    }}
+                  >
+                    <Text style={styles.centuryButtonText}>◀</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.centuryText}>
+                    {selectedCentury}世纪 {selectedHalfCentury === 0 ? '前半' : '后半'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.centuryButton}
+                    onPress={() => {
+                      if (selectedHalfCentury === 0) {
+                        setSelectedHalfCentury(1);
+                      } else {
+                        setSelectedCentury(Math.min(25, selectedCentury + 1));
+                      }
+                    }}
+                  >
+                    <Text style={styles.centuryButtonText}>▶</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.centurySubText}>
+                  年份 {(selectedCentury * 100 + selectedHalfCentury * 50)}-{(selectedCentury * 100 + selectedHalfCentury * 50 + 49)}
+                </Text>
+              </View>
+              
+              {/* 年份网格（50 年，5 列 x 10 行） */}
               <FlatList
-                data={Array.from({ length: 201 }, (_, i) => 1900 + i)}
+                data={Array.from({ length: 50 }, (_, i) => selectedCentury * 100 + selectedHalfCentury * 50 + i)}
                 keyExtractor={(item) => item.toString()}
                 numColumns={5}
-                style={{ flex: 1 }}
+                style={{ flex: 1, maxHeight: 450 }}
                 contentContainerStyle={{ paddingBottom: 10 }}
                 showsVerticalScrollIndicator
                 removeClippedSubviews={true}
-                nestedScrollEnabled={true}
-                initialNumToRender={25}
-                maxToRenderPerBatch={25}
-                windowSize={5}
-                updateCellsBatchingPeriod={10}
+                initialNumToRender={20}
+                maxToRenderPerBatch={20}
+                windowSize={3}
                 getItemLayout={(data, index) => ({
                   length: 44,
                   offset: 44 * index,
@@ -476,7 +519,7 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     backgroundColor: '#fff', borderRadius: 16, width: 320,
-    padding: 16, height: 500,
+    padding: 16, height: 550,
     flexDirection: 'column',
   },
   pickerTitle: {
@@ -484,6 +527,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexShrink: 0,
   },
+  // 世纪选择器
+  centurySelector: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  centuryButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+  centuryButtonText: { fontSize: 18, color: '#333', fontWeight: 'bold' },
+  centuryText: { fontSize: 16, fontWeight: '600', color: '#333', minWidth: 100, textAlign: 'center' },
+  centuryRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  centurySubText: { fontSize: 12, color: '#666', textAlign: 'center', marginTop: 4 },
   pickerGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
