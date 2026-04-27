@@ -22,6 +22,7 @@ import { getAiConfig, saveAiConfig, clearAiConfig, AiConfig } from '../database/
 const { colors, fonts, spacing, radii } = theme;
 
 export const AiConfigScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
+  const [enabled, setEnabled] = useState(true);  // 默认启用
   const [baseUrl, setBaseUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
@@ -39,6 +40,7 @@ export const AiConfigScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
     try {
       const config = await getAiConfig();
       if (config) {
+        setEnabled(config.enabled ?? true);  // 兼容旧数据
         setBaseUrl(config.baseUrl || '');
         setApiKey(config.apiKey || '');
         setSelectedModel(config.model || '');
@@ -151,6 +153,7 @@ export const AiConfigScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
 
     try {
       const config: AiConfig = {
+        enabled,
         baseUrl,
         apiKey,
         model: selectedModel,
@@ -245,6 +248,35 @@ export const AiConfigScreen: React.FC<{ navigation: any }> = ({ navigation }) =>
             autoCorrect={false}
           />
           <Text style={styles.inputHint}>任意字符串即可（如：sk-local）</Text>
+
+          {/* 启用 AI 解卦开关 */}
+          <View style={styles.enabledToggle}>
+            <Text style={styles.label}>🤖 启用 AI 解卦</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  enabled ? styles.toggleButtonOn : styles.toggleButtonOff,
+                ]}
+                onPress={() => setEnabled(!enabled)}
+              >
+                <View
+                  style={[
+                    styles.toggleCircle,
+                    enabled ? styles.toggleCircleOn : styles.toggleCircleOff,
+                  ]}
+                />
+              </TouchableOpacity>
+              <Text style={styles.enabledText}>
+                {enabled ? '✅ 已启用' : '❌ 已禁用'}
+              </Text>
+            </View>
+            <Text style={styles.inputHint}>
+              {enabled
+                ? 'AI 解卦已启用，将使用配置的 API 进行智能分析'
+                : 'AI 解卦已禁用，仅使用本地规则引擎'}
+            </Text>
+          </View>
 
           {/* 获取模型列表按钮 */}
           <TouchableOpacity
@@ -443,6 +475,47 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sourceHan,
     color: colors.gray[500],
     marginTop: spacing.xs,
+  },
+  // 启用 AI 解卦开关样式
+  enabledToggle: {
+    marginTop: spacing.lg,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  toggleButton: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  toggleButtonOn: {
+    backgroundColor: colors.cinnabarRed,
+  },
+  toggleButtonOff: {
+    backgroundColor: colors.gray[300],
+  },
+  toggleCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+  },
+  toggleCircleOn: {
+    transform: [{ translateX: 22 }],
+  },
+  toggleCircleOff: {
+    transform: [{ translateX: 0 }],
+  },
+  enabledText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.inkBlack,
+    fontWeight: fonts.weights.semibold,
   },
   fetchButton: {
     backgroundColor: colors.gold,

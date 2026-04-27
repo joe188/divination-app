@@ -18,6 +18,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { insertRecord, getRecordById as getRecord, updateRecord } from '../database/queries/history';
+import { getAiConfig } from '../database/queries/ai-config';
 import { generateAIInterpretation as callAIInterpretationAPI } from '../utils/ai-interpret';
 import { generateFullBaZiAnalysis } from '../utils/bazi-interpret';
 import { DivinationRecord } from '../database/models/DivinationRecord';
@@ -119,7 +120,24 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiInterpretation, setAiInterpretation] = useState<string>('');
   const [localInterpretation, setLocalInterpretation] = useState<string>('');
+  const [aiEnabled, setAiEnabled] = useState(true);  // AI 启用状态
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 加载 AI 配置（检查是否启用）
+  useEffect(() => {
+    const loadAiConfig = async () => {
+      try {
+        const config = await getAiConfig();
+        const enabled = config?.enabled ?? true;  // 兼容旧数据，默认启用
+        setAiEnabled(enabled);
+        console.log('🤖 AI 配置加载:', config, '启用状态:', enabled);
+      } catch (error) {
+        console.error('❌ 加载 AI 配置失败:', error);
+        setAiEnabled(true);  // 失败时默认启用
+      }
+    };
+    loadAiConfig();
+  }, []);
 
   // 使用传入的 baziData 或默认空数据(必须先定义,供 useEffect 使用)
   const data = baziData?.baziResult;
@@ -237,11 +255,20 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
       setSaved(true);
       console.log('✅ Record saved to database, ID:', id, 'baziType:', record.baziType, 'timePeriod:', record.timePeriod);
 
-      // 触发后台 AI 解读生成
-      triggerAIInterpretation(id);
+      // 检查 AI 是否启用
+      const aiConfig = await getAiConfig();
+      const aiEnabled = aiConfig?.enabled ?? true;  // 兼容旧数据，默认启用
+      
+      console.log('🤖 AI 配置:', aiConfig, '启用状态:', aiEnabled);
 
-      // 开始轮询等待 AI 结果
-      startPollingAIResult(id);
+      // 触发后台 AI 解读生成（仅当 AI 启用时）
+      if (aiEnabled) {
+        triggerAIInterpretation(id);
+        // 开始轮询等待 AI 结果
+        startPollingAIResult(id);
+      } else {
+        console.log('🤖 AI 解卦已禁用，跳过 AI 生成');
+      }
     } catch (error) {
       console.error('❌ Failed to save record:', error);
       Alert.alert('保存失败', '无法保存到本地数据库,请稍后重试');
@@ -521,31 +548,42 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
         </GuochaoCard>
 
         {/* AI 解卦 */}
-        <GuochaoCard title="💡 AI 解卦" variant="pattern">
-          {aiGenerating ? (
-            <View style={styles.aiStatusLoading}>
-              <ActivityIndicator size="small" color={colors.cinnabarRed} />
-              <Text style={styles.aiStatusText}>AI 正在解卦中...</Text>
+        {aiEnabled ? (
+          <GuochaoCard title="💡 AI 解卦" variant="pattern">
+            {aiGenerating ? (
+              <View style={styles.aiStatusLoading}>
+                <ActivityIndicator size="small" color={colors.cinnabarRed} />
+                <Text style={styles.aiStatusText}>AI 正在解卦中...</Text>
+              </View>
+            ) : aiInterpretation ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <Text style={styles.aiResultText}>{aiInterpretation}</Text>
+              </ScrollView>
+            ) : (
+              <TouchableOpacity
+                style={styles.aiButton}
+                onPress={() => {
+                  if (id) {
+                    triggerAIInterpretation(id);
+                  } else {
+                    Alert.alert('错误', '记录未保存，无法生成 AI 解卦');
+                  }
+                }}
+              >
+                <Text style={styles.aiButtonText}>生成 AI 解卦</Text>
+              </TouchableOpacity>
+            )}
+          </GuochaoCard>
+        ) : (
+          <GuochaoCard title="💡 AI 解卦" variant="pattern">
+            <View style={styles.aiDisabledContainer}>
+              <Text style={styles.aiDisabledText}>🤖 AI 解卦已禁用</Text>
+              <Text style={styles.aiDisabledHint}>
+                请在设置中启用 AI 解卦功能以使用智能分析
+              </Text>
             </View>
-          ) : aiInterpretation ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text style={styles.aiResultText}>{aiInterpretation}</Text>
-            </ScrollView>
-          ) : (
-            <TouchableOpacity
-              style={styles.aiButton}
-              onPress={() => {
-                if (id) {
-                  triggerAIInterpretation(id);
-                } else {
-                  Alert.alert('错误', '记录未保存，无法生成 AI 解卦');
-                }
-              }}
-            >
-              <Text style={styles.aiButtonText}>生成 AI 解卦</Text>
-            </TouchableOpacity>
-          )}
-        </GuochaoCard>
+          </GuochaoCard>
+        )}
 
         {/* 五行分析(简化,后续可增强) */}
         <GuochaoCard title="五行分析" variant="elevated">
@@ -916,35 +954,25 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sourceHan,
     fontSize: fonts.sizes.md,
     color: colors.inkBlack,
-    lineHeight: 28,
+    lineHeight: fonts.sizes.md * 1.6,
   },
-  aiButton: {
-    backgroundColor: colors.cinnabarRed,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.sm,
-    alignSelf: 'flex-start',
-  },
-  aiButtonText: {
-    color: '#fff',
-    fontFamily: fonts.bold,
-    fontSize: fonts.sizes.lg,
-  },
-  aiStatusLoading: {
-    flexDirection: 'row',
+  // AI 已禁用样式
+  aiDisabledContainer: {
     alignItems: 'center',
+    paddingVertical: spacing.lg,
   },
-  aiStatusText: {
-    marginLeft: spacing.sm,
-    color: colors.textSecondary,
-    fontFamily: fonts.medium,
-    fontSize: fonts.sizes.md,
+  aiDisabledText: {
+    fontFamily: fonts.kaiTi,
+    fontSize: fonts.sizes.lg,
+    color: colors.gray[500],
+    marginBottom: spacing.sm,
   },
-  aiResultText: {
-    fontSize: fonts.sizes.base,
-    lineHeight: 24,
-    color: colors.text,
-    fontFamily: fonts.regular,
+  aiDisabledHint: {
+    fontFamily: fonts.sourceHan,
+    fontSize: fonts.sizes.sm,
+    color: colors.gray[400],
+    textAlign: 'center',
+    opacity: 0.8,
   },
 });
 

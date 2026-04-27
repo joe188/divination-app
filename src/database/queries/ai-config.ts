@@ -6,6 +6,7 @@
 import db from '../Database';
 
 export interface AiConfig {
+  enabled: boolean;     // 是否启用 AI 解卦
   baseUrl: string;
   apiKey: string;
   model: string;
@@ -40,6 +41,10 @@ export const getAiConfig = async (): Promise<AiConfig | null> => {
         console.log('🔍 value:', value);
         if (value) {
           const config = JSON.parse(value) as AiConfig;
+          // 兼容旧数据：如果没有 enabled 字段，默认启用
+          if (config.enabled === undefined) {
+            config.enabled = true;
+          }
           console.log('✅ AI 配置读取成功:', config);
           return config;
         }
