@@ -66,7 +66,7 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   
   const [yearPage, setYearPage] = useState(0); // 年份选择器当前页
-  const YEARS_PER_PAGE = 10; // 每页显示的年份数量
+  const YEARS_PER_PAGE = 20; // 每页显示的年份数量
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -240,7 +240,7 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
               <Text style={[styles.modalButton, styles.modalConfirm]}>确定</Text>
             </TouchableOpacity>
           </View>
-          <View style={{ flex: 1, minHeight: responsiveHeight(30) }}>
+          <View style={{ flex: 1, minHeight: responsiveHeight(30), maxHeight: responsiveHeight(50) }}>
             <FlatList
               data={currentYears}
               keyExtractor={(item) => item.toString()}
@@ -265,11 +265,6 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
                   </Text>
                 </TouchableOpacity>
               )}
-              getItemLayout={(data, index) => ({
-                length: responsiveHeight(8),
-                offset: responsiveHeight(8) * index,
-                index,
-              })}
             />
             {/* 分页导航 */}
             <View style={styles.yearPagination}>
@@ -330,11 +325,6 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
                 </Text>
               </TouchableOpacity>
             )}
-            getItemLayout={(data, index) => ({
-              length: 50,
-              offset: 50 * index,
-              index,
-            })}
           />
         </View>
       </View>
