@@ -345,6 +345,11 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     fontWeight: '500',
   },
+  buttonContainer: {
+    flexDirection: 'column', // 垂直排列
+    gap: spacing.md, // 按钮间距
+    marginTop: spacing.lg,
+  },
   juName: {
     fontSize: responsiveFontSize(24), // 响应式字体
     fontWeight: 'bold',

@@ -15,7 +15,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { solarToLunar } from '../utils/lunar-calendar';
+import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding, responsiveWidth } from '../styles/responsive';
 
+const { colors, fonts, spacing, radii } = theme;
 const { width } = Dimensions.get('window');
 // calendarContainer 左右 margin 各 16，内部无额外 padding
 const CALENDAR_WIDTH = width - 32; // 容器宽度

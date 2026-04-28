@@ -17,6 +17,7 @@ import {
   FlatList,
 } from 'react-native';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 import { getAiConfig, saveAiConfig, clearAiConfig, AiConfig } from '../database/queries/ai-config';
 
 const { colors, fonts, spacing, radii } = theme;

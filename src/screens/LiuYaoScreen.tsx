@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import theme from '../styles/theme';
 import { calculateHexagramNumber, GUA64_NAME, getHexagramMeaning } from '../utils/liuyao-data';
-import { responsiveFontSize, responsiveWidth, responsiveHeight } from '../styles/responsive';
+import { responsiveFontSize, responsiveWidth, responsiveHeight, responsiveBorderRadius } from '../styles/responsive';
 
 const { colors, fonts, spacing, radii } = theme;
 const { width, height } = Dimensions.get('window');

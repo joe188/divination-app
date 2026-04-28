@@ -15,6 +15,7 @@ import {
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoButton } from '../components/GuochaoButton';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 const { colors, fonts, spacing, radii } = theme;
 
 interface HistoryDetailScreenProps {

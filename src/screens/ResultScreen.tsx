@@ -528,8 +528,8 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               <TouchableOpacity
                 style={styles.aiButton}
                 onPress={() => {
-                  if (id) {
-                    triggerAIInterpretation(id);
+                  if (recordId) {
+                    triggerAIInterpretation(recordId);
                   } else {
                     Alert.alert('错误', '记录未保存，无法生成 AI 解卦');
                   }

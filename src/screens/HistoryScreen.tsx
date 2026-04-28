@@ -18,7 +18,7 @@ import {
 import { GuochaoCard } from '../components/GuochaoCard';
 import { GuochaoButton } from '../components/GuochaoButton';
 import theme from '../styles/theme';
-import { responsiveFontSize, responsiveWidth, responsiveHeight } from '../styles/responsive';
+import { responsiveFontSize, responsiveWidth, responsiveHeight, responsiveBorderRadius } from '../styles/responsive';
 import {
   getRecentRecords,
   getRecordsByType,

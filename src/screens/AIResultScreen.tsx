@@ -19,6 +19,7 @@ import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import { insertRecord } from '../database/queries/history';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 const { colors, fonts, spacing, radii } = theme;
 
 interface AIResultScreenProps {

@@ -13,6 +13,7 @@ import {
   Linking,
 } from 'react-native';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 
 const { colors, fonts, spacing, radii } = theme;
 

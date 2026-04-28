@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
 import { liuyaoQueries } from '../database';
+import theme from '../styles/theme';
+import { responsiveFontSize } from '../styles/responsive';
+
+const { colors, fonts, spacing } = theme;
 
 export default function YijingTestScreen() {
   const [results, setResults] = useState<any[]>([]);

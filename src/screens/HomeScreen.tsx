@@ -377,18 +377,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   headerLeftText: {
-    fontSize: 24,
+    fontSize: responsiveFontSize(24), // 响应式字体
     fontFamily: fonts.kaiTi,
     color: colors.gold,
     fontWeight: fonts.weights.bold,
     marginRight: spacing.lg,
   },
   headerCenterText: {
-    fontSize: 50,
+    fontSize: responsiveFontSize(50), // 响应式字体
     color: colors.gold,
   },
   headerRightText: {
-    fontSize: 24,
+    fontSize: responsiveFontSize(24), // 响应式字体
     fontFamily: fonts.kaiTi,
     color: colors.gold,
     fontWeight: fonts.weights.bold,

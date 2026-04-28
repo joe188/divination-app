@@ -15,6 +15,7 @@ import {
   Modal,
 } from 'react-native';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 import {
   knowledgeData,
   getKnowledgeByCategory,

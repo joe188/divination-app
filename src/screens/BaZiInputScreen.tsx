@@ -22,7 +22,7 @@ import theme from '../styles/theme';
 import { calculateBaZi, adjustSolarTime, BaZiResult } from '../utils/bazi-calculator';
 import { CITY_COORDINATES, getCoordinate } from '../data/city-coordinates-full';
 import { solarToLunar, getGanZhiYear, getZodiac } from '../utils/lunar-calendar';
-import { responsiveFontSize, responsiveWidth, responsiveHeight } from '../styles/responsive';
+import { responsiveFontSize, responsiveWidth, responsiveHeight, responsivePadding } from '../styles/responsive';
 
 const { colors, fonts, spacing, radii } = theme;
 const { width, height } = Dimensions.get('window');
@@ -64,6 +64,9 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [showHourPicker, setShowHourPicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  
+  const [yearPage, setYearPage] = useState(0); // 年份选择器当前页
+  const YEARS_PER_PAGE = 10; // 每页显示的年份数量
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -218,8 +221,13 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
       </View>
     </Modal>
   );
-  // 渲染年份选择器（网格状）
-  const renderYearPicker = () => (
+  // 渲染年份选择器（网格状，带分页）
+  const renderYearPicker = () => {
+    const totalPages = Math.ceil(YEAR_RANGE.length / YEARS_PER_PAGE);
+    const startIndex = yearPage * YEARS_PER_PAGE;
+    const currentYears = YEAR_RANGE.slice(startIndex, startIndex + YEARS_PER_PAGE);
+    
+    return (
     <Modal visible={showYearPicker} transparent animationType="slide" onRequestClose={() => setShowYearPicker(false)}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
@@ -232,35 +240,58 @@ export const BaZiInputScreen: React.FC<{ navigation: any }> = ({ navigation }) =
               <Text style={[styles.modalButton, styles.modalConfirm]}>确定</Text>
             </TouchableOpacity>
           </View>
-          <FlatList
-            data={YEAR_RANGE}
-            keyExtractor={(item) => item.toString()}
-            numColumns={5}
-            contentContainerStyle={{ padding: spacing.md }}
-            renderItem={({ item }) => (
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={currentYears}
+              keyExtractor={(item) => item.toString()}
+              numColumns={5}
+              contentContainerStyle={{ padding: spacing.md }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.yearGridItem,
+                    item === year && styles.yearGridItemSelected,
+                  ]}
+                  onPress={() => {
+                    setYear(item);
+                    setShowYearPicker(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.yearGridText,
+                    item === year && styles.yearGridTextSelected,
+                  ]}>
+                    {item}年
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+            {/* 分页导航 */}
+            <View style={styles.yearPagination}>
               <TouchableOpacity
-                style={[
-                  styles.yearGridItem,
-                  item === year && styles.yearGridItemSelected,
-                ]}
-                onPress={() => {
-                  setYear(item);
-                  setShowYearPicker(false);
-                }}
+                style={[styles.yearPaginationButton, yearPage === 0 && styles.yearPaginationButtonDisabled]}
+                onPress={() => setYearPage(prev => Math.max(0, prev - 1))}
+                disabled={yearPage === 0}
               >
-                <Text style={[
-                  styles.yearGridText,
-                  item === year && styles.yearGridTextSelected,
-                ]}>
-                  {item}年
-                </Text>
+                <Text style={styles.yearPaginationButtonText}>上一页</Text>
               </TouchableOpacity>
-            )}
-          />
+              <Text style={styles.yearPaginationText}>
+                {yearPage + 1} / {totalPages}
+              </Text>
+              <TouchableOpacity
+                style={[styles.yearPaginationButton, (yearPage + 1) >= totalPages && styles.yearPaginationButtonDisabled]}
+                onPress={() => setYearPage(prev => Math.min(totalPages - 1, prev + 1))}
+                disabled={(yearPage + 1) >= totalPages}
+              >
+                <Text style={styles.yearPaginationButtonText}>下一页</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </View>
     </Modal>
-  );
+    );
+  };
 
   const renderPicker = (items: any[], value: any, onChange: (item: any) => void, visible: boolean, onClose: () => void) => (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -628,18 +659,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: spacing.md,
+    gap: spacing.sm, // 添加间距
   },
   dateButton: {
     flex: 1,
     backgroundColor: colors.riceWhite,
-    paddingVertical: responsiveHeight(2), // 响应式高度
-    paddingHorizontal: spacing.sm,
+    paddingVertical: responsiveHeight(1.5), // 响应式高度
     borderRadius: radii.lg,
     alignItems: 'center',
-    marginHorizontal: spacing.sm,
     borderWidth: 1,
     borderColor: colors.gray[200],
-    minHeight: responsiveHeight(8), // 响应式最小高度
+    minHeight: responsiveHeight(7), // 响应式最小高度
+    maxWidth: responsiveWidth(20), // 限制最大宽度，避免太长
   },
   dateLabel: {
     fontSize: fonts.sizes.xs,
@@ -782,12 +813,14 @@ const styles = StyleSheet.create({
   yearGridItem: {
     flex: 1,
     margin: 2,
-    padding: spacing.md,
+    padding: responsivePadding(12), // 响应式内边距
     backgroundColor: colors.riceWhite,
     borderRadius: radii.md,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.gray[200],
+    minWidth: responsiveWidth(18), // 最小宽度，确保在小屏幕上也能点击
+    minHeight: responsiveHeight(6), // 最小高度，确保易于点击
   },
   yearGridItemSelected: {
     backgroundColor: colors.cinnabarRed,
@@ -801,6 +834,34 @@ const styles = StyleSheet.create({
   yearGridTextSelected: {
     color: colors.white,
     fontWeight: fonts.weights.bold,
+  },
+  yearPagination: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray[200],
+  },
+  yearPaginationButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.cinnabarRed,
+    borderRadius: radii.md,
+    alignItems: 'center',
+  },
+  yearPaginationButtonDisabled: {
+    backgroundColor: colors.gray[300],
+  },
+  yearPaginationButtonText: {
+    fontSize: fonts.sizes.sm,
+    fontFamily: fonts.sourceHan,
+    color: colors.white,
+  },
+  yearPaginationText: {
+    fontSize: fonts.sizes.md,
+    fontFamily: fonts.sourceHan,
+    color: colors.inkBlack,
   },
   modalButton: {
     fontSize: fonts.sizes.md,

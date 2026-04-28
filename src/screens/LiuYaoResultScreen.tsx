@@ -15,6 +15,7 @@ import {
 import { GuochaoButton } from '../components/GuochaoButton';
 import { GuochaoCard } from '../components/GuochaoCard';
 import theme from '../styles/theme';
+import { responsiveFontSize, responsivePadding } from '../styles/responsive';
 import { generateFullAnalysis, LiuYaoAnalysis } from '../utils/liuyao-interpret';
 import { insertRecord } from '../database/queries/history';
 
